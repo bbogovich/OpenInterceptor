@@ -2347,3 +2347,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Steps | 1. `openinterceptor --campaign interceptor --strategy` (the CSD). Press and hold the Bases button; move the cursor off it and back; release outside it. 2. Press Research and release on it. 3. On Bases, press each side button. 4. On Purchase, click the manufacture radio; then on Manufacture the purchase radio. 5. On Equip Ships, click each tab. |
 | Expected | 1: while held inside, the button shows its pressed sprite; outside, the art's up look; releasing outside still opens Bases. 2: Research opens on release, not on press. 3: each shows its pressed image while held and opens its screen on release. 4: the radios switch screens; the current screen's radio shows pressed. 5: the clicked tab stays pressed and the others are released. No coloured box around any sprite. |
 
+### MT-6-32 — History, the clock by screen, and message boxes
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy`; set the dial to 1 hour; watch the clock. 2. Open Bases; wait; then its close button (top-left). 3. CSD → Bases → Purchase → the manufacture radio → close; close again. 4. CSD → Research → close. 5. `--strategy --notice "Hello"`; click *OK (5-SECS)*; repeat with *OK*. 6. Play until a module finishes building. |
+| Expected | 1: the clock runs. 2: on Bases the clock stands still; closing returns to the CSD and it runs again at 1 hour. 3: the first close returns from Manufacture to Bases (the radio did not add a step), the second to the CSD. 4: back on the CSD. 5: a message box with the original's fill and two capsule buttons; *OK (5-SECS)* sets the dial to 5 s, *OK* leaves it. 6: the module report shows both buttons and the speed is unchanged until one is chosen. |
+

@@ -643,7 +643,7 @@ section: `skins: {<skin id>: {…}}`; `campaign.skin` chooses one.
 | `font` | asset | the built-in font | A TrueType font for every skinned text. |
 | `fonts.<name>` | asset or `{sheet, top, wrap_offset, spacing, centre_raise}` | none | Grid sheet bitmap fonts for screen-set widgets' `font:` (app 0.22.5; [Skins › Sheet fonts](skins.md#sheet-fonts-app-0225)). `sheet`: the image; `top`: glyph top = anchor y − `top` (default half the line height); `wrap_offset`: extra drop of wrapped text; `spacing`: extra pixels per character; `centre_raise` (app 0.22.7): a centred line moves up this much. `sheet: builtin:small` (app 0.22.7) is the engine's 6-pixel caption font with the original's advances. `interceptor`: the original's nine SpritesDLL fonts. |
 | `text_button` | `{font, colour, line, fill}` | none (plain buttons) | The original's TextButton for labelled buttons, list actions and dialog buttons (app 0.22.7; [Skins › Text buttons and dialogs](skins.md#text-buttons-and-dialogs-app-0227)). Defaults: the original's 200,200,200 caption, 0,150,0 lines, 0,200,0 fill at 50 %. |
-| `dialog` | `{design, width, title_font, body_font, title_y, body_top, button_step}` | none (plain prompts) | Prompts as the original's message boxes (app 0.22.7). Defaults 640 × 480, 320, —, —, 20, 32, 22. |
+| `dialog` | `{design, width, title_font, body_font, title_y, body_top, button_step, fill, capsule, frame}` | none (plain prompts) | Prompts as the original's message boxes (app 0.22.7). Defaults 640 × 480, 320, —, —, 20, 32, 22. Since app NEXT: `fill` (an image tiled over the body), `capsule` (message-box capsule buttons from a base sprite), `frame` (pieces `{image, at, offset, tile}`). |
 
 ### `screens`
 
@@ -656,6 +656,8 @@ Screen layouts (app 0.16.0; guide: [Screen layouts](screens.md)). A definition s
 | `background` | asset | none | An image stretched over the whole window behind the screen's widgets (drawn since app 0.16.2; a file that cannot be loaded is reported on standard error once and left out). |
 | `widgets` | mapping name: `[x, y, w, h]` or widget | the engine's places | Where each widget goes, in the design space. `starmap`: `top`, `map`, `nav`, `info`, `panel`; another name is a load error. A widget left out keeps the engine's place. In a screen set each entry is a full widget (below). |
 | `dialog` | bool | `false` | A screen set's dialog: drawn over the screen under it (app 0.17.0). |
+| `clock` | `run`, `pause` | `run` | Whether the campaign clock runs while this screen is on top (app NEXT; `interceptor`: the CSD only). Another value is a load error. |
+| `history` | number | 29 | On the first screen: how many screens Back remembers (app NEXT; at least 1). |
 
 A screen set's widget (app 0.17.0 – 0.17.1): `widgets.<name>: {kind, rect, …}`. A screen of a set
 keeps its shape (one scale factor, centred) instead of stretching.
@@ -666,7 +668,7 @@ keeps its shape (one scale factor, centred) instead of stretching.
 | `rect` | 4 numbers | *required* | x, y, w, h in the screen's design space. |
 | `image` | asset | none | An `image`'s picture (a button's `up` image). |
 | `images` | `{up, down, hover, disabled}` | none | A button's state images; a missing state draws `up`. |
-| `action` | text | none | A button's action: `open(<screen>)` (the screen must exist), `back`, `speed(n)` (an index into the campaign's [`clock.speeds`](strategy.md#clock), 0 = the first; a number past the last picks the last), `save`, `menu`, `testbed`. Another is a load error. |
+| `action` | text | none | A button's action: `open(<screen>)` (the screen must exist), `menu(<screen>)`, `replace(<screen>)` (app NEXT; [History and the clock](screens.md#history-and-the-clock)), `back`, `speed(n)` (an index into the campaign's [`clock.speeds`](strategy.md#clock), 0 = the first; a number past the last picks the last), `save`, `menu`, `testbed`. Another is a load error. |
 | `value` | name | none | A `value`'s value: `date`, `date_long`, `weekday` (both app 0.17.1), `time`, `money` (or `funds`), `score`, `base`, `speed`, `selection`. Not checked: an unknown name shows as `?<name>`. |
 | `source` | name | none | A `list`'s list: `bases`, `research`, `build`, `market`, `factory`, `hangar`, `contacts`, `supply`, `archive`, `reports`, `messages`. On a `map`: `minimap`, the whole map small, without names (app 0.17.1). Not checked at load. |
 | `text` | text | none | A `text` widget's text (a `@key` is resolved), wrapped. |

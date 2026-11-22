@@ -403,6 +403,41 @@ Tests:
 - `content::screens::tests`: the new keys and their errors.
 - `check::tests`: a missing sprite.
 
+### History, clock and message boxes (`app::history`, `app::caption`)
+
+*App NEXT, branch `parity/m2` (plan M2, issue #127; RQ-UI-14/15/16, RQ-S-18).*
+
+- **`app::history::History`** replaces the screen set's `Vec<String>` stack. It holds `home`,
+  `current`, `trail` (Back's screens), `dialogs` and `limit`. Its operations follow the exe
+  (0x4b5bfe – 0x4b5e5b):
+  - `push`: home clears; no duplicates; nothing added when full.
+  - `menu`: a run of menu switches remembers once.
+  - `replace`, `back`, `open_dialog`.
+  - `shown()` lists what to draw.
+  - `UiAction` gained `MenuOpen` and `Replace`.
+- **The clock.** `draw_set` sets `screen_holds_clock` from the top screen's
+  `ScreenLayout::clock_runs`, and the time step skips while it is set (set mode only). Prompts
+  already stop time through `prompting`.
+- **RQ-S-18.** `ClockDef::notices` (`NoticeClock::{Drop, Keep, Ask}`) and `notice_buttons`
+  decide whether a notice changes the speed. With `Ask` the Report prompt shows both buttons,
+  and the second sets `on_event`.
+- **`caption::dialog`** draws, in order: the `fill` tiled over the body, the `frame` pieces
+  (`frame_piece`: anchor, offset, tiling along a side), then the buttons. The buttons are
+  message-box capsules (`capsule_parts`: caps and a tiled middle; `capsule_row`; caption at
+  `capsule_caption`) when the style has a `capsule`, else stacked text buttons.
+- **`Ui` loads the dialog's images** once at start (`Ui::image`), unsmoothed.
+- **`--check`** loads them too.
+
+Tests:
+
+- `app::history::tests`: home clears, duplicates and the limit, menu runs, replace, dialogs.
+- `app::caption::tests`: frame anchors and tiling, the original's ornament position,
+  capsules, a capsule-row layout.
+- `content::skin::tests`: fill, capsule and frame keys and errors.
+- `content::strategy` clock tests: `notices`, `notice_buttons`.
+- `content::screens::tests`: `clock`, `history`, `menu(x)`, `replace(x)`.
+- `check::tests`: a missing dialog image.
+
 ### The main menu and credits (`app::menu`, `app::credits`)
 
 Since app 0.14.0 `app::run` opens `Screen::Menu(MainMenu)` instead of the launcher when the
@@ -477,6 +512,7 @@ play without it.
 | `SheetFont`, `Glyph`, `CHAR_MAP`, `char_table`, `ACCENTED_FIRST` | `formats::sheetfont` | A grid sheet font's metrics and the fixed char → glyph table (app 0.22.5). |
 | `SheetFontDef`, `skin::load_sheet`, `Skin::fonts` | `content::skin` | `skins.<id>.fonts.<name>`; reading a sheet with its background made transparent. |
 | `caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}`; `StrategyScreen::draw_list_art`, `notice` | `app::caption`, `app::strategy` | Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7). |
+| `history::{History, DEFAULT_LIMIT}`; `UiAction::{MenuOpen, Replace}`; `ScreenLayout::{clock_runs, history, empty}`; `StrategyScreen::{history, screen_holds_clock}`; `NoticeClock`, `ClockDef::{notices, notice_buttons}`; `caption::{frame_piece, capsule_parts, capsule_row}`; `DialogStyle::{fill, capsule, frame, images}`, `FramePiece`, `Anchor`; `Ui::image` | `app::history`, `content::screens`, `app::strategy`, `content::strategy`, `app::caption`, `content::skin`, `app::ui` | The history stack, the clock by screen and notice, message-box fills, capsules and frames (app NEXT). |
 | `spritetable::{SpriteRow, parse, hot_offset, parse_index}`; `Content::sprite`; `tga::key_corner`; `button::{look, Look, Press, sprite_rect, latch}`; `Place`, `WidgetKind::Check`, `WidgetDef::{sprite, states, place, fire_on_press, repeat, group, selected}`; `StrategyScreen::{presses, radios, checks}`, `widget_rect`, `draw_widget_image` | `formats`, `content`, `app::button`, `content::screens`, `app::strategy` | Sprite references, button states, press semantics, toggles and radio groups (app 0.22.10). |
 | `listbox::{visible_rows, columns, Column, column_width, pulse_step, pulse_level, PRESSED, Repeat}`; `Row::cells`; `StrategyScreen::arrows`, `image_keyed`; `Content::load_image_keyed`; `ListStyle::{compact, columns, bar, up, down}`, `Arrow` | `app::listbox`, `app::strategy`, `content`, `formats::tga`, `content::screens` | The original's compact list box (app 0.22.9). |
 | `smallfont::{REFERENCE, advances, sheet}`; `SheetFont::with_advances`; `TextButtonStyle`, `DialogStyle`, `ListStyle` | `content::smallfont`, `formats::sheetfont`, `content::skin`, `content::screens` | The built-in 6 px caption font; the skin's `text_button` and `dialog`; a list's part rectangles. |
