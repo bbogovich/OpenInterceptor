@@ -93,7 +93,6 @@ pub fn layout(
     extra_h: i32,
 ) -> MsgBox {
     let (mut w, mut h) = base_size(caption_w, body_w, lh);
-    h += extra_h.max(0);
     let widths: Vec<i32> = button_text_w.iter().map(|t| button_width(*t)).collect();
     let rows = button_rows(&widths);
     let row_w = |r: &Vec<usize>| r.iter().map(|i| widths[*i]).sum::<i32>() + 10 * (r.len() as i32 - 1).max(0);
@@ -120,11 +119,21 @@ pub fn layout(
         _ => {}
     }
     // Styles 2 and 3: a whole number of side tiles between the right edge's caps.
-    if style == 2 || style == 3 {
-        let tile = kit[2][1].max(1);
-        let caps = kit[5][1] + kit[6][1];
-        let inner = (h - caps).max(0);
-        h = caps + (inner + tile - 1) / tile * tile;
+    let round = |h: i32| {
+        if style == 2 || style == 3 {
+            let tile = kit[2][1].max(1);
+            let caps = kit[5][1] + kit[6][1];
+            let inner = (h - caps).max(0);
+            caps + (inner + tile - 1) / tile * tile
+        } else {
+            h
+        }
+    };
+    h = round(h);
+    // The engine's growth for text and buttons that would not fit the text rect, added
+    // to the exe's (rounded) height and rounded again (DERIVED).
+    if extra_h > 0 {
+        h = round(h + extra_h);
     }
     // Back on the screen.
     x = x.clamp(0, (640 - w).max(0));
@@ -138,28 +147,30 @@ pub fn layout(
             [x + l, y + t, w - l - r, h - t - b]
         }
     };
-    // Button rows from the bottom up: the lowest ends 25 px above the frame's bottom, the
-    // others 17 px apart above it (bottom − 25, − 42, − 59, − 76). The exe then moves them
-    // by the kit's bottom height in its own coordinates; ending them at the frame's
-    // bottom − 25 is a DERIVED reading that keeps them on the art's bottom band.
-    let bottom = y + h - 14;
+    // Button rows from the bottom up, 17 px apart (the exe's bottom − 25, − 42, − 59, − 76
+    // pitch). Where the exe's rows land after "moved down by the kit's bottom height" is
+    // not settled, so the engine keeps them in the box's button area: the lowest row ends
+    // 4 px above the text rect's bottom, rows centred on the text rect, two buttons at the
+    // style's offsets kept inside it (DERIVED). `button_area` gives the height to reserve.
+    let bottom = client[1] + client[3] - 4 - 14;
+    let (cl, cr) = (client[0], client[0] + client[2]);
     let n = rows.len() as i32;
     let mut buttons = vec![[0; 4]; widths.len()];
     for (r, row) in rows.iter().enumerate() {
-        let ry = bottom - 25 - 17 * (n - 1 - r as i32);
+        let ry = bottom - 17 * (n - 1 - r as i32);
         let place: Vec<i32> = match (row.len(), style) {
-            (1, _) => vec![x + (w - widths[row[0]]) / 2],
+            (1, _) => vec![cl + (cr - cl - widths[row[0]]) / 2],
             (2, _) => {
                 let (lo, ro) = match style {
                     1 => (50, 60),
                     2 => (90, 90),
                     _ => (20, 20),
                 };
-                vec![x + lo, x + w - ro - widths[row[1]]]
+                vec![(x + lo).max(cl), (x + w - ro).min(cr) - widths[row[1]]]
             }
             _ => {
                 let rw = row_w(row);
-                let mut bx = x + (w - rw) / 2;
+                let mut bx = cl + (cr - cl - rw) / 2;
                 row.iter()
                     .map(|i| {
                         let v = bx;
@@ -174,6 +185,17 @@ pub fn layout(
         }
     }
     MsgBox { frame, client, buttons }
+}
+
+/// The height a message box's buttons take at the foot of its text rect: their rows,
+/// 17 px apart, 14 tall, and 4 px under them (DERIVED, see [`layout`]).
+pub fn button_area(button_text_w: &[i32]) -> i32 {
+    if button_text_w.is_empty() {
+        return 0;
+    }
+    let widths: Vec<i32> = button_text_w.iter().map(|t| button_width(*t)).collect();
+    let n = button_rows(&widths).len() as i32;
+    14 + 17 * (n - 1) + 4 + 6
 }
 
 /// The pieces of a frame kit on `frame`, in drawing order: `(piece index, dest rect,
@@ -299,10 +321,14 @@ mod tests {
         let k = kit();
         let m = layout(3, &k, 0, 0, 14, &[20], 0);
         let b = m.buttons[0];
-        assert_eq!((b[0] + b[2] / 2, b[2], b[3]), (m.frame[0] + m.frame[2] / 2, 100, 14));
+        assert_eq!((b[0] + b[2] / 2, b[2], b[3]), (m.client[0] + m.client[2] / 2, 100, 14), "centred on the text rect");
+        assert_eq!(b[1] + 14, m.client[1] + m.client[3] - 4, "inside the text rect, 4 px from its bottom");
         let two = layout(2, &k, 0, 0, 14, &[20, 20], 0);
-        assert_eq!(two.buttons[0][0], two.frame[0] + 90);
-        assert_eq!(two.buttons[1][0] + 100, two.frame[0] + two.frame[2] - 90);
+        assert_eq!(two.buttons[0][0], (two.frame[0] + 90).max(two.client[0]));
+        assert!(two.buttons[1][0] + 100 <= two.client[0] + two.client[2], "kept inside the text rect");
+        assert_eq!(button_area(&[20]), 24);
+        assert_eq!(button_area(&[300, 300]), 41, "two rows");
+        assert_eq!(button_area(&[]), 0);
         let rows = layout(3, &k, 0, 0, 14, &[300, 300], 0);
         assert_eq!(rows.buttons[1][1] - rows.buttons[0][1], 17, "a second row 17 px lower");
     }

@@ -412,8 +412,12 @@ fn kit_dialog(
     let mut m = at(0);
     // The text as DrawTextRect lays it in the client rect: grow the box if it would run
     // out of it (DERIVED — the exe sizes by its own rule only).
+    // The text as DrawTextRect lays it at the top of the text rect (one line: in its
+    // middle, so it needs two lines' room), then the buttons' rows at its foot.
     let lines = text::wrap(&bf, body, m.client[2], false).len() as i32;
-    let needed = if lines <= 1 { lh } else { lh / 2 + lh + bf.wrap_offset + (lines - 1) * (lh + lh / 3) + lh - bf.top };
+    let text_h =
+        if lines <= 1 { 2 * lh } else { lh / 2 + lh + bf.wrap_offset + (lines - 1) * (lh + lh / 3) + lh - bf.top };
+    let needed = text_h + msgbox::button_area(&button_w);
     if needed > m.client[3] {
         m = at(needed - m.client[3]);
     }
@@ -481,7 +485,9 @@ fn kit_dialog(
     let mut buf = Vec::new();
     caption(ui, title_sheet, layout, &heading, [cx, cy], Align::Centre, WHITE, &mut buf);
     buf.clear();
-    text::draw_text_rect(&bf, body, m.client, Align::Left, false, &mut buf);
+    // The text above the buttons' area of the text rect.
+    let text_rect = [m.client[0], m.client[1], m.client[2], m.client[3] - msgbox::button_area(&button_w)];
+    text::draw_text_rect(&bf, body, text_rect, Align::Left, false, &mut buf);
     ui.draw_glyphs(body_sheet, &buf, layout, WHITE);
     // The buttons: capsules on the 14 px button rects (centred on them).
     let caps: Option<Vec<&Texture2D>> =
