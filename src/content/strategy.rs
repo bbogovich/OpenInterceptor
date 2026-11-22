@@ -185,6 +185,11 @@ pub enum MapKind {
         names: Vec<String>,
         seed: Option<u64>,
         black_holes: u32,
+        /// With a spacing, `black_holes` is a range `[min, max]` (`black_holes_max`) and the
+        /// holes are existing systems picked at random at least `black_hole_spacing` apart
+        /// (the original: 4 or 5, 7,500 units, §14.6); without, the last systems become them.
+        black_holes_max: u32,
+        black_hole_spacing: f32,
     },
 }
 
@@ -880,7 +885,16 @@ impl StrategyDef {
                         count_table,
                         names: g.list("names"),
                         seed: g.num("seed").map(|s| s as u64),
-                        black_holes: g.num("black_holes").unwrap_or(1.0) as u32,
+                        // `black_holes: n` or `[min, max]`.
+                        black_holes: match g.nums("black_holes").as_deref() {
+                            Some([lo, _]) => *lo as u32,
+                            _ => g.num("black_holes").unwrap_or(1.0) as u32,
+                        },
+                        black_holes_max: match g.nums("black_holes").as_deref() {
+                            Some([lo, hi]) => hi.max(*lo) as u32,
+                            _ => g.num("black_holes").unwrap_or(1.0) as u32,
+                        },
+                        black_hole_spacing: g.num("black_hole_spacing").unwrap_or(0.0),
                     }
                 }
                 k => {
@@ -1390,7 +1404,12 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("size", Ty::Numbers(2), "generated: width and height, map units"),
                 f("names", Ty::List(Box::new(Ty::Text)), "generated: system names to draw from"),
                 f("seed", Ty::Num, "generated: a fixed seed (default: new every campaign)"),
-                f("black_holes", Ty::Num, "generated: hidden black holes"),
+                f(
+                    "black_holes",
+                    Ty::Either(Box::new(Ty::Num), Box::new(Ty::Numbers(2))),
+                    "generated: hidden black holes, a number or [min, max]",
+                ),
+                f("black_hole_spacing", Ty::Num, "generated: black holes picked at random this far apart"),
                 f("unit_ly", Ty::Num, "light years per map unit"),
             ])),
             "star maps",

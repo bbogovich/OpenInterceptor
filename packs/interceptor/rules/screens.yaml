@@ -22,10 +22,22 @@ screens:
       # Labels as the original's (VERIFIED, notes/re/unknowns-2026-11.md §1.3): only for the
       # objects in a 30 px box around the cursor, upper-cased, in the 6 px font, centred 20 px
       # above a star (8 above a base), kept 3 px inside the circle, taking turns every second.
-      # Zoom levels 0 and 1: 45 and 30 map units a pixel (VERIFIED, §1.1); the wheel steps
-      # between them in place of the view knob (whose control is not placed yet). A click on
-      # a system shows its star-class picture (level 2, §13.4; centred, DERIVED).
-      map: {kind: map, shape: round, rect: [66, 61, 333, 333], labels: {font: caption}, zoom_levels: [45, 30]}
+      # Zoom levels 0 and 1: 45 and 30 map units a pixel (VERIFIED, §1.1), set by the view knob
+      # below (the wheel steps them too, an engine extra). A click on a system shows its picture
+      # (level 2, §13.4, §14.4): its star class's, or the base picture where X-COM has a base
+      # (rows 566-585; the enemy bases' 586-605 are listed for when the map has them); centred,
+      # DERIVED. A black hole cannot be opened.
+      map: {kind: map, shape: round, rect: [66, 61, 333, 333], labels: {font: caption}, zoom_levels: [45, 30],
+            base_portraits: ["original:sprite#566", "original:sprite#586"], base_portrait_frames: 20}
+      # The view knob, control 101 (VERIFIED, §14.5): 13 turning frames (rows 978-990) at (13, 25);
+      # clicked within 14 px of (9, 99), (29, 45) or (90, 22) it picks level 0, 1 or 2, with the
+      # RotarySwitch sound. Lamps 992/994/996 off, 993/995/997 on, 991 where level 2 is
+      # unavailable; their places (on the click points) are DERIVED.
+      view_knob: {kind: knob, pos: [13, 25], sound: ui_dial,
+                  knob: {frames: "original:sprite#978", count: 13, stops: [[9, 99], [29, 45], [90, 22]], reach: 14,
+                         lamps_off: ["original:sprite#992", "original:sprite#994", "original:sprite#996"],
+                         lamps_on: ["original:sprite#993", "original:sprite#995", "original:sprite#997"],
+                         unavailable: "original:sprite#991"}}
       minimap: {kind: map, source: minimap, shape: round, rect: [502, 43, 94, 94], tip: "@orig.S_CSD_MINIMAP"}
       # The four green readouts (VERIFIED, Interceptor.exe 0x43fb0f): font 23010, centred
       # on x 561 at y 370/390/410/430 (glyph tops 363/383/403/423); the time monospaced.
@@ -80,11 +92,16 @@ screens:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
       # The info pane [347,39,639,266] (VERIFIED): the rows below its header, the selected
       # row and its actions at the pane's foot (placement in the pane DERIVED).
-      # The module scroll buttons, ids 400 / 401 at (484, 247) and (580, 247), sprite rows
-      # 1381 / 1379 (VERIFIED, unknowns-2026-11.md §13.3; the pressed row N + 1 is DERIVED).
-      modules: {kind: list, source: build, rect: [356, 104, 274, 108], font: body, style: compact, detail: [356, 216, 274, 26], buttons: [356, 244, 274, 18],
-                up: {pos: [484, 247], images: ["original:sprite#1381", "original:sprite#1382", "original:sprite#1381"]},
-                down: {pos: [580, 247], images: ["original:sprite#1379", "original:sprite#1380", "original:sprite#1379"]}}
+      # The module panel's three 42 x 32 buttons (VERIFIED, unknowns-2026-11.md §14.2; idle row N,
+      # pressed N + 1): 402 previous at (387, 247) rows 1377 / 1378, 400 close panel at (484, 247)
+      # rows 1381 / 1382 (the check mark: accept the placement), 401 next at (580, 247) rows
+      # 1379 / 1380. The original's panel shows one module at a time and steps with these; it has
+      # no scroll arrows. Here they step the list's selection and build the selected module
+      # (DERIVED); the wheel still scrolls the list.
+      modules: {kind: list, source: build, rect: [356, 104, 274, 108], font: body, style: compact, detail: [356, 212, 274, 18]}
+      previous: {kind: button, centre: [387, 247], images: {sprite: "original:sprite#1377", states: 2}, action: list(prev)}
+      close_panel: {kind: button, centre: [484, 247], images: {sprite: "original:sprite#1381", states: 2}, action: list(act)}
+      next: {kind: button, centre: [580, 247], images: {sprite: "original:sprite#1379", states: 2}, action: list(next)}
       # The side buttons 204/206/208 (VERIFIED): SpriteButtonTL with their top-left at
       # these points, two states (rows 1345/1347/1349: up, then pressed).
       purchase: {kind: button, pos: [504, 361], images: {sprite: "original:sprite#1345", states: 2}, action: open(purchase), sound: ui_beep22}
@@ -110,11 +127,26 @@ screens:
       # (VERIFIED).
       # The ring's nine sockets (centres VERIFIED, 0x535566): the selected ship's hard points
       # as icons only (VERIFIED, unknowns-2026-11.md §13.2) - row 1237 where the hull has no
-      # hard point, the selection overlay 1235 at (+1, +1). The fitted items' icons come from
-      # a table by item kind (0x690990) whose rows are not read yet: no slot_icons.
+      # hard point, the selection overlay 1235 at (+1, +1). The fitted items' icons by item
+      # (VERIFIED, §14.3: catalogue 0x65f880 -> table 0x690990; a launcher and its missile share
+      # one). Accumulator shields have none; the probes' (1417/1418/1429/1438) are not matched
+      # to these probes yet.
       ships: {kind: list, source: hangar, rect: [17, 397, 500, 60], font: body, style: compact, columns: "@orig.S_CSD_CHOOSESHIPTAB",
               slots: [[117, 336], [65, 265], [64, 178], [115, 107], [198, 79], [282, 106], [334, 177], [334, 265], [283, 336]],
               slot_unusable: "original:sprite#1237", slot_selected: "original:sprite#1235",
+              slot_icons: {
+                armor_type1: "original:sprite#1413", armor_type2: "original:sprite#1414", armor_type3: "original:sprite#1415", shield_type1: "original:sprite#1442",
+                shield_type2: "original:sprite#1443", shield_type3: "original:sprite#1444", ship_damage_control_computer: "original:sprite#1454", engine_type1: "original:sprite#1422",
+                engine_type2: "original:sprite#1423", engine_type3: "original:sprite#1424", vector_control_thrusters: "original:sprite#1450", dimension_jump_drive: "original:sprite#1419",
+                sensor_targeting_system1: "original:sprite#1439", sensor_targeting_system2: "original:sprite#1440", sensor_targeting_system3: "original:sprite#1441", cloaking_device: "original:sprite#1416",
+                ecmpod_type1: "original:sprite#1452", ecmpod_type2: "original:sprite#1453", tractor_beam: "original:sprite#1449", laser_cannon: "original:sprite#1430",
+                heavy_laser: "original:sprite#1428", gatling_laser: "original:sprite#1427", tracer_cannon: "original:sprite#1447", tracking_tracer_cannon: "original:sprite#1448",
+                phase_cannon: "original:sprite#1435", plasma_cannon: "original:sprite#1436", psi_blaster: "original:sprite#1437", tachyon_pulser: "original:sprite#1446",
+                xwinder: "original:sprite#1451", xwinder_missile_launcher: "original:sprite#1451", fusion: "original:sprite#1426", fusion_missile_launcher: "original:sprite#1426",
+                permeator: "original:sprite#1434", permeator_missile_launcher: "original:sprite#1434", doppelganger: "original:sprite#1420", doppelganger_missile_launcher: "original:sprite#1420",
+                nova_bomb: "original:sprite#1431", nova_bomb_launcher: "original:sprite#1431", elerium_torpedo: "original:sprite#1421", elerium_torpedo_launcher: "original:sprite#1421",
+                enveloping_torpedo: "original:sprite#1425", enveloping_fusion_torpedo_launcher: "original:sprite#1425", sidestep: "original:sprite#1445", sidestep_missile_launcher: "original:sprite#1445",
+                cloaking_torpedo: "original:sprite#1433", passive_cloaking_torpedo_launcher: "original:sprite#1433", parallax_torpedo: "original:sprite#1432", parallax_torpedo_launcher: "original:sprite#1432"},
               detail: [436, 186, 198, 118], buttons: [436, 310, 198, 20],
               up: {rect: [518, 413, 24, 24], images: ["original:SpritesDLL.dll#27500", "original:SpritesDLL.dll#27501", "original:SpritesDLL.dll#27502"]},
               down: {rect: [518, 434, 24, 24], images: ["original:SpritesDLL.dll#27503", "original:SpritesDLL.dll#27504", "original:SpritesDLL.dll#27505"]}}
@@ -230,8 +262,12 @@ screens:
   # font RGB(0,200,0)); finance's five rows pick its series and it draws LOW / HIGH lines;
   # the activity reports add a system map coloured by activity (none / 1-5 / 6-15 / 16+);
   # the outpost report a six-column table and a small map; player status a pilot/skill list.
-  # DERIVED: every position and size below, the activity colours, the series line's colour,
-  # the table's columns, and the player status title (no text key found).
+  # The graphs' axes (VERIFIED, §14.8, the income report): the plot from the panel's left + 60
+  # to right - 15 and top + 30 to bottom - 40; income's y fixed 0-18,000 in 18 steps; 22
+  # months, upper-cased at bottom + 10, the years at bottom + 25 between brackets.
+  # DERIVED: the panels and every other position and size, the other graphs' fitted y
+  # ranges, the activity colours, the series line's colour, the table's columns, the lists
+  # beside the activity maps, and the player status title (no text key found).
   reports:   # Income (32)
     design: [640, 480]
     clock: pause
@@ -239,8 +275,7 @@ screens:
     widgets:
       title: {kind: text, text: "@orig.INCOMEREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
       graph_title: {kind: text, text: "@orig.INCOMEREPORT_GRAPHTITLE", rect: [40, 90, 520, 10], font: caption, at: [296, 94], align: centre}
-      graph: {kind: graph, source: income, rect: [40, 104, 512, 170], font: caption, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
-      report: {kind: list, source: report_income, rect: [40, 300, 512, 120], font: body, style: compact, detail: [40, 424, 512, 18]}
+      graph: {kind: graph, source: income, rect: [24, 76, 544, 371], font: caption, y_range: [0, 18000], y_steps: 18, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_finance)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_player)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -251,9 +286,9 @@ screens:
     background: original:WrappersDLL.dll#7700
     widgets:
       title: {kind: text, text: "@orig.FINANCEREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
-      graph: {kind: graph, source: finance, rect: [40, 96, 512, 178], font: caption, legend: ["@orig.S_FINANCEREPORT_LOW", "@orig.S_FINANCEREPORT_HIGH"], months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
+      graph: {kind: graph, source: finance, rect: [24, 76, 544, 290], font: caption, legend: ["@orig.S_FINANCEREPORT_LOW", "@orig.S_FINANCEREPORT_HIGH"], months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
       # The five rows pick the graph's series: income, expenditure, maintenance, balance, score.
-      report: {kind: list, source: report_finance, rect: [40, 300, 512, 90], font: body, style: compact}
+      report: {kind: list, source: report_finance, rect: [84, 366, 400, 80], font: body, style: compact}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_alien)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(reports)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -264,10 +299,10 @@ screens:
     background: original:WrappersDLL.dll#7700
     widgets:
       title: {kind: text, text: "@orig.ALIENREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
-      graph_title: {kind: text, text: "@orig.ALIENREPORT_GRAPHTITLE", rect: [40, 90, 300, 10], font: caption, at: [190, 94], align: centre}
-      graph: {kind: graph, source: alien, rect: [40, 104, 300, 170], font: caption, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
-      activity: {kind: map, source: activity_alien, rect: [356, 90, 200, 250], font: caption, legend: ["@orig.S_AR_ALIEN_NOACTIV", "@orig.S_AR_ALIEN_1TO5", "@orig.S_AR_ALIEN_6TO15", "@orig.S_AR_ALIEN_16"]}
-      report: {kind: list, source: report_alien, rect: [40, 300, 300, 120], font: body, style: compact}
+      graph_title: {kind: text, text: "@orig.ALIENREPORT_GRAPHTITLE", rect: [40, 90, 520, 10], font: caption, at: [296, 94], align: centre}
+      graph: {kind: graph, source: alien, rect: [24, 76, 544, 250], font: caption, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
+      activity: {kind: map, source: activity_alien, rect: [300, 326, 256, 118], font: caption, legend: ["@orig.S_AR_ALIEN_NOACTIV", "@orig.S_AR_ALIEN_1TO5", "@orig.S_AR_ALIEN_6TO15", "@orig.S_AR_ALIEN_16"]}
+      report: {kind: list, source: report_alien, rect: [40, 330, 250, 112], font: body, style: compact}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_xcom)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_finance)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}
@@ -278,10 +313,10 @@ screens:
     background: original:WrappersDLL.dll#7700
     widgets:
       title: {kind: text, text: "@orig.XCOMREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
-      graph_title: {kind: text, text: "@orig.XCOMREPORT_GRAPHTITLE", rect: [40, 90, 300, 10], font: caption, at: [190, 94], align: centre}
-      graph: {kind: graph, source: xcom, rect: [40, 104, 300, 170], font: caption, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
-      activity: {kind: map, source: activity_xcom, rect: [356, 90, 200, 250], font: caption, legend: ["@orig.S_AR_XCOM_NOACTIV", "@orig.S_AR_XCOM_1TO5", "@orig.S_AR_XCOM_6TO15", "@orig.S_AR_XCOM_16"]}
-      report: {kind: list, source: report_xcom, rect: [40, 300, 300, 120], font: body, style: compact}
+      graph_title: {kind: text, text: "@orig.XCOMREPORT_GRAPHTITLE", rect: [40, 90, 520, 10], font: caption, at: [296, 94], align: centre}
+      graph: {kind: graph, source: xcom, rect: [24, 76, 544, 250], font: caption, months: ["@orig.S_MONTH_ABREV_JAN", "@orig.S_MONTH_ABREV_FEB", "@orig.S_MONTH_ABREV_MAR", "@orig.S_MONTH_ABREV_APR", "@orig.S_MONTH_ABREV_MAY", "@orig.S_MONTH_ABREV_JUN", "@orig.S_MONTH_ABREV_JUL", "@orig.S_MONTH_ABREV_AUG", "@orig.S_MONTH_ABREV_SEP", "@orig.S_MONTH_ABREV_OCT", "@orig.S_MONTH_ABREV_NOV", "@orig.S_MONTH_ABREV_DEC"]}
+      activity: {kind: map, source: activity_xcom, rect: [300, 326, 256, 118], font: caption, legend: ["@orig.S_AR_XCOM_NOACTIV", "@orig.S_AR_XCOM_1TO5", "@orig.S_AR_XCOM_6TO15", "@orig.S_AR_XCOM_16"]}
+      report: {kind: list, source: report_xcom, rect: [40, 330, 250, 112], font: body, style: compact}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_outpost)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_alien)}
       back: {kind: button, rect: [5, 5, 22, 22], action: back}

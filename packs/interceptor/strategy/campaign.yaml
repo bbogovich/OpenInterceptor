@@ -42,7 +42,10 @@ maps:
     # The count rolled as the original does (VERIFIED, unknowns-2026-11.md §13.5: rand % 100
     # <= 10 -> 65, <= 20 -> 70, <= 90 -> 75, else 80).
     system_counts: {65: 11, 70: 10, 75: 70, 80: 9}
-    black_holes: 1            # the gateway, hidden until found (how many the original places is not read)
+    # 4 or 5 existing systems become hidden black holes, each at least 7,500 units (1.25 ly)
+    # from the others (VERIFIED, unknowns-2026-11.md §14.6).
+    black_holes: [4, 5]
+    black_hole_spacing: 7500
     names: ["original:starcorp1.txt/STAR NAMES"]   # the original's star names (Text/starcorp1.txt)
     travel: free
     unit_ly: 0.000167
@@ -52,9 +55,9 @@ maps:
 # Dwarf, <= 24 Blue, <= 35 White, <= 70 Yellow, <= 85 Orange, else Red Dwarf); a black-hole
 # roll is re-drawn, so black holes weigh 0 here and are placed by black_holes. Icons: the
 # CSD's level-0 class icons, 9 x 9 (sprite rows 893-901, §1.2). Portraits (the CSD's level
-# 2): rows 454-553 hold five 20-frame star pictures - yellow 454, orange 474, red 494, blue
-# 514, white 534 (OBSERVED from the rows; which class takes which, giants and dwarfs
-# sharing their colour's, is DERIVED). Colours (the dot when an icon is missing) are DERIVED.
+# 2): five 20-frame star pictures (VERIFIED, §14.4) - 454 Yellow, 474 Orange, 494 Red Giant
+# and Red Dwarf, 514 Blue Giant and Blue, 534 White Dwarf and White; a black hole has none
+# (it cannot be opened). Colours (the dot when an icon is missing) are DERIVED.
 star_classes:
   red_giant: {color: [1.0, 0.4, 0.3], weight: 3, icon: "original:sprite#899", portrait: "original:sprite#494", portrait_frames: 20}
   blue_giant: {color: [0.5, 0.65, 1.0], weight: 4, icon: "original:sprite#896", portrait: "original:sprite#514", portrait_frames: 20}
