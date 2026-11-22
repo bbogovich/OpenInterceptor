@@ -1470,8 +1470,8 @@ impl Campaign {
                 (shown(maintenance as f64), shown(upkeep as f64), shown(salaries as f64));
             let t = format!(
                 "Monthly report: score {:+.0} this month ({:.0} in all); costs {:.0} (modules {maintenance:.0}, craft {upkeep:.0}, salaries {salaries:.0}); funds {:.0}{rating}",
-                shown(self.month_score as f64),
-                shown(self.score as f64),
+                shown(self.month_score),
+                shown(self.score),
                 shown(total),
                 shown(self.money)
             );

@@ -3073,8 +3073,8 @@ fn report_rows(c: &mut Campaign, def: &StrategyDef, k: u8) -> Vec<Row> {
             rows.push(line(format!("Craft upkeep a month: {}", money(shown(upkeep as f64)))));
             rows.push(line(format!("Salaries a month: {}", money(shown(salaries as f64)))));
             rows.push(line(format!("Total costs a month: {}", money(shown((maintenance + upkeep + salaries) as f64)))));
-            rows.push(line(format!("Score this month: {:+.0}", shown(c.month_score as f64))));
-            rows.push(line(format!("Score in all: {:.0}", shown(c.score as f64))));
+            rows.push(line(format!("Score this month: {:+.0}", shown(c.month_score))));
+            rows.push(line(format!("Score in all: {:.0}", shown(c.score))));
         }
         // Alien activity: the contacts on the sensors and the raids struck.
         2 => {
@@ -3119,11 +3119,7 @@ fn report_rows(c: &mut Campaign, def: &StrategyDef, k: u8) -> Vec<Row> {
         }
         // Player status: score, standing, the rival.
         _ => {
-            rows.push(line(format!(
-                "Score {:.0} ({:+.0} this month)",
-                shown(c.score as f64),
-                shown(c.month_score as f64)
-            )));
+            rows.push(line(format!("Score {:.0} ({:+.0} this month)", shown(c.score), shown(c.month_score))));
             if let Some(r) = &def.story.relations {
                 for (f, v) in &c.story.standing {
                     rows.push(line(format!("{f}: {} ({v:+.0})", r.stance(*v))));
