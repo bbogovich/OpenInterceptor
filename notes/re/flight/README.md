@@ -883,8 +883,8 @@ the angle error. It is **not speed matching**, which is `SetSpeed` (`0x585a79`, 
   * **60 s later** (`0x5011e6(1)`): the flag is set, the mission is evaluated, and the flight ends
     (`0x461413`). The final-mission evaluators (`0x4dc1f5`, `0x4dee7d`) count a fired Nova as a **win
     (outcome 1) when an X-COM Patton (hull 19) is still in the battle**; the other branch was not
-    traced. A win plays message 0x3a and records result (5, 3) (`0x550fd5`), a loss message 0x39 and
-    (5, 1). Counter 0x71c458 (index 134, outside the scored 0–133) counts Nova endings.
+    traced. A win plays message 0x3a and the **victory music cue** (5, 3) (`0x550fd5` is the music system,
+    `../unknowns-2026-11.md` §11.1), a loss message 0x39 and the defeat cue (5, 1). Counter 0x71c458 (index 134, outside the scored 0–133) counts Nova endings.
   * **Messages 0x46–0x49** are wingman radio messages; `0x4035c2` maps them to voice-phrase (wave)
     numbers **33, 34, 35, 36** (case table 0x404568 → 0x404418; logged as "Incoming Message ...
     WAVE %d"). The string/clip each wave plays was not traced.
