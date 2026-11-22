@@ -264,6 +264,9 @@ C / C; `balance: share`. The original has no step budget — the settings cost e
 
 Every beam or missile hit goes through the same pipeline (`sim::combat::apply_hit`):
 
+0. **Covered modules.** A hit on a `shielded_by_hub` module whose hub's `shield_pool` holds
+   points is taken by the hub instead (app NEXT, [Stations and
+   modules](stations.md#shield-pools-and-covered-modules)).
 1. **Spread and difficulty.** The hit does between `damage.spread` and all of its damage; a
    beam hit from or on the player's craft is scaled by `damage.difficulty.player_hits` /
    `hits_on_player`.
@@ -271,12 +274,15 @@ Every beam or missile hit goes through the same pipeline (`sim::combat::apply_hi
    the beam's `shield_factor` points (1; the original's Phase Cannon 1.5): a bank that holds
    `damage × shield_factor` stops the hit, one that holds less stops `bank / shield_factor`
    and falls. `bypass_shields` missiles skip this step; `enveloping` ones put half on each
-   facing.
+   facing. A station with a `shield_pool` has one pool that takes the whole hit from any side.
 3. **Armour**: the one pool, or with `damage.armor: per_side` the bank on that side.
 4. **Systems**: while the hull is below `system_below` of its maximum, `system_share` of what
    is left strikes one random working system — instead of the hull with `system_divert: true`,
    or as well.
 5. **Hull.** At zero the ship is destroyed.
+
+A class with `damage_model: station` skips the difficulty factor, armour and systems: what gets
+through its shields goes straight to the hull (app NEXT; the original's stations, **verified**).
 
 Bank maxima come from the class's protection (its `fitted` equipment), times its
 `protection_scale` and, with `damage.difficulty`, the factor for the level and the ship's side;

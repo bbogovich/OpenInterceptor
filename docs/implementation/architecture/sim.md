@@ -330,8 +330,23 @@ original manipulator index, looked up in the class's `collision::Shape::mounts` 
 module's −Z follows the slot's facing, with the hub's faction and `Ship::mount = (hub, offset,
 rotation)`; modules with a behaviour fly it (`turret`), the rest are idle; up to five levels.
 `update_modules` (every tick, after systems) puts each module back on its hub, destroys the
-modules of a destroyed hub, removes wrecks whose hub is gone, and zeroes a station's shields
-while none of its `shield_generator` modules survives ("STATION SHIELDS DOWN"). A destroyed
+modules of a destroyed hub, removes wrecks whose hub is gone, and calls
+`stations::update_shields`, which zeroes a station's banks while none of its `shield_generator`
+modules survives ("STATION SHIELDS DOWN") or, for a `shield_pool` station, sets the pool's
+maximum from its first standing generator (`Ruleset::pool_capacity`) and clears
+`Ship::pool_powered` (and, with `drop`, the points) when none stands.
+
+**`sim::stations`** (app NEXT, #113) holds the station shield rules. A pool is stored in both
+banks (`shield_fore == shield_aft`), so the HUD, the remote console and the AI read it without
+knowing pools exist; only `stations::absorb`, `stations::recharge` and `update_shields` change
+it, and they write both banks together. `fill_protection` sizes it with
+`stations::initial_capacity` (no scale, no difficulty factor); `systems::recharge` hands a pool
+class to `stations::recharge` (`recharge` points per second, `max − pool` clamped as the
+original's `min(max − pool, 2)`). `combat::apply_hit` first asks `stations::hit_target`, which
+returns the hub for a `shielded_by_hub` module while the hub's pool holds points (counted as 0
+while the hub is cloaked), so the hub's pool and then the hub's hull take the hit;
+`combat::beam_factor` resolves the same taker and returns 1 for a `damage_model: station` class,
+and `apply_hit` skips armour and the system roll for such a class. A destroyed
 module whose model set has a `destroyed` state becomes a `Wreck { class, hub, offset, rotation }`
 in `World::wrecks`, drawn by the renderer on its hub. Modder's view:
 [Stations and modules](../../modding/stations.md).

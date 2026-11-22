@@ -1373,6 +1373,7 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-63 | `interceptor`: missile lock — 2.5 s in a 2.5° cone within 3 km, held at 5°, running down off target | `gunnery-range` (`interceptor`), Lightning | not run | | | App 0.22.0; Track A A5, sensor `lock_*`, `flight.lock_hold`, `lock_decay` |
 | MT-4-64 | `interceptor`: bolts do not drift with your own sideways motion | `gunnery-range` (`interceptor`), Lightning; `rocket-vs-saucer` (default) | not run | | | App 0.22.0; Track A A2, `flight.bolt_inherit: false` |
 | MT-4-65 | `interceptor`: the lead indicator | `gunnery-range` and `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.22.0; Track A A2/A7, the lead follows `bolt_inherit` |
+| MT-4-66 | Station shield pool and covered modules | `base-assault` (`interceptor`), Lightning; `outpost-strike` (default) | not run | | | App NEXT; #113, `shield_pool`, `shielded_by_hub`, `damage_model: station`, hull = `HP1` |
 
 ## Stage 4 cases
 
@@ -1890,6 +1891,15 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App 0.22.0 or later; the player's data. `openinterceptor --campaign interceptor --scenario gunnery-range --ship lightning`. |
 | Steps | 1. Target a circling drone and watch the lead circle as you fly parallel to it at the drone's speed. 2. Aim at the lead circle at 1 – 1.5 km and fire short bursts. 3. Stop dead (throttle 0, wait) and fire at the lead circle again. 4. `--scenario duel-wraith`: watch where the Wraiths' bolts go when you fly straight, then when you jink. |
 | Expected | 1: the lead circle sits **ahead of the drone along its own course**, even when you match its speed (it no longer collapses onto the target as it would with relative velocity). 2 and 3: bolts aimed at the circle **hit** whether you are moving or stopped. 4: Wraith fire is close but not exact: about half the time it falls behind you and half the time ahead (a 50 % pilot leads half or one and a half times right), it tracks you less tightly when you jink, and it opens fire only within about 2 – 2.5 km. |
+
+
+### MT-4-66 — Station shield pool and covered modules
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later. `openinterceptor --campaign interceptor --scenario base-assault --ship lightning` (the player's data); then `openinterceptor --campaign default --scenario outpost-strike`. Target the base (`T`) and read the target box. |
+| Steps | 1. Target the alien base: note its shield and hull. 2. Fire at a plasma pod while the base's shields are up; watch the pod's and the base's readouts. 3. Fire at the base from the front, then from behind. 4. Wear the shields down to 0 and hit a pod again. 5. Destroy both shield pods, stop firing and watch the base's shields for 20 s. 6. Default campaign: repeat 2, 4 and 5 on the Dominion outpost. |
+| Expected | 1: hull **5,000** (an X-COM base: 6,000); shields **3,000** on both rings. 2: the pod does not lose hull; the base's shields fall instead. 3: both rings fall together, by the same amount, whichever side you hit. 4: once the shields are at 0 the pod takes the hits, and hits on the base go straight to its hull (no armour). 5: **interceptor**: the shields keep what they had and do not recharge; **default**: "STATION SHIELDS DOWN" and they go to 0 when the shield pod dies. While a generator stands the shields climb back at 2 points per second (interceptor) or 5 (default). |
 
 ## Stage 5 results
 

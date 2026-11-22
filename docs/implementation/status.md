@@ -337,6 +337,18 @@ Deviations revised: DEV-009, DEV-013 (resolved in `interceptor`), DEV-032, DEV-0
 `2bc263b`, **466** `#[test]` functions by a count of the sources. What remains:
 [Track A](plan/track-a-fidelity.md).
 
+**Parity M1** (app NEXT; issue #113, RQ-C-01 – 04 and D-16 of `notes/re/parity-plan.md`, facts
+from `notes/re/flight` §8): a station's hull is its chart's `HP1` alone (the X-COM base 6,000,
+the alien base 5,000, outposts 3,500; DEV-056's sum resolved); `shield_pool` (one pool,
+`recharge`, `on_generator_lost: keep | drop`), generator `shield_capacity`, `shielded_by_hub`
+modules and `damage_model: station`, in the new `sim::stations`. `interceptor`: the X-COM and
+alien bases have one 2,000 / 3,000 pool at 2 per second that keeps its points when the
+generators fall; every base module is covered; the six station hubs take hull hits without
+armour, difficulty factor or system hits. `default`: the Dominion outpost has a pool (its 3,600
+`shields`, 5 per second, `drop`) covering its pods; the Guard station is unchanged. Manual case
+MT-4-66; **474** `#[test]` functions. Not yet: the alien base's hard points (#114), the outposts'
+own shield routines, `--balance` showing pools (#121).
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),
