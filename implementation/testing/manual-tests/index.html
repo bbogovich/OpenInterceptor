@@ -6801,6 +6801,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-34-map-hover-labels-star-icons-and-names-reports-databank-equip-ships-ring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-34 — Map hover labels, star icons and names, reports, databank, Equip Ships ring
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12450,6 +12461,17 @@
     <span class="md-ellipsis">
       
         MT-6-33 — Interface sounds, hover help, the time dial and lamps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-34-map-hover-labels-star-icons-and-names-reports-databank-equip-ships-ring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-34 — Map hover labels, star icons and names, reports, databank, Equip Ships ring
       
     </span>
   </a>
@@ -20722,6 +20744,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: the corner lamps flicker through their frames about 1.5 times a second, all four together; the status lamp cycles. 2: after the cursor stops, a dark-blue box with the original's help text appears above the control (below it near the top of the screen); it closes when the cursor leaves. 3: each click turns the rotary switch (its sound), lights that hole's lamp and sets the speed; the globe turns faster or slower with the clock and stops on other screens; keys 1 – 6 pick speeds 5 s … 1 day. 4: each press makes the original's sound (beep, click, Beep8, Beep29b, Beep3025). 5: the box's opening sound, then MsgBoxBtn on OK.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-34-map-hover-labels-star-icons-and-names-reports-databank-equip-ships-ring">MT-6-34 — Map hover labels, star icons and names, reports, databank, Equip Ships ring<a class="headerlink" href="#mt-6-34-map-hover-labels-star-icons-and-names-reports-databank-equip-ships-ring" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's Interceptor data for steps 1 – 4.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. <code>openinterceptor --campaign interceptor --strategy</code>. Move the cursor over the map, rest it on a star, then on two stars close together, then outside the circle. 2. Look at the stars. 3. Open Reports; press next and previous through all six. 4. Open Equip Ships; click a craft in a socket. 5. <code>openinterceptor --campaign default --strategy</code>; move over the map; open Reports and Archive.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: no names until the cursor is within about 15 px of a star; then its name, upper-cased in the 6 px yellow font, centred 20 px above it, kept inside the circle near the rim; with two stars the labels alternate every second; outside the circle nothing. 2: the 9 × 9 class icons, not dots; real star names (Capella, …). 3: Income, Finance, Alien activity, X-COM activity, Outposts, Player status, each with its list; no value reads -0. 4: the craft name and pilot sit in the left sockets; the click selects that craft in the list. 5: hover labels in the default body font; Reports lists the six reports under their names; Archive lists the topics researched.</td>
 </tr>
 </tbody>
 </table>

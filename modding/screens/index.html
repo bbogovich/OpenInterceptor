@@ -4925,6 +4925,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#map-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map labels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#sprite-buttons-toggles-and-radio-groups" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6819,6 +6830,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#map-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map labels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#sprite-buttons-toggles-and-radio-groups" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7275,6 +7297,18 @@ and kept; one that cannot be loaded is reported on standard error once
 <td><code>rect</code></td>
 <td>A map's viewport: <code>round</code> clips it to the circle inside the rectangle.</td>
 </tr>
+<tr>
+<td><code>labels</code></td>
+<td><code>{font, colour, base_colour, rise, base_rise, box, cycle, margin}</code></td>
+<td>none</td>
+<td>A <code>map</code>'s labels the original's way (<a href="#map-labels">Map labels</a>, app 0.22.17). Without it every star's name is drawn beside it.</td>
+</tr>
+<tr>
+<td><code>slots</code>, <code>slot_size</code>, <code>slot_font</code></td>
+<td>list of <code>[x, y]</code>, <code>[w, h]</code>, name</td>
+<td>none, <code>[76, 75]</code>, the list's font</td>
+<td>A compact <code>list</code>'s sockets on the art: the rows that have cells (the hangar's craft) are also shown there, one per socket, name over second cell; a click selects the row (app 0.22.17).</td>
+</tr>
 </tbody>
 </table>
 <table>
@@ -7303,7 +7337,7 @@ and kept; one that cannot be loaded is reported on standard error once
 </tr>
 <tr>
 <td><code>list</code></td>
-<td>One of the strategy screen's lists with its rows and buttons, as in the testbed layout: <code>bases</code>, <code>research</code>, <code>build</code>, <code>market</code>, <code>factory</code>, <code>hangar</code>, <code>contacts</code>, <code>supply</code>, <code>archive</code>, <code>reports</code>, <code>messages</code>.</td>
+<td>One of the strategy screen's lists with its rows and buttons, as in the testbed layout: <code>bases</code>, <code>research</code>, <code>build</code>, <code>market</code>, <code>factory</code>, <code>hangar</code>, <code>contacts</code>, <code>supply</code>, <code>archive</code>, <code>reports</code>, <code>messages</code>; since app 0.22.17 also <code>databank</code> (the topics researched, each with its description, then the encyclopaedia's unlocked entries) and the six status reports <code>report_income</code>, <code>report_finance</code>, <code>report_alien</code>, <code>report_xcom</code>, <code>report_outpost</code>, <code>report_player</code>.</td>
 </tr>
 <tr>
 <td><code>map</code></td>
@@ -7537,10 +7571,71 @@ lists that fill columns, in this order:</p>
   template (<strong>derived</strong>).</li>
 <li>Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Their arrows'
   positions are not recovered yet, so they scroll with the wheel.</li>
+<li>Since app 0.22.17 Equip Ships' nine ring sockets (centres <strong>verified</strong>) show the craft, name over
+  pilot in the 6 px font (<strong>derived</strong>); a click on a socket selects that craft.</li>
 <li>Research keeps its rows on the art's slots.</li>
 </ul>
 <p>A <code>button</code> with a <code>label</code> and no images is drawn as a <strong>text button</strong> when the skin has
 <code>text_button</code>: its caption is centred on its own rectangle in the caption font.</p>
+<h3 id="map-labels">Map labels<a class="headerlink" href="#map-labels" title="Permanent link">&para;</a></h3>
+<p><code>labels:</code> on a <code>map</code> (app 0.22.17, plan M2 #128, D-39) labels it as the original's CSD does
+(<code>notes/re/unknowns-2026-11.md</code> §1.3, <strong>verified</strong>): only the stars and bases inside a <code>box</code> × <code>box</code>
+square around the cursor — and, on a round map, only while the cursor is inside the circle — are
+labelled. The name is upper-cased, in <code>font</code> (a sheet font of the skin), centred on the object's x
+and <code>rise</code> px above a star (<code>base_rise</code> above a base, with " BUILDING" while it is built). On a
+round map the label is pushed sideways to stay <code>margin</code> px inside the circle at its row. When
+several objects are in the box their labels take turns, one at a time, each for <code>cycle</code> ticks.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>The original's</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>font</code></td>
+<td>none (required: without the font, every name is drawn)</td>
+<td>the 6 px font</td>
+</tr>
+<tr>
+<td><code>colour</code>, <code>base_colour</code></td>
+<td><code>[0.63, 0.63, 0]</code>, <code>[0.47, 0.47, 0]</code></td>
+<td>RGB(160, 160, 0), RGB(120, 120, 0)</td>
+</tr>
+<tr>
+<td><code>rise</code>, <code>base_rise</code></td>
+<td>20, 8</td>
+<td>20, 8</td>
+</tr>
+<tr>
+<td><code>box</code></td>
+<td>30</td>
+<td>30</td>
+</tr>
+<tr>
+<td><code>cycle</code></td>
+<td>60</td>
+<td>15 map-counter steps of 4 ticks</td>
+</tr>
+<tr>
+<td><code>margin</code></td>
+<td>3</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/screens.yaml: the CSD's star map</span>
+<span class="nt">map</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">map</span><span class="p p-Indicator">,</span><span class="nt"> shape</span><span class="p">:</span><span class="w"> </span><span class="nv">round</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">66</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">61</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">333</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">333</span><span class="p p-Indicator">],</span><span class="nt"> labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">font</span><span class="p">:</span><span class="w"> </span><span class="nv">caption</span><span class="p p-Indicator">}}</span>
+<span class="c1"># resources/default/rules/screens.yaml: the default starmap, its 5x9 body font</span>
+<span class="nt">starmap</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">widgets</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">map</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">map</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">8</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">52</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">790</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">660</span><span class="p p-Indicator">],</span><span class="nt"> labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">font</span><span class="p">:</span><span class="w"> </span><span class="nv">body</span><span class="p p-Indicator">,</span><span class="nt"> rise</span><span class="p">:</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="nt"> base_rise</span><span class="p">:</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="nt"> box</span><span class="p">:</span><span class="w"> </span><span class="nv">40</span><span class="p p-Indicator">}}</span>
+</code></pre></div>
+<p>The testbed layout (<code>starmap</code>) takes a full <code>map</code> definition too, for its <code>labels</code>; its
+other keys are unused there. <code>--hover X,Y</code> puts the labels' cursor at a design-space point (for
+screenshots).</p>
 <h3 id="sprite-buttons-toggles-and-radio-groups">Sprite buttons, toggles and radio groups<a class="headerlink" href="#sprite-buttons-toggles-and-radio-groups" title="Permanent link">&para;</a></h3>
 <p>Since app 0.22.10 (plan M2 #125, RQ-UI-01/02/07/08) a screen set's buttons behave as the original's
 (Interceptor.exe button base 0x65f420, <strong>verified</strong>):</p>
@@ -7651,8 +7746,10 @@ original art <strong>by reference</strong> into the player's own <code>WrappersD
 640 × 480. The first screen is <code>csd</code> (the Command and Strategic Display): the round star map, the
 minimap, the time, weekday, date and funds readouts, the six screen buttons, the time dial's six
 holes and the help line. The others are <code>bases</code>, <code>equip_ships</code>, <code>purchase</code>, <code>manufacture</code>,
-<code>research</code>, <code>base_stats</code>, <code>ufopedia</code> and <code>reports</code>, each its background, its list where the
-original has one, its links and a back button.</p>
+<code>research</code>, <code>base_stats</code>, <code>ufopedia</code> and the six status reports (<code>reports</code> is income, then
+<code>report_finance</code>, <code>report_alien</code>, <code>report_xcom</code>, <code>report_outpost</code>, <code>report_player</code>, linked by the
+art's next and previous buttons, app 0.22.17), each its background, its list where the original has
+one, its links and a back button.</p>
 <ul>
 <li><strong>Verified</strong>: the positions read from <code>Interceptor.exe</code>'s screen setup code (each screen's
   widgets, the button and dial centres).</li>
@@ -7669,12 +7766,12 @@ original has one, its links and a back button.</p>
   row's text and actions go in a nearby black box (<strong>derived</strong>): E&amp;P's info boxes 2 and 3, the
   Equip Ships stat panel, the Research description pane, the UFOpedia article box. The base names
   are centred on the drop-down strip (D-40). Prompts are message boxes in 23010 and 23011 with text
-  buttons. The map labels are still in the TrueType font (#128).</li>
+  buttons. Since app 0.22.17 the map labels are the original's hover labels in the 6 px font, the stars are drawn with the class icons and named from <code>starcorp1.txt</code>, and the UFOpedia lists the <code>databank</code>.</li>
 <li><strong>Unknown</strong>: the buttons' own state images, which live in the original's sprite table
   (<code>SpritesDLL</code>), not yet read; until then the buttons are hot spots over the art.</li>
 </ul>
 <p>The file's comments name the original's own screen numbers. The <code>default</code> campaign has no set yet
-(6.9.13) and uses the testbed layout.</p>
+(6.9.13) and uses the testbed layout, whose map has hover labels in its body font (app 0.22.17).</p>
 <h3 id="how-the-set-differs-from-the-format-design">How the set differs from the format design<a class="headerlink" href="#how-the-set-differs-from-the-format-design" title="Permanent link">&para;</a></h3>
 <p>The screen sets were <a href="../../specification/design/format-interface/#screen-sets-screens-and-widgets">specified</a>
 before they were built, and the first build differs: widgets have <code>kind</code>, not <code>type</code>; values are

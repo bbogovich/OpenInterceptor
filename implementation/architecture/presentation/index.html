@@ -3724,6 +3724,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#map-labels-appmaplabel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map labels (app::maplabel)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -6899,6 +6916,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#map-labels-appmaplabel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Map labels (app::maplabel)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -7266,7 +7300,7 @@ stacking and layout, rows that fit, button blocks, "..."), <code>content::smallf
 advances, every design narrower than its advance, the sheet reads),
 <code>formats::sheetfont::tests</code> (given advances win), <code>app::text::tests</code> (centre raise, top-aligned
 detail text), <code>content::skin::tests::text_button_and_dialog_styles_parse_over_the_originals_look</code>,
-<code>content::screens::tests</code> (list keys), <code>cli::tests</code> (<code>--notice</code>).</p>
+<code>content::screens::tests</code> (list keys), <code>cli::tests</code> (<code>--notice</code>, <code>--hover</code>).</p>
 <h3 id="the-compact-list-box-applistbox">The compact list box (<code>app::listbox</code>)<a class="headerlink" href="#the-compact-list-box-applistbox" title="Permanent link">&para;</a></h3>
 <p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #124; RQ-UI-13).</em> <code>app::listbox</code> holds the original
 ListBox's rules (0x51b7c6) as pure functions:</p>
@@ -7383,7 +7417,7 @@ ListBox's rules (0x51b7c6) as pure functions:</p>
 </tr>
 <tr>
 <td><code>layout</code></td>
-<td>Centred on (320, 240); style padding; styles 2/3 rounded to whole side tiles; per-style insets (<code>insets</code>); button rows and the 1- or 2-button offsets.</td>
+<td>The exe's order (§4.2): content size, the style kit's side edges, rows breaking past width − 70, the kit for the row count (<code>kit_choice</code>), the style's box change, the bands, styles 2/3 rounded; row k's top = final bottom − 25 − 17k + <code>row_change</code> − 5 × (rows − 1); the 1- or 2-button rules; the text rect from the final kit's insets.</td>
 </tr>
 <tr>
 <td><code>kit_pieces</code></td>
@@ -7399,7 +7433,7 @@ ListBox's rules (0x51b7c6) as pure functions:</p>
 </tr>
 </tbody>
 </table>
-<p><code>caption::kit_dialog</code> draws a prompt with them when the skin's <code>dialog.kit</code> is set: the
+<p><code>caption::kit_dialog</code> draws a prompt with them when the skin has <code>dialog.kits</code>, in the style <code>DialogStyle::style_for(kind)</code> gives for the prompt's kind (<code>widgets::modal_kind</code>, <code>strategy::ask</code>): the
 <code>DialogStyle::images</code> (kit rows, live pieces, <code>fill</code>, <code>fill_large</code>, capsules) are loaded by
 <code>Ui</code> at start. The campaign tags each notice with a <code>NoticeKind</code>
 (<code>campaign::Event::Notice(text, kind)</code>); <code>ClockDef::asks(kind)</code> decides whether the Report
@@ -7410,7 +7444,7 @@ offers "OK (5 secs)" (<code>clock.ask_for</code>).</p>
   rounding; centred and offset buttons; kit tiling with corners last; fill clipping; the knob,
   sliders and ornament timings.</li>
 <li>The clock tests: <code>ask_for</code>.</li>
-<li><code>content::skin::tests</code>: <code>kit</code>, <code>frame_style</code>, <code>fill_large</code>.</li>
+<li><code>content::skin::tests</code>: <code>kits</code>, <code>styles</code>, <code>fill_large</code>.</li>
 </ul>
 <h3 id="sounds-hover-help-the-dial-and-lamps-appfloater">Sounds, hover help, the dial and lamps (<code>app::floater</code>)<a class="headerlink" href="#sounds-hover-help-the-dial-and-lamps-appfloater" title="Permanent link">&para;</a></h3>
 <p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #126; RQ-UI-09 – 12).</em></p>
@@ -7592,7 +7626,7 @@ play without it.</p>
 <td>Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7).</td>
 </tr>
 <tr>
-<td><code>msgbox::{layout, MsgBox, Kit, insets, base_size, button_rows, button_width, kit_pieces, fill_rect, knob_frame, slider_offset, ornament_on}</code>; <code>caption::kit_dialog</code>; <code>DialogStyle::{kit, frame_style, fill_large, row}</code>; <code>NoticeKind</code>, <code>ClockDef::{ask_for, asks}</code>, <code>StrategyScreen::banner_kind</code></td>
+<td><code>msgbox::{layout, MsgBox, Kit, insets, base_size, button_rows, button_width, kit_pieces, fill_rect, knob_frame, slider_offset, ornament_on}</code>; <code>caption::kit_dialog</code>; <code>DialogStyle::{kits, styles, kit, style_for, fill_large, row}</code>; <code>msgbox::{KitChoice, kit_choice, row_change}</code>; <code>widgets::modal_kind</code>; <code>NoticeKind</code>, <code>ClockDef::{ask_for, asks}</code>, <code>StrategyScreen::banner_kind</code></td>
 <td><code>app::msgbox</code>, <code>app::caption</code>, <code>content::skin</code>, <code>content::strategy</code>, <code>campaign</code>, <code>app::strategy</code></td>
 <td>The original's message box and which notices ask (app 0.22.15, #127 follow-up).</td>
 </tr>
@@ -7738,6 +7772,39 @@ play without it.</p>
 <li>A cutscene caption that shows a key: the key is missing for the language (<code>--check</code> reports
   <code>text: missing key … (cutscenes/&lt;id&gt;)</code>).</li>
 </ul>
+<h3 id="map-labels-appmaplabel">Map labels (<code>app::maplabel</code>)<a class="headerlink" href="#map-labels-appmaplabel" title="Permanent link">&para;</a></h3>
+<p>The CSD labels only what is under the cursor (D-39, <code>notes/re/unknowns-2026-11.md</code> §1.3). The
+pure part is three functions in design pixels, unit-tested without a window:</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>in_box(obj, cursor, size)</code></td>
+<td>Whether an object lies in the <code>size</code> square centred on the cursor.</td>
+</tr>
+<tr>
+<td><code>chord_x(x, y, w, centre, radius, margin)</code></td>
+<td>The label's centre x, pushed so a <code>w</code>-wide label at row <code>y</code> stays <code>margin</code> px inside the circle.</td>
+</tr>
+<tr>
+<td><code>turn(n, ticks, cycle)</code></td>
+<td>Which of <code>n</code> queued labels shows now, each for <code>cycle</code> ticks.</td>
+</tr>
+</tbody>
+</table>
+<p><code>StrategyScreen::draw_map_labels</code> gathers the systems and bases in the box (bases get
+" BUILDING" while built), picks one with <code>turn</code>, places it with <code>chord_x</code> on a round map and draws
+it with <code>text::draw_text</code> / <code>Ui::draw_glyphs</code> in the widget's sheet font. The labels config
+(<code>content::screens::MapLabels</code>) and the layout it is placed in are set per frame in
+<code>StrategyScreen::map_labels</code> by the <code>map</code> widget (or the testbed layout's <code>map</code> item, in screen
+pixels scaled by the text scale). Star-class icons are textures loaded once per frame through the
+keyed image cache (<code>star_icons</code>). Tests: <code>app::maplabel::tests</code>, <code>content::content tests</code>
+(<code>list_section</code>), <code>campaign::tests::readouts_never_show_negative_zero</code>.</p>
 
 
 

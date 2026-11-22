@@ -7878,7 +7878,7 @@ base_distance(system) &lt;= 3500                      # a placement: condition
 <td><code>names</code></td>
 <td>list of text</td>
 <td>none</td>
-<td>Generated: system names to draw from (then numbered).</td>
+<td>Generated: system names to draw from (then numbered). An entry <code>original:&lt;file&gt;/&lt;section&gt;</code> (app 0.22.17) stands for the lines of <code>[section]</code> in a text file of the player's data — <code>interceptor</code> uses <code>original:starcorp1.txt/STAR NAMES</code>, the original's 101 star names. A missing file or section is a load warning.</td>
 </tr>
 <tr>
 <td><code>seed</code></td>
@@ -7902,9 +7902,11 @@ base_distance(system) &lt;= 3500                      # a placement: condition
 </table>
 <p>Fixed-map systems also take <code>bodies</code> (a list of planets, moons and belts; descriptive) and, for
 a campaign with <a href="#logistics">logistics</a>, <code>deposits</code> and <code>features</code> (app 0.9.0).</p>
-<p><code>star_classes: {&lt;id&gt;: {color: [r, g, b], weight}}</code> — how a star of that class is drawn, and
+<p><code>star_classes: {&lt;id&gt;: {color: [r, g, b], weight, icon}}</code> — how a star of that class is drawn, and
 (for generated maps) how often it appears relative to the others (<code>weight</code>, default 1; 0 = never
-rolled). Generated systems are scattered at least a little apart, take a class by weight and a
+rolled). <code>icon</code> (asset, app 0.22.17) draws that image at its own size, centred on the star, instead
+of a dot; <code>interceptor</code> uses the CSD's 9 × 9 class icons (<code>original:sprite#893</code> – <code>#901</code>,
+<strong>verified</strong>; which original class each of its six classes stands for is <strong>derived</strong>). Generated systems are scattered at least a little apart, take a class by weight and a
 name from <code>names</code>.</p>
 <h3 id="research-and-research_model"><code>research</code> and <code>research_model</code><a class="headerlink" href="#research-and-research_model" title="Permanent link">&para;</a></h3>
 <p><code>research: {&lt;id&gt;: …}</code> — the research tree.</p>

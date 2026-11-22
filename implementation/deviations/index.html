@@ -6963,8 +6963,8 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-089</td>
-<td><strong>Message boxes follow the original's rules, with a few engine choices.</strong> Since the RE of MsgBox.cpp (<code>ui-framework.md</code> §4, <strong>verified</strong>) the box is sized, framed (the 8-row kit, edges tiled, corners last), filled, captioned and given its buttons and live pieces as the exe does, notices ask by kind, and the UFOpedia exit is control 106. <strong>Derived:</strong> the fill is clipped to the text rect, not the whole box; the box grows when its wrapped text would leave the text rect; the lowest button row ends 25 px above the box's bottom (the exe's "moved down by the kit's bottom height" is in its own coordinates); styles 1 and 2 put the caption 23 px above the text rect; the "never further in than 35 px" rule for two buttons is not applied; every <code>interceptor</code> prompt uses style 3; and the red close buttons' hot spots are measured from the art. <strong>Not built:</strong> the opening animation (10 × 3 ticks, then a reveal) and the progress/check row.</td>
-<td>The style per dialog and the button-row coordinates are not settled; RE #136.</td>
+<td><strong>Message boxes follow the original's rules, with a few engine choices.</strong> Since the RE of MsgBox.cpp (<code>ui-framework.md</code> §4, <strong>verified</strong>) the box is sized, framed (the 8-row kit, the style's own or 242 / 250 by button rows), filled (clipped to the box), given its text (no growth, no clip), buttons on the exe's rows and live pieces as the exe does; each prompt kind takes the exe's style; notices ask by kind; the UFOpedia exit is control 106. <strong>Derived:</strong> only style 3 draws a caption (the exe's title routine draws the message); a row of three or more buttons is centred 10 px apart; the engine's prompts that have no exe counterpart (choice, convoy, survey, strike, card, save) use the default style 1; the red close buttons' hot spots are measured from the art. <strong>Not built:</strong> the opening animation (10 × 3 ticks, then a reveal), the progress/check row and full-width buttons.</td>
+<td>Some engine prompts have no original dialog.</td>
 <td>M2 (#127)</td>
 </tr>
 <tr>
@@ -6990,6 +6990,12 @@ one looks like a bug.</p>
 <td><strong>AI retreat and the Nova as built</strong> (app 0.22.16, #119). The retreat rolls and the Nova timeline are the original's (<strong>verified</strong>); still different or unknown: the pilot rank is the derived rank +0x29 and comes only from a scenario's <code>pilot:</code> (campaign pilots are not handed to battle, #133), so every <code>interceptor</code> AI ship rolls the no-pilot band (50 – 75 %); the radio call on break-off (chance 25 %, level &gt; 1) is not made; the break-off lasts a fixed time rather than until the original's manoeuvre ends (<em>derived</em>); the Nova's messages are in the engine's words (the original's texts are not mapped); its detonation damages nothing and no mission ends on <code>battle_over</code> yet (what the original does then is not traced).</td>
 <td>Data; the default campaign sets none of it.</td>
 <td>4 (A7; #119)</td>
+</tr>
+<tr>
+<td>DEV-094</td>
+<td><strong>The six status reports and the databank show the engine's campaign state.</strong> The report screens (32 – 37), their area and their next / previous buttons are <strong>verified</strong>; what each lists is <strong>derived</strong> from its title (income: the monthly reports; finance: funds and the month's costs; alien activity: contacts and raids; X-COM activity: battles, craft, pilots; outposts: the bases; player status: score and standing), as are the UFOpedia's databank (topics researched, then the encyclopaedia) and Equip Ships' sockets (name over pilot). The original's report graphs are not built.</td>
+<td>The original's report contents and graphs are not recovered.</td>
+<td>M2 (#128)</td>
 </tr>
 </tbody>
 </table>

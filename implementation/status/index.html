@@ -7849,6 +7849,16 @@ elements it belongs to</em>. Branch <code>parity/m2</code>.</p>
 <td><strong>Done</strong> (app 0.22.15; DEV-089 updated)</td>
 <td><code>src/app/msgbox.rs</code>, <code>src/app/caption.rs</code>, <code>src/campaign/{mod,logistics,story}.rs</code>, <code>src/content/{skin,strategy}.rs</code>, <code>src/app/strategy.rs</code>, <code>packs/interceptor/rules/{skin,screens}.yaml</code>, <code>packs/interceptor/strategy/campaign.yaml</code></td>
 </tr>
+<tr>
+<td>#127 fixes: text and buttons kept in the box; then, from the re-read (§4.2, §4.6), the style per dialog kind (<code>dialog.kits</code>, <code>dialog.styles</code>), the exe's button rows and the 242 / 250 kits for several rows, no growth and no clip for long text</td>
+<td><strong>Done</strong> (app 0.22.17; DEV-089 rewritten)</td>
+<td><code>src/app/msgbox.rs</code>, <code>src/app/caption.rs</code>, <code>src/app/widgets.rs</code>, <code>src/app/strategy.rs</code>, <code>src/content/skin.rs</code>, <code>packs/interceptor/rules/skin.yaml</code></td>
+</tr>
+<tr>
+<td>#128 D-39 map hover labels (<code>labels:</code>, <code>app::maplabel</code>), star-class icons (<code>star_classes.&lt;id&gt;.icon</code>), D-28 star names from <code>starcorp1.txt</code> (<code>names: [original:&lt;file&gt;/&lt;section&gt;]</code>), D-29 no negative zero (<code>campaign::shown</code>), D-26 the UFOpedia databank, D-27 the six status reports, D-30 Equip Ships' ring sockets (<code>slots</code>); default: hover labels on the starmap, six reports and databank in the grid</td>
+<td><strong>Done</strong> (app 0.22.17; DEV-094; MT-6-34). Not built: zoom levels 0 / 1 / 2 and the original's map transform, the reports' graphs, the Bases module plan</td>
+<td><code>src/app/maplabel.rs</code>, <code>src/app/strategy.rs</code>, <code>src/content/screens.rs</code>, <code>src/content/strategy.rs</code>, <code>src/content/mod.rs</code>, <code>src/campaign/mod.rs</code>, <code>packs/interceptor/rules/screens.yaml</code>, <code>packs/interceptor/strategy/campaign.yaml</code>, <code>resources/default/rules/screens.yaml</code></td>
+</tr>
 </tbody>
 </table>
 <p>Not yet: map labels in the TrueType font (#128); the list box's spinners, row icons, blinking
