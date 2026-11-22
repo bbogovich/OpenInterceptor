@@ -90,6 +90,7 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `range` | distance | 3000 m | Reach (`2.4km`, `2400m`; a plain number is metres). An original `Range` inherited from `GameSettings.ini` is read as kilometres (DEV-008; confirmed from the original program in app 0.21.0). |
 | `shield_factor` | number | 1 | Shield points lost per point of damage the shields stop (app 0.21.0). A bank that holds `damage × shield_factor` stops the hit; one that holds less stops `bank / shield_factor` of it and falls ([Rulesets › How a hit lands](rulesets.md#how-a-hit-lands)). `interceptor`: the Phase Cannon 1.5 (verified). |
 | `color` | RGB | 1, 0.2, 0.2 | Bolt colour. |
+| `hit_points` | number | 0 | A mount's hit points (app NEXT), struck by [`damage.system_table`](#damage); damaged, it fires at half rate or not at all (`damage.mounts`). 0: it cannot be damaged. `interceptor`: the beam section's `HitPoints` (inherited; Laser Cannon 20, **verified**). |
 | `sound` | asset | none | Firing sound. |
 
 ### `missiles`
@@ -105,6 +106,7 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `turn_rate` | number | 90 | Degrees per second while homing. `interceptor`: 143.2 for every type — the original's limit of 2.5 rad/s (verified, app 0.22.0). |
 | `lead_speed` | number | 0 | Homing leads the target as if it flew at this speed along its heading, m/s (app 0.22.0): the aim point is the target's position plus its heading × `lead_speed × distance / speed`. No lead for targets slower than 50 m/s or nearer than 100 m. 0 = pure pursuit of the target's position. `interceptor`: 200 for every type, the original's fixed figure (verified). |
 | `lock_time` | time | 2 s | Seconds in the lock cone to lock on, when the ship's sensor sets no [`lock_time`](#systems). |
+| `launcher_hit_points` | number | 0 | A launcher's (rack's) hit points (app NEXT), struck by `damage.system_table`; damaged, it fires twice as slowly or not at all, and destroyed it loses its rounds. 0: it cannot be damaged. `interceptor`: 25, each `*Launcher`'s `HitPoints` (**verified**). |
 | `mass` | number | 0 | Kilograms per round carried (app 0.21.0): each round still in a rack adds this to the ship's mass under [`flight.drive`](#flightdrive). `interceptor`: the original's per-missile table (verified). |
 | `color` | RGB | 1, 0.8, 0.4 | Trail colour. |
 | `sound` | asset | none | Launch sound (or `cue:<Name>`). |
@@ -183,7 +185,10 @@ The same keys; `objects` defaults to `kind: station`.
 | `power` | number | per kind | Power steps while switched on. |
 | `range` | distance | per kind | Tractor hold range, ECM radius, cloak detection range. |
 | `strength` | number | per kind | Tractor pull m/s²; ECM and cloak: chance per second, in %, that a homing missile loses its target. |
-| `repair_rate` | number | per kind (4 for damage control) | Damage control: repair speed multiplier. |
+| `repair_rate` | number | per kind (4 for damage control) | Damage control: repair speed multiplier. `interceptor`: 2 — 4 points a second instead of 2 (app NEXT, **verified**; it was 4, so 8). |
+| `efficiency` | `standard`, `linear`, `ignore` or a list of `{below, factor}` | `standard` | How it works when damaged (app NEXT, [Rulesets › How systems behave in flight](rulesets.md#how-systems-behave-in-flight)). Steps: below `below` of its hit points it works at `factor` (up to four; the lowest that applies wins; at 0 hit points nothing). `linear`: in proportion to its hit points. `ignore`: damage changes nothing, even destroyed. `standard`: the engine's table (½ at half or less, off at 0 until repaired to 25 %). |
+| `min_hit_points` | number | 0 | Hits never take it below this, so it is never destroyed (app NEXT). `interceptor`: flight control 1 (**verified**). |
+| `disables_below` | fraction | 0 | Engines (app NEXT): below this share of its hit points, or destroyed, the ship is **disabled** — no thrust, the afterburner and the cloak drop, and repair takes the hull first. 0: only the engine's own rule (engines and manoeuvring both out). `interceptor`: 15 % (**verified**). |
 | `mass` | number | 0 | Kilograms it adds to the ship under [`flight.drive`](#flightdrive) (app 0.21.0). `interceptor`: the original's table — damage control 100, VCT 450, cloak 550, each ECM pod 200, tractor 300 (verified). |
 | `lock_time` | time | 0 | Sensors only (app 0.22.0): missile lock time for a ship carrying this sensor; 0 = each missile's own `lock_time`. |
 | `lock_angle` | angle | 0 | Sensors only (app 0.22.0): lock cone half-angle; 0 = [`flight.lock_angle`](#flight). |
@@ -486,8 +491,11 @@ power:
 | `system_below` | fraction | 100 % | Systems are struck only while the hull is below this share of its maximum (app 0.21.0; 100 % = always). `interceptor`: 75 %. |
 | `system_divert` | bool | `false` | `true`: the system share is taken off the hull damage (the original); `false`: it is dealt to a system as well as the hull (app 0.21.0). |
 | `difficulty` | map | none | Protection and damage factors per difficulty level (app 0.21.0; below). |
-| `destroy_below` | fraction | 50 % | A system this far below zero hit points is destroyed for the battle. |
-| `repair_rate` | number | 2 | Default crew repair rate, hit points per second. |
+| `destroy_below` | fraction | 50 % | A system this far below zero hit points is destroyed for the battle. **0**: a system at 0 is destroyed — never repaired (app NEXT; `interceptor`, **verified**). |
+| `repair_rate` | number | 2 | Default crew repair rate, hit points per second. `interceptor`: 2 (**verified**). |
+| `repair_order` | list | none | The original's repair (app NEXT): the whole repair rate goes to the **first** item in the list that needs it — system kinds, `hull`, `beams` (the first damaged mount), `launchers`, `others` (any system the list does not name). Something at 0 hit points is never repaired; a disabled ship repairs its hull first. Without it: one system at a time, the worst first, never the hull. `interceptor`: `[engines, hull, shields, manoeuvring, hyperdrive, sensors, beams, launchers, others]` (**verified**). |
+| `system_table` | `{tries, rolls}` | none | The original's system hits (app NEXT): the system share of a hit is dealt by up to `tries` weighted `rolls`, each `{chance, hit, carry}` — `hit` a system kind, `beams` (a random mount), `launchers` (a random rack), `special` (a random system other than engines, manoeuvring, sensors, shields, hyperdrive) or `none`; chances left over strike nothing. A roll whose target is missing or at 0 uses up its try. Damage beyond what the target has left goes on to the next try with `carry: true`, otherwise it is lost. Without it: one random system takes it all. `interceptor`: 5 tries; mounts 20 %, launchers 30 %, shields, flight control, sensor, engine 10 % each, hyperdrive 5 %, special 3 % (**verified**). |
+| `mounts` | `{half_rate, no_fire}` | 50 %, 25 % | A damaged beam mount or launcher at or below `half_rate` of its hit points fires at half rate, at or below `no_fire` not at all (app NEXT; **verified** for `interceptor`). |
 
 `damage.difficulty` holds lists with one factor per level, easiest first; a level beyond a short
 list uses 100 %. The bank maxima are set when a ship is placed (and when a campaign craft's fit is

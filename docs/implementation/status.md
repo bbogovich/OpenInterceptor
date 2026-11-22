@@ -349,6 +349,18 @@ armour, difficulty factor or system hits. `default`: the Dominion outpost has a 
 MT-4-66; **474** `#[test]` functions. Not yet: the alien base's hard points (#114), the outposts'
 own shield routines, `--balance` showing pools (#121).
 
+**Parity M1, #116** (app NEXT; D-02, D-05, D-06, RQ-C-16, RQ-C-17 of the parity plan, facts from
+`notes/re/flight` §3 – §5, §11): system `efficiency` tables (steps, `linear`, `ignore`),
+`min_hit_points` and the engine's `disables_below`; beam `hit_points` and missile
+`launcher_hit_points` with `damage.mounts`; `damage.system_table` and `damage.repair_order`.
+`interceptor`: the original's engine, shield, flight-control, sensor and hyperdrive behaviour,
+its system table (mounts 20 %, launchers 30 %, …), its repair (2 per second, 4 with a damage
+control computer, hull second; nothing at 0 is repaired). `default`: unchanged. Soak
+`duel-wraith` with `--soak-pilot ai` (veteran): the Lightning now survives about 98 s instead of
+16 s — the Wraiths lose beam mounts to system hits (to re-measure in #121); passive runs
+are unchanged (about 10 s). Manual case MT-4-67; **481** `#[test]` functions. Not yet: pilot
+injury (D-08, with the pilots of #133), the flight-control wobble.
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),
