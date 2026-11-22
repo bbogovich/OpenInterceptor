@@ -17,7 +17,6 @@
 
 objects:
   xcom_base:
-    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: X-COM Base
     faction: xcom
     model_set: xcom_base
@@ -44,7 +43,6 @@ objects:
     inherit: original:GameSettings.ini/XCOMOPPHP   # hull = HP1 (VERIFIED)
     shield_pool: {recharge: 2}   # shields = the chart's SD (VERIFIED)
   alien_base:
-    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: Alien Base
     faction: alien
     model_set: alien_base
@@ -102,7 +100,6 @@ objects:
     inherit: original:GameSettings.ini/AlienOPPHP   # hull = HP1 (VERIFIED)
     shield_pool: {recharge: 2}   # shields = the chart's SD (VERIFIED)
   pirate_base:
-    point_defence: {range: 1.2km, rate: 4, chance: 40%, energy: 3}
     name: Pirate Base
     faction: pirate
     model_set: pirate_base

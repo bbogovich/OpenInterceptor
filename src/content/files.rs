@@ -116,6 +116,39 @@ fn missile() -> Ty {
         ),
         f("trigger_range", dist(), "cloaked_wait: wakes when a hostile comes this close"),
         f("fuse", time(), "a Nova bomb: no contact detonation; it goes off this long after launch (0 = none)"),
+        f("launcher_rate", Ty::Num, "shots per second from its launcher (0 = the engine's refire)"),
+        f("flight", Ty::Enum(&["engine", "original"]), "original: straight for 250 ms, slowing in hard turns"),
+        f(
+            "pass_fuse",
+            dist(),
+            "also go off this close to the target when more than 45 deg off it (0 = proximity fuse)",
+        ),
+        f(
+            "blast",
+            Ty::Struct(vec![
+                f("impact", dist(), "impact damage to every object this close (15m)"),
+                f("radius", dist(), "proximity damage to every object out to this (200m)"),
+            ]),
+            "the warhead hits every object round it, with no falloff",
+        ),
+        f("dud_on_expiry", Ty::Bool, "running out of fuel leaves a dud: no explosion"),
+        f("lose_lock_beyond", Ty::Num, "the lock is lost beyond this many degrees off the nose (0 = never)"),
+        f("hit_points", Ty::Num, "what a beam bolt must beat to destroy it (10-500)"),
+        f("max_life", time(), "its flight time is held to this (0 = duration)"),
+        f(
+            "images",
+            Ty::Struct(vec![
+                f("count", Ty::Num, "how many (2)"),
+                f("offset", dist(), "how far to the side (20m)"),
+                f("after", time(), "how long after launch (1s)"),
+            ]),
+            "decoy images beside it",
+        ),
+        f(
+            "retarget_every",
+            Ty::List(Box::new(time())),
+            "[min, max]: hostile pilots switch to its decoy at this interval",
+        ),
         f("ends_battle_after", time(), "with fuse: the battle is over this long after the detonation (battle_over)"),
         f(
             "warnings",
@@ -458,6 +491,9 @@ fn system() -> Ty {
         f("lock_time", time(), "sensors: missile lock time (0 = each missile's lock_time)"),
         f("lock_angle", Ty::Qty(Unit::Angle), "sensors: lock cone half-angle (0 = flight.lock_angle)"),
         f("lock_range", dist(), "sensors: lock range (0 = the missile's reach)"),
+        f("drain", Ty::Num, "cloak: energy per second while on, instead of the shield recharge; drops at 0 (0)"),
+        f("shields_off", Ty::Bool, "cloak: while on, hits skip the ship's shields"),
+        f("no_missiles", Ty::Bool, "cloak: while on, no missile can be fired"),
         f(
             "efficiency",
             Ty::Either(
@@ -828,6 +864,15 @@ fn flight() -> Ty {
         ),
         f("formation", Ty::Name, "the formation wingmen fly in when a role names none (formations.<id>; vee)"),
         f("formation_gap", Ty::Num, "wingman slots are at least this many x the combined radii from the leader; 3"),
+        f("start_throttle", Ty::Qty(Unit::Fraction), "the throttle every ship starts at (0)"),
+        f(
+            "beams_hit_missiles",
+            Ty::Struct(vec![
+                f("chance", Ty::Qty(Unit::Fraction), "the chance a bolt through a missile applies its damage (90 %)"),
+                f("radius", dist(), "how close a bolt must pass (3m)"),
+            ]),
+            "beam bolts can strike missiles",
+        ),
         f(
             "link_modes",
             Ty::Enum(&["engine", "original"]),

@@ -1,6 +1,12 @@
 # yaml-language-server: $schema=../../../schemas/rules.schema.json
 # Global flight settings.
 flight:
+  # Every ship starts at half throttle (the power block's start, README §2, VERIFIED).
+  start_throttle: 50%
+  # No automatic point defence: beam bolts strike missiles and apply their damage with a
+  # 90 % chance; a missile with fewer hit points than that is destroyed (README §4.4,
+  # VERIFIED; the 3 m pass radius is DERIVED).
+  beams_hit_missiles: {chance: 90%, radius: 3m}
   # The afterburner draws 100 energy a second from the pool (Interceptor.exe, verified;
   # the INI's Afterburners Boost/Cost are only sent to multiplayer peers).
   cost: 100

@@ -343,6 +343,14 @@ fn handle_missile_controls(w: &mut World, i: usize, id: ShipId, dt: f32) {
         return;
     }
     let rack_index = s.selected_rack;
+    // A cloak with `no_missiles` (the original: a cloaked ship's lock time is 0) keeps them
+    // in their racks.
+    let cloak_blocks = s.system(SystemKind::Cloak).is_some_and(|(_, c)| c.on && rules.system(c.id).no_missiles);
+    if cloak_blocks {
+        s.missile_cooldown = 0.5;
+        w.events.push(SimEvent::Message { ship: id, text: "NO MISSILES WHILE CLOAKED".into() });
+        return;
+    }
     if rack_index < s.missiles.len() && s.missiles[rack_index].1 > 0 && rack_rate(&rules, s, rack_index) <= 0.0 {
         // Held for half a second so the message is not repeated every tick.
         s.missile_cooldown = 0.5;
@@ -356,8 +364,13 @@ fn handle_missile_controls(w: &mut World, i: usize, id: ShipId, dt: f32) {
     };
     rack.1 -= 1;
     let class = rack.0;
-    // A launcher at half health or less reloads twice as slowly.
-    s.missile_cooldown = MISSILE_REFIRE / rate.max(0.5);
+    // The launcher's own rate (`launcher_rate`, shots per second), or the engine's fixed
+    // refire; a launcher at half health or less reloads twice as slowly.
+    let refire = match rules.missile(class).launcher_rate {
+        r if r > 0.0 => 1.0 / r,
+        _ => MISSILE_REFIRE,
+    };
+    s.missile_cooldown = refire / rate.max(0.5);
     // Homing on a sensor lock, or on an AI pilot's own lock (`lock_cone`).
     let target = if s.lock.locked || s.controls.guide_missile { s.target } else { None };
     let speed = w.rules.missile(class).speed;
@@ -401,6 +414,9 @@ pub fn first_hit(w: &World, a: Vec3, b: Vec3, owner: ShipId) -> Option<(usize, f
 
 fn move_bolts(w: &mut World, dt: f32) {
     // Phase 1: move bolts and find hits (only reads ships).
+    let rules_hit_missiles = w.rules.flight.beams_hit_missiles;
+    // Bolts that met a missile: (missile index, damage).
+    let mut missile_hits: Vec<(usize, f32)> = Vec::new();
     // (ship index, where, damage, shield factor, who fired, how it lands, repair slowdown)
     #[allow(clippy::type_complexity)]
     let mut hits: Vec<(usize, Vec3, f32, f32, ShipId, DamageMode, f32)> = Vec::new();
@@ -421,7 +437,31 @@ fn move_bolts(w: &mut World, dt: f32) {
             b.carry = 0.0;
         }
         let next = b.position + b.velocity * dt;
-        match first_hit(w, b.position, next, b.owner) {
+        // `flight.beams_hit_missiles` (the original): a hostile missile on the bolt's path
+        // before any ship takes the bolt (the chance is rolled in phase 2).
+        let ship_hit = first_hit(w, b.position, next, b.owner);
+        if let Some((_, radius)) = rules_hit_missiles {
+            let before = ship_hit.map_or(1.0, |(_, t)| t);
+            let seg = next - b.position;
+            let len2 = seg.length_squared().max(1e-9);
+            let missile = w
+                .missiles
+                .iter()
+                .enumerate()
+                .filter(|(_, m)| !m.decoy && m.faction != b.faction)
+                .filter_map(|(k, m)| {
+                    // The closest point of the segment to the missile, as a fraction.
+                    let t = ((m.position - b.position).dot(seg) / len2).clamp(0.0, 1.0);
+                    (m.position.distance(b.position + seg * t) <= radius && t < before).then_some((k, t))
+                })
+                .min_by(|a, b| a.1.total_cmp(&b.1));
+            if let Some((k, _)) = missile {
+                let dmg = if w.harmless.contains(&b.owner) { 0.0 } else { b.damage };
+                missile_hits.push((k, dmg));
+                continue;
+            }
+        }
+        match ship_hit {
             // A harmless owner's bolt still hits (for the effect) but does no damage.
             Some((j, t)) => {
                 let dmg = if w.harmless.contains(&b.owner) { 0.0 } else { b.damage };
@@ -432,6 +472,17 @@ fn move_bolts(w: &mut World, dt: f32) {
         }
     }
     w.bolts = keep;
+    // A bolt through a missile applies its damage with the rule's chance, unrolled; a
+    // missile with fewer hit points than that is destroyed and goes off (flight README
+    // §4.4, verified; the guidance step sets it off).
+    if let Some((chance, _)) = rules_hit_missiles {
+        for (k, dmg) in missile_hits {
+            if w.random() < chance {
+                let m = &mut w.missiles[k];
+                m.hp = if dmg > m.hp { 0.0 } else { m.hp - dmg };
+            }
+        }
+    }
     // Phase 2: apply damage (mutates ships).
     // Each hit rolls its damage (`damage.spread`) and takes the difficulty factors.
     for (j, pos, dmg, factor, owner, mode, slowdown) in hits {
@@ -528,6 +579,11 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     }
 }
 
+/// True while `s` is cloaked under a cloak whose `shields_off` makes hits skip its shields.
+fn cloak_drops_shields(s: &super::Ship, rules: &crate::content::rules::Ruleset) -> bool {
+    s.system(SystemKind::Cloak).is_some_and(|(_, c)| c.on && rules.system(c.id).shields_off)
+}
+
 /// A Tachyon Pulser hit (`effect: systems`; the original's `0x451b1e`, flight README §4.4,
 /// verified): the struck shield bank absorbs it 1:1; what is left skips armour and hull
 /// and strikes the ship's systems through `damage.tachyon_table` (or one random system),
@@ -543,8 +599,9 @@ pub fn tachyon_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, slowdown: f
         return;
     }
     let from_front = (at - s.position).dot(s.forward()) >= 0.0;
+    let skip = cloak_drops_shields(s, &rules);
     let bank = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
-    let stopped = amount.min(*bank);
+    let stopped = if skip { 0.0 } else { amount.min(*bank) };
     *bank -= stopped;
     let rest = amount - stopped;
     s.since_hit = 0.0;
@@ -586,6 +643,8 @@ fn hit_chain(
     let m = shield_factor.max(0.01);
     let Some(s) = w.get_mut(id) else { return };
     let from_front = front.unwrap_or_else(|| (at - s.position).dot(s.forward()) >= 0.0);
+    // A cloak with `shields_off`: hits skip a cloaked ship's shields (the original).
+    let shields = shields && !cloak_drops_shields(s, &rules);
     // Stops what it can of `amount` with one shield bank; returns the damage it stopped.
     let stop = |shield: &mut f32, amount: f32| -> f32 {
         if *shield >= amount * m {
@@ -1026,6 +1085,85 @@ mod tests {
         p.recharge_while_burning = true;
         crate::sim::systems::recharge(w.get_mut(me).unwrap(), &class, &p, 1.0);
         assert!(w.get(me).unwrap().energy > 0.0, "D-11: the original keeps recharging");
+    }
+
+    #[test]
+    fn bolts_shoot_down_missiles_and_cloaks_cost_energy_shields_and_missiles() {
+        // D-09: a 30-damage bolt through a 20-point missile destroys it 90 % of the time.
+        let mut destroyed = 0;
+        for seed in 0..100u64 {
+            let (mut w, me, foe) = duel();
+            let mut r = (*w.rules).clone();
+            r.flight.beams_hit_missiles = Some((0.9, 3.0));
+            r.missiles[0].hit_points = 20.0;
+            w.rules = Arc::new(r);
+            w.rng = seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1;
+            let m = crate::sim::Missile::new(
+                crate::content::rules::MissileId(0),
+                foe,
+                FactionId(1),
+                Some(me),
+                Vec3::new(0.0, 0.0, -60.0),
+                Vec3::ZERO,
+                5.0,
+            );
+            crate::sim::guidance::launch(&mut w, m);
+            w.get_mut(me).unwrap().controls.fire_beams = true;
+            for _ in 0..3 {
+                step(&mut w, TICK);
+            }
+            destroyed += usize::from(w.missiles.is_empty());
+        }
+        assert!((80..=97).contains(&destroyed), "{destroyed} of 100");
+        // D-10: a cloak with drain 50, shields_off and no_missiles.
+        let (mut w, _, foe) = duel();
+        let mut r = (*w.rules).clone();
+        let cloak = r.system_id("cloak").unwrap();
+        let d = &mut r.systems[cloak.0 as usize];
+        (d.drain, d.shields_off, d.no_missiles) = (50.0, true, true);
+        w.rules = Arc::new(r);
+        let def = w.rules.system(cloak).clone();
+        let s = w.get_mut(foe).unwrap();
+        s.systems.push(crate::sim::SystemState { on: true, ..crate::sim::SystemState::from_def(cloak, &def) });
+        s.energy = 100.0;
+        // A hit skips the shields while cloaked.
+        apply_damage(&mut w, foe, 30.0, Vec3::new(0.0, 0.0, -310.0));
+        let s = w.get(foe).unwrap();
+        assert_eq!((s.shield_fore, s.armor), (40.0, 20.0));
+        // No missiles while cloaked.
+        w.get_mut(foe).unwrap().controls.fire_missile = true;
+        step(&mut w, TICK);
+        assert!(w.missiles.is_empty());
+        // The drain: −50 a second (plus the beam recharge), the shields do not recharge,
+        // and at 0 the cloak drops.
+        let s = w.get_mut(foe).unwrap();
+        (s.shield_fore, s.power.beam) = (10.0, 0); // no beam recharge: −50 a second net
+        for _ in 0..(1.0 / TICK) as usize {
+            crate::sim::systems::step(&mut w, TICK);
+        }
+        let s = w.get(foe).unwrap();
+        assert_eq!(s.shield_fore, 10.0, "no shield recharge while cloaked");
+        assert!(s.cloaked() && (s.energy - 50.0).abs() < 1.5, "{}", s.energy);
+        for _ in 0..(1.5 / TICK) as usize {
+            crate::sim::systems::step(&mut w, TICK);
+        }
+        assert!(!w.get(foe).unwrap().cloaked(), "dropped when the energy ran out");
+    }
+
+    #[test]
+    fn launcher_rate_and_start_throttle_come_from_the_rules() {
+        let (mut w, me, foe) = duel();
+        let mut r = (*w.rules).clone();
+        r.missiles[0].launcher_rate = 4.0;
+        r.flight.start_throttle = 0.5;
+        w.rules = Arc::new(r);
+        let f = w.rules.ship_id("fighter").unwrap();
+        let new = w.spawn(f, FactionId(0), "n", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        assert_eq!(w.get(new).unwrap().throttle, 0.5, "D-15: half throttle at the start");
+        let s = w.get_mut(me).unwrap();
+        (s.target, s.controls.fire_missile) = (Some(foe), true);
+        step(&mut w, TICK);
+        assert!((w.get(me).unwrap().missile_cooldown - 0.25).abs() < 1e-6, "D-13: 4 shots a second");
     }
 
     #[test]

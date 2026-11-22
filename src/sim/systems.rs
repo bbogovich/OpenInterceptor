@@ -303,17 +303,22 @@ fn toggle_hyperspace(s: &mut Ship, rules: &Ruleset) -> String {
     format!("HYPERDRIVE ACTIVATED: JUMP IN {time:.0} S")
 }
 
+/// The energy part of [`recharge`]: the pool gains its beam-level rate — not while the
+/// afterburner burns, unless `power.recharge_while_burning` (the original, D-11).
+pub fn recharge_energy(ship: &mut Ship, class: &ShipClass, p: &PowerRules, dt: f32) {
+    let level = |table: &[f32], l: u8| table.get(l as usize).copied().unwrap_or(0.0);
+    if !ship.afterburning || p.recharge_while_burning {
+        let rate = class.energy_recharge * level(&p.beam_recharge, ship.power.beam);
+        ship.energy = (ship.energy + rate * dt).min(class.energy);
+    }
+}
+
 /// Regenerates the energy pool and the shields for one tick, honouring the power
 /// settings, the shield generator's condition and the shield balance
 /// (`power.balance`: shift moves capacity, share moves the recharge).
 pub fn recharge(ship: &mut Ship, class: &ShipClass, p: &PowerRules, dt: f32) {
     let level = |table: &[f32], l: u8| table.get(l as usize).copied().unwrap_or(0.0);
-    // The engine stops the recharge while the afterburner burns; the original does not
-    // (`power.recharge_while_burning`, flight README §3, D-11).
-    if !ship.afterburning || p.recharge_while_burning {
-        let rate = class.energy_recharge * level(&p.beam_recharge, ship.power.beam);
-        ship.energy = (ship.energy + rate * dt).min(class.energy);
-    }
+    recharge_energy(ship, class, p, dt);
     // A station's single pool has its own fixed rate (no power levels, no facings).
     if let Some(pool) = class.shield_pool {
         super::stations::recharge(ship, pool, dt);
@@ -677,7 +682,23 @@ pub fn step(w: &mut World, dt: f32) {
         let id = w.id_of(i);
         let class = rules.ship(w.ships[i].class);
         let s = &mut w.ships[i];
-        recharge(s, class, &rules.power, dt);
+        // A cloak with a `drain` (the original: 50 a second) costs energy instead of the
+        // shields recharging, and drops when the energy is gone.
+        let drain = s.system(SystemKind::Cloak).filter(|(_, c)| c.on).map_or(0.0, |(_, c)| rules.system(c.id).drain);
+        if drain > 0.0 {
+            recharge_energy(s, class, &rules.power, dt);
+            s.energy = (s.energy - drain * dt).max(0.0);
+            if s.energy <= 0.0 {
+                if let Some((k, _)) = s.system(SystemKind::Cloak) {
+                    s.systems[k].on = false;
+                }
+                w.events.push(SimEvent::Message { ship: id, text: "CLOAK DROPPED".into() });
+                w.events.push(SimEvent::Switched { ship: id, kind: SystemKind::Cloak, on: false });
+            }
+        } else {
+            recharge(s, class, &rules.power, dt);
+        }
+        let s = &mut w.ships[i];
         // The disabled check comes before repair: the original disables a ship at the
         // moment of the engine hit, so its next repair already puts the hull first.
         let disabled = is_disabled(s, &rules);
