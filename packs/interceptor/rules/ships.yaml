@@ -27,6 +27,7 @@
 ships:
   lightning:
     inherit: original:GameSettings.ini/Ship_IntType1
+    pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
     mass: 6700
     ai_speed: 500
     ai_turn: {pitch: 2.1, yaw: 2.0, roll: 2.55}
@@ -46,6 +47,7 @@ ships:
     behaviour: xcom_pilot
   firestar:
     inherit: original:GameSettings.ini/Ship_IntType2
+    pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
     mass: 12700
     ai_speed: 500
     ai_turn: {pitch: 1.7, yaw: 1.4, roll: 1.5}
@@ -64,6 +66,7 @@ ships:
     behaviour: xcom_pilot
   avenger:
     inherit: original:GameSettings.ini/Ship_IntType3
+    pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
     mass: 22700
     ai_speed: 500
     ai_turn: {pitch: 1.5, yaw: 1.3, roll: 1.5}
@@ -86,6 +89,7 @@ ships:
     behaviour: xcom_pilot
   wraith:
     inherit: original:GameSettings.ini/Ship_AlienType1
+    pilot_grade: 1   # AlienType1/2 early on; grade 2 from month 2 is not modelled (VERIFIED)
     mass: 5500
     ai_speed: {min: 350, max: 400, level_step: 40}
     ai_turn: {pitch: 2.3, yaw: 2.1, roll: 3.75}
@@ -106,6 +110,7 @@ ships:
     behaviour: wraith
   spectre:
     inherit: original:GameSettings.ini/Ship_AlienType2
+    pilot_grade: 1   # AlienType1/2 early on; grade 2 from month 2 is not modelled (VERIFIED)
     mass: 11000
     ai_speed: {min: 350, max: 400, level_step: 40}
     ai_turn: {pitch: 1.7, yaw: 1.7, roll: 0.75}
@@ -126,6 +131,7 @@ ships:
     behaviour: spectre
   phantasm:
     inherit: original:GameSettings.ini/Ship_AlienType3
+    pilot_grade: 3   # AlienType3 (VERIFIED)
     mass: 19000
     ai_speed: {min: 450, max: 500, level_step: 30}
     ai_turn: {pitch: 1.3, yaw: 1.3, roll: 1.5}
@@ -145,6 +151,7 @@ ships:
     behaviour: phantasm
   shade:
     inherit: original:GameSettings.ini/Ship_AlienType4
+    pilot_grade: 4   # AlienType4 (VERIFIED)
     mass: 11000
     ai_speed: 500
     name: Shade
@@ -231,6 +238,7 @@ ships:
     behaviour: drone
   pirate_lightning:
     inherit: lightning
+    pilot_grade: 1   # pirates (VERIFIED)
     ai_turn: {pitch: 2, yaw: 2, roll: 3}
     faction: pirate
     playable: false
@@ -239,6 +247,7 @@ ships:
     behaviour: human_pilot
   pirate_firestar:
     inherit: firestar
+    pilot_grade: 1   # pirates (VERIFIED)
     faction: pirate
     playable: false
     name: Pirate Firestar
@@ -246,6 +255,7 @@ ships:
     behaviour: human_pilot
   pirate_avenger:
     inherit: avenger
+    pilot_grade: 1   # pirates (VERIFIED)
     faction: pirate
     playable: false
     name: Pirate Super Avenger
@@ -253,6 +263,7 @@ ships:
     behaviour: human_pilot
   rogue_freighter:
     inherit: original:GameSettings.ini/Ship_PirateFreighter
+    pilot_grade: 1   # pirates (VERIFIED)
     mass: 157000
     ai_speed: {min: 100, max: 174}
     name: Rogue Freighter
@@ -269,6 +280,7 @@ ships:
     missiles: {xwinder: 4}
   corporate_lightning:
     inherit: lightning
+    pilot_grade: 0   # corporate pilots' grade is not traced (DERIVED: as X-COM's)
     faction: corporate
     playable: false
     name: Corporate Lightning II
@@ -276,6 +288,7 @@ ships:
     behaviour: human_pilot
   corporate_firestar:
     inherit: firestar
+    pilot_grade: 0   # corporate pilots' grade is not traced (DERIVED: as X-COM's)
     faction: corporate
     playable: false
     name: Corporate Firestar
@@ -283,6 +296,7 @@ ships:
     behaviour: human_pilot
   corporate_avenger:
     inherit: avenger
+    pilot_grade: 0   # corporate pilots' grade is not traced (DERIVED: as X-COM's)
     faction: corporate
     playable: false
     name: Corporate Super Avenger

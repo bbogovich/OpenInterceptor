@@ -166,6 +166,10 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
     for c in &mut s.beam_cooldown {
         *c -= dt;
     }
+    // An AI pilot's fire mode for this tick (`skill.fire_mode: pilot`).
+    if let Some(mode) = s.controls.link {
+        s.link_mode = mode;
+    }
     let class = rules.ship(s.class);
     let n = class.beams.len();
     if !s.controls.fire_beams || n == 0 {
@@ -322,7 +326,8 @@ fn handle_missile_controls(w: &mut World, i: usize, id: ShipId, dt: f32) {
     let class = rack.0;
     // A launcher at half health or less reloads twice as slowly.
     s.missile_cooldown = MISSILE_REFIRE / rate.max(0.5);
-    let target = if s.lock.locked { s.target } else { None };
+    // Homing on a sensor lock, or on an AI pilot's own lock (`lock_cone`).
+    let target = if s.lock.locked || s.controls.guide_missile { s.target } else { None };
     let speed = w.rules.missile(class).speed;
     let duration = w.rules.missile(class).duration;
     let radius = w.shapes[s.class.0 as usize].radius;

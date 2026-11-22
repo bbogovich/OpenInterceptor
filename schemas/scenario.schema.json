@@ -52,7 +52,15 @@
           "state": {"description": "model-set state to show it in (a construction stage such as build_60)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "protect": {"description": "an objective the player must keep alive: marked on the HUD, skipped by nearest-enemy targeting", "type": "boolean"},
           "hull": {"description": "starting hull fraction", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
-          "behaviour": {"description": "behaviour id instead of the class's", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+          "behaviour": {"description": "behaviour id instead of the class's", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+          "pilot": {"description": "the AI pilot's record", "type": "object", "additionalProperties": false, "properties": {
+              "accuracy": {"description": "0–100 (50)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "intelligence": {"description": "0–100 (50)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "flying": {"description": "0–100 (50)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "bravery": {"description": "0–100 (50)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "stamina": {"description": "0–100 (50)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "grade": {"description": "the pilot's grade (flight.pilot_grades; default the class's)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }}
         }}},
     "nav": {"description": "navigation points", "type": "object", "additionalProperties": {"type": "object", "additionalProperties": false, "properties": {
           "position": {"description": "metres", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}

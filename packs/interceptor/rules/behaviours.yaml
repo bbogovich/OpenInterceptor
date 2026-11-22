@@ -6,7 +6,8 @@
 # notes/re/flight README section 5.1), in original_attack below: fire when the aim point
 # is within 1.5-2.5 deg and the target within 2.0-2.5 km (by level), missiles within half
 # that range at least 5 s apart, lead only inside 1,750 m, and an aim that errs in the
-# lead time (50 % accuracy: pilots in battle have no records yet, and aliens have none).
+# lead time by the pilot's Accuracy (50 % without a record: campaign pilots are not yet
+# handed to battle, and a scenario may give one with pilot:).
 # Only the Wraith, Spectre and drone wait between shots. When classes break off, jink or
 # flee is DERIVED from the strategy guide's descriptions (Wraiths are agile and evasive,
 # Harbingers tow disabled ships, drones are fast and reckless) and tuned in the testbed.
@@ -23,7 +24,22 @@ behaviours:
         pause: 0s
         missiles: 5s
         missile_range: {per_level: [1km, 1.0625km, 1.125km, 1.1875km, 1.25km]}
-    skill: {accuracy: 50%, lead_range: 1750m, reaction: 0.1s}
+        # Break off under 250 m; missiles on the pilot's own lock: a timer starts while
+        # the aim is within 5 deg on both axes, and a missile may go during the sensor's
+        # lock time after that with a 5 + 2 x level % chance per frame (as the code reads).
+        break_off: 250m
+        lock_cone: 5
+        missile_chance: {per_level: [5%, 7%, 9%, 11%, 13%]}
+    # The pilot's own Accuracy (50 with no record), held below level 2 (Veteran) to
+    # 50-100 for X-COM and 25+10d to 50+10d for others; the original's steering law; all
+    # mounts with chance (Intelligence + Accuracy) / 2 near the aim point.
+    skill:
+      accuracy: pilot
+      pilot_clamp: {below_level: 2, own: [50, 100], others: [25, 50], per_level: 10}
+      steer: original
+      fire_mode: pilot
+      lead_range: 1750m
+      reaction: 0.1s
 
   wraith:
     inherit: original_attack

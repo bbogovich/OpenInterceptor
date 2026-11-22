@@ -94,6 +94,12 @@ pub struct Controls {
     /// Turrets: the world direction to fire beams along, if the class's `TurretArc`
     /// allows it (stations and gun platforms aim without turning the hull).
     pub aim: Option<Vec3>,
+    /// AI pilots: how this tick's beams fire (`skill.fire_mode: pilot`); `None` keeps the
+    /// ship's link mode.
+    pub link: Option<LinkMode>,
+    /// AI pilots with their own lock (`lock_cone`): a missile fired this tick homes on the
+    /// target although the sensor has not locked.
+    pub guide_missile: bool,
 }
 
 /// One-press requests to the ship's power and equipment, as pilots make them from the
@@ -1117,6 +1123,9 @@ impl World {
         let mut pilot = pilot;
         if let (Some(b), Pilot::Ai(state)) = (&p.behaviour, &mut pilot) {
             state.def = Some(rules.behaviour_id(b).ok_or(format!("object {}: unknown behaviour '{b}'", p.name))?);
+        }
+        if let Pilot::Ai(state) = &mut pilot {
+            state.pilot = p.pilot;
         }
         let id = self.spawn(class, faction, &p.name, p.position, rot, pilot);
         // A station shown in a state (under construction) has no modules yet.

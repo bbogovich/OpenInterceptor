@@ -31,6 +31,15 @@
 //! | `tow` | finds a disabled enemy, tractors it and jumps out with it |
 //! | `mine` | waits; detonates when a hostile comes within `range` |
 //!
+//! ## The original's pilots
+//!
+//! A campaign can opt into the original X-COM: Interceptor's AI rules, all data: a pilot
+//! **record** ([`PilotStats`]: Accuracy, Intelligence, … and a grade) read by
+//! `skill: {accuracy: pilot, fire_mode: pilot}`; the original's **steering law**
+//! ([`steer_original`]); its own **missile lock** (`lock_cone`); and **grades**
+//! (`flight.pilot_grades`) that set the obstacle look-ahead ([`avoid_ahead`]) and the
+//! long-range sprint. Under `flight.drive`, speeds are m/s against [`top_speed`].
+//!
 //! A `do: script` state flies its `fly:` manoeuvre and, every `every` seconds, runs its
 //! Tier 2 script in the object context ([`ObjectHost`]): the script reads the same
 //! queries (plus the pilot's object variables, `var(name)`) and may switch state
@@ -45,7 +54,9 @@
 //! would also make the result depend on the order ships are processed.
 
 use super::{targeting, Controls, Pilot, Ship, ShipId, SimEvent, World, TICK};
-use crate::content::behaviour::{BehaviourDef, BehaviourId, Manoeuvre, Params, Selector, Skill, StateScript};
+use crate::content::behaviour::{
+    BehaviourDef, BehaviourId, Manoeuvre, Params, PilotStats, Selector, Skill, StateScript, Steer,
+};
 use crate::content::equipment::SystemKind;
 use crate::script::action::Action;
 use crate::script::object::MAX_VARS;
@@ -133,6 +144,12 @@ pub struct AiState {
     pub script_clock: f32,
     /// A script of this pilot has run out of budget and been reported (once is enough).
     pub script_warned: bool,
+    /// The pilot's record (`None`: no record; the original then uses 50 everywhere).
+    pub pilot: Option<PilotStats>,
+    /// The pilot's own missile lock (`lock_cone`): when the aim came within the cone.
+    pub lock_start: Option<f64>,
+    /// When this pilot last fired a missile (world time; −∞ = never).
+    pub last_missile: f64,
 }
 
 impl AiState {
@@ -160,6 +177,9 @@ impl AiState {
             vars: [0.0; MAX_VARS],
             script_clock: 0.0,
             script_warned: false,
+            pilot: None,
+            lock_start: None,
+            last_missile: f64::NEG_INFINITY,
         }
     }
 }
@@ -176,6 +196,17 @@ fn next_random(state: &mut u64) -> f32 {
 pub const ENGAGE_RADIUS: f32 = 3000.0;
 /// How far an enemy looks for prey, metres.
 pub const HUNT_RADIUS: f32 = 8000.0;
+
+/// The fastest this AI ship flies, m/s: under `flight.drive` its drive factor S over the
+/// drag (the original's terminal speed S × throttle / 2 at full throttle), else its
+/// class's `max_speed`. Every speed an AI manoeuvre asks for is in m/s against this top
+/// (fixes D-19: a share of `max_speed` used to be read as the throttle).
+pub fn top_speed(w: &World, ship: &Ship) -> f32 {
+    match &w.rules.flight.drive {
+        Some(d) if ship.drive_factor > 0.0 => ship.drive_factor / d.drag.max(1e-3),
+        _ => w.rules.ship(ship.class).max_speed,
+    }
+}
 
 /// Stick inputs that turn `ship` towards world point `point`.
 /// Returns `(pitch, yaw, roll, cos_angle_off_nose)`.
@@ -382,7 +413,7 @@ pub fn think(w: &mut World) {
             // their fire buttons: avoiding does not stop a pilot shooting).
             _ => escape_black_hole(w, ship)
                 .or_else(|| avoid_ground(w, ship))
-                .or_else(|| avoid_collision(w, id).map(|c| Controls { fire_beams: controls.fire_beams, ..c }))
+                .or_else(|| avoid(w, id).map(|c| Controls { fire_beams: controls.fire_beams, ..c }))
                 .unwrap_or(controls),
         };
         decisions.push((i, controls, target, state));
@@ -515,9 +546,8 @@ fn fly(
         Manoeuvre::Circle => (circle(w, ship), None),
         Manoeuvre::Patrol => {
             let home = st.home.unwrap_or(ship.position);
-            let class = w.rules.ship(ship.class);
             let r = p.range.max(100.0);
-            let speed = class.max_speed * p.speed * 0.6;
+            let speed = top_speed(w, ship) * p.speed * 0.6;
             let angle = w.time as f32 * speed / r + me.index as f32;
             let point = home + Vec3::new(angle.cos() * r, 0.0, angle.sin() * r);
             let (pitch, yaw, roll, _) = steer_towards(ship, point);
@@ -526,7 +556,7 @@ fn fly(
         Manoeuvre::Attack => match hunt(HUNT_RADIUS) {
             Some(t) => (attack(w, me, t, st, p, skill), Some(t)),
             None => {
-                let speed = 0.5 * w.rules.ship(ship.class).max_speed;
+                let speed = 0.5 * top_speed(w, ship);
                 (Controls { yaw: 0.05, hold_speed: Some(speed), ..Default::default() }, None)
             }
         },
@@ -557,7 +587,7 @@ fn systems_ok_target(w: &World, me: &Ship, other: &Ship) -> bool {
 
 /// A slow circle (practice targets).
 fn circle(w: &World, ship: &Ship) -> Controls {
-    let speed = 0.35 * w.rules.ship(ship.class).max_speed;
+    let speed = 0.35 * top_speed(w, ship);
     Controls { yaw: 0.12, hold_speed: Some(speed), ..Default::default() }
 }
 
@@ -600,7 +630,7 @@ fn wingman(w: &World, me: ShipId, state: &mut AiState) -> (Controls, Option<Ship
     }
     let slot = formation_slot(w, ship, leader, state.offset);
     // Something about to hit us (often the leader itself): get clear first.
-    if let Some(c) = avoid_collision(w, me) {
+    if let Some(c) = avoid(w, me) {
         return (c, None);
     }
     (fly_to_slot(w, ship, leader, slot), None)
@@ -618,7 +648,7 @@ pub fn fly_to_slot(w: &World, ship: &Ship, leader: &Ship, slot: Vec3) -> Control
         // Far away: fly straight to the slot, burning if very far.
         let (p, y, r, _) = steer_towards(ship, slot);
         (c.pitch, c.yaw, c.roll) = (p, y, r);
-        c.hold_speed = Some(class.max_speed);
+        c.hold_speed = Some(top_speed(w, ship));
         c.afterburner = dist > 2000.0 && ship.energy > 0.3 * class.energy;
     } else {
         // Close: aim at a point ahead of the slot so we fly parallel to the leader, and
@@ -631,7 +661,7 @@ pub fn fly_to_slot(w: &World, ship: &Ship, leader: &Ship, slot: Vec3) -> Control
         c.roll = (local_leader_up.x * 2.0).clamp(-1.0, 1.0);
         let along = to_slot.dot(leader.forward());
         let wanted = leader.forward_speed() + along * 0.8;
-        let max = class.max_speed.max(1.0);
+        let max = top_speed(w, ship).max(1.0);
         c.hold_speed = Some(wanted.clamp(0.0, max));
         c.afterburner = wanted > max + 50.0 && leader.afterburning;
     }
@@ -670,7 +700,8 @@ pub fn avoid_ground(w: &World, ship: &Ship) -> Option<Controls> {
     let aim = ship.position + flat * 800.0 + Vec3::Y * 600.0;
     let (pitch, yaw, roll, _) = steer_towards(ship, aim);
     let class = w.rules.ship(ship.class);
-    let speed = (class.lift * 1.4).clamp(class.max_speed * 0.5, class.max_speed);
+    let top = top_speed(w, ship);
+    let speed = (class.lift * 1.4).clamp(top * 0.5, top);
     Some(Controls { pitch, yaw, roll, hold_speed: Some(speed), ..Default::default() })
 }
 
@@ -691,10 +722,62 @@ pub fn escape_black_hole(w: &World, ship: &Ship) -> Option<Controls> {
         pitch,
         yaw,
         roll,
-        hold_speed: Some(class.max_speed),
+        hold_speed: Some(top_speed(w, ship)),
         afterburner: ship.energy > 0.2 * class.energy,
         ..Default::default()
     })
+}
+
+/// Obstacle avoidance for one AI pilot: the original's look-ahead when the campaign has
+/// `flight.pilot_grades`, otherwise the engine's predictive [`avoid_collision`].
+pub fn avoid(w: &World, me: ShipId) -> Option<Controls> {
+    let Some(grades) = &w.rules.flight.pilot_grades else { return avoid_collision(w, me) };
+    let ship = w.get(me)?;
+    let Pilot::Ai(st) = &ship.pilot else { return avoid_collision(w, me) };
+    let (lookahead, _) = grades.of(grade_of(w, ship, st), w.rules.difficulty);
+    avoid_ahead(w, me, lookahead)
+}
+
+/// The original's obstacle check (`0x587065` / `0x58f33b`, flight README §5.1, verified):
+/// a line of sight from the ship along its **velocity**, `lookahead` metres long (225,
+/// 100 or 250 by the pilot's grade). When it meets another object the pilot steers away
+/// from it and slows to half its top speed when the object is nearer than half the
+/// look-ahead, else to three quarters. Which way it steers is not traced: here, away
+/// from the object, across the line of flight (derived).
+pub fn avoid_ahead(w: &World, me: ShipId, lookahead: f32) -> Option<Controls> {
+    let ship = w.get(me)?;
+    let mine = w.rules.ship(ship.class);
+    if mine.kind.is_static() || mine.max_speed <= 0.0 || lookahead <= 0.0 {
+        return None;
+    }
+    let dir = ship.velocity.try_normalize()?;
+    let my_r = w.shapes[ship.class.0 as usize].radius;
+    // The nearest object the line meets: (distance along the line, its centre).
+    let mut hit: Option<(f32, Vec3)> = None;
+    for (i, o) in w.ships.iter().enumerate() {
+        if !o.alive || w.id_of(i) == me || o.mount.is_some_and(|(hub, _, _)| hub == me) {
+            continue;
+        }
+        // Ray against a sphere of the two radii: the closest point of the line to the
+        // centre is `along` metres ahead; it hits if it passes within `r`.
+        let r = my_r + w.shapes[o.class.0 as usize].radius;
+        let to = o.position - ship.position;
+        let along = to.dot(dir);
+        let miss = (to - dir * along).length();
+        if along < 0.0 || along - r > lookahead || miss > r {
+            continue;
+        }
+        if hit.is_none_or(|(d, _)| along < d) {
+            hit = Some((along, o.position));
+        }
+    }
+    let (along, centre) = hit?;
+    let across = (ship.position + dir * along - centre).try_normalize().unwrap_or(ship.up());
+    let aim = ship.position + dir * 300.0 + across * 300.0;
+    let (pitch, yaw, roll, _) = steer_towards(ship, aim);
+    let top = top_speed(w, ship);
+    let hold = if along < lookahead * 0.5 { 0.5 * top } else { 0.75 * top };
+    Some(Controls { pitch, yaw, roll, hold_speed: Some(hold), ..Default::default() })
 }
 
 /// How far ahead collision avoidance looks, seconds.
@@ -764,7 +847,6 @@ pub fn avoid_collision(w: &World, me: ShipId) -> Option<Controls> {
         }
     }
     let (_, miss, now, other_v) = worst?;
-    let class = w.rules.ship(ship.class);
     // Steer so the other passes further away: away from where it will be at closest
     // approach. A dead-on course (no miss at all) breaks to the pilot's own upper right.
     let away = match (-miss).try_normalize() {
@@ -778,8 +860,9 @@ pub fn avoid_collision(w: &World, me: ShipId) -> Option<Controls> {
     // (Judged by where it is now: on a dead-on course the miss vector is nearly zero.)
     let ahead = now.dot(ship.forward()) > 0.0;
     let other_speed = other_v.dot(ship.forward()).max(0.0);
-    let hold = if ahead { (other_speed - 40.0).max(0.0) } else { class.max_speed };
-    Some(Controls { pitch, yaw, roll, hold_speed: Some(hold.min(class.max_speed)), ..Default::default() })
+    let top = top_speed(w, ship);
+    let hold = if ahead { (other_speed - 40.0).max(0.0) } else { top };
+    Some(Controls { pitch, yaw, roll, hold_speed: Some(hold.min(top)), ..Default::default() })
 }
 
 /// The pilot's aim point at `target`: refreshed every `reaction` seconds (with a new aim
@@ -847,14 +930,66 @@ fn in_burst(st: &mut AiState, p: &Params) -> bool {
     cycle <= 0.0 || st.burst_clock % cycle < p.burst
 }
 
+/// The pilot's grade: its own record's, else its class's (`pilot_grade`).
+pub fn grade_of(w: &World, ship: &Ship, st: &AiState) -> Option<u8> {
+    st.pilot.and_then(|p| p.grade).or(w.rules.ship(ship.class).pilot_grade)
+}
+
+/// The skill a pilot flies with: with `accuracy: pilot`, the original's accuracy from its
+/// record — 50 % with no record, otherwise its Accuracy, held to `pilot_clamp` on the easy
+/// levels (own side: the player's faction).
+pub fn pilot_skill(w: &World, ship: &Ship, st: &AiState, skill: &Skill) -> Skill {
+    if !skill.accuracy_from_pilot {
+        return *skill;
+    }
+    let Some(p) = st.pilot else { return Skill { accuracy: Some(0.5), ..*skill } };
+    let player = w.ships.iter().find(|s| s.alive && s.pilot == Pilot::External).map(|s| s.faction);
+    let own = player == Some(ship.faction);
+    let a = match &skill.pilot_clamp {
+        Some(c) => c.apply(p.accuracy, w.rules.difficulty, own),
+        None => p.accuracy,
+    };
+    Skill { accuracy: Some((a / 100.0).clamp(0.0, 1.0)), ..*skill }
+}
+
+/// The angles from `ship`'s nose to `point`, degrees: `(pitch, yaw)`, up and right
+/// positive (each in its own plane, as the original measures them).
+pub fn aim_errors(ship: &Ship, point: Vec3) -> (f32, f32) {
+    let local = ship.rotation.inverse() * (point - ship.position);
+    // The engine's nose is −Z, so "ahead" is −z.
+    (local.y.atan2(-local.z).to_degrees(), local.x.atan2(-local.z).to_degrees())
+}
+
+/// The original's steering law (`skill.steer: original`, flight README §5, verified):
+/// each axis turns at its angle error *in degrees*, read as radians per second, up to the
+/// axis's maximum — so a small error closes within about one tick. A sluggish frame
+/// turns at 6 % of that. Returns the stick (pitch, yaw), which `flight` multiplies by the
+/// AI turn rates (or the class's rates without `flight.turning`).
+pub fn steer_original(w: &World, ship: &Ship, point: Vec3, sluggish: bool) -> (f32, f32) {
+    let class = w.rules.ship(ship.class);
+    let [max_pitch, max_yaw] = match &w.rules.flight.turning {
+        Some(t) => {
+            let r = class.ai_turn.unwrap_or(t.ai_rates);
+            [r[0], r[1]]
+        }
+        None => [class.pitch_rate.to_radians(), class.yaw_rate.to_radians()],
+    };
+    let (pitch, yaw) = aim_errors(ship, point);
+    let k = if sluggish { SLUGGISH } else { 1.0 };
+    // Rate wanted = error° × k (rad/s); the stick is that over the axis maximum.
+    ((pitch * k / max_pitch.max(1e-3)).clamp(-1.0, 1.0), (yaw * k / max_yaw.max(1e-3)).clamp(-1.0, 1.0))
+}
+
 /// Dogfighting against `target` (the `attack` manoeuvre).
 fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, skill: &Skill) -> Controls {
     let ship = w.get(me).expect("think only visits live ships");
     let Some(t) = w.get(target) else { return Controls::default() };
+    let skill = &pilot_skill(w, ship, st, skill);
     let class = w.rules.ship(ship.class);
     let bolt_speed = class.beams.first().map(|b| w.rules.beam(*b).speed).unwrap_or(2000.0);
     let reach = class.beams.first().map(|b| w.rules.beam(*b).range).unwrap_or(2000.0);
     let dist = ship.position.distance(t.position);
+    let top = top_speed(w, ship);
     let mut c = Controls::default();
     st.break_timer = (st.break_timer - TICK).max(0.0);
     // The first launch comes 3 s plus a random part of one interval into the attack, so
@@ -868,7 +1003,8 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
         let away = ship.position + (ship.position - t.position).normalize_or(Vec3::Y) * 500.0 + ship.up() * 200.0;
         let (pi, y, r, _) = steer_towards(ship, away);
         (c.pitch, c.yaw, c.roll) = (pi, y, r);
-        c.hold_speed = Some(class.max_speed * p.speed);
+        c.hold_speed = Some(top * p.speed);
+        st.lock_start = None;
         return c;
     }
     let aim = aim_point(w, ship, target, st, skill, bolt_speed);
@@ -876,24 +1012,65 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
     (c.pitch, c.yaw, c.roll) = (pi, y, r * 0.5);
     // The original's aim model: each frame the pilot fails its accuracy roll, it turns at
     // 6 % of its usual rate (a sluggish frame), so a 50 % pilot tracks half as well.
-    if let Some(acc) = skill.accuracy {
-        if next_random(&mut st.rng) >= acc {
-            (c.pitch, c.yaw, c.roll) = (c.pitch * SLUGGISH, c.yaw * SLUGGISH, c.roll * SLUGGISH);
+    let sluggish = skill.accuracy.is_some_and(|acc| next_random(&mut st.rng) >= acc);
+    match skill.steer {
+        Steer::Original => (c.pitch, c.yaw) = steer_original(w, ship, aim, sluggish),
+        Steer::Smooth if sluggish => {
+            (c.pitch, c.yaw, c.roll) = (c.pitch * SLUGGISH, c.yaw * SLUGGISH, c.roll * SLUGGISH)
+        }
+        Steer::Smooth => {}
+    }
+    // Close in fast when far; slow to stay on the target's tail when near. A pilot whose
+    // grade sprints (`flight.pilot_grades`) goes faster still when the target is far.
+    c.hold_speed = Some(top * p.speed * if dist > 1500.0 { 1.0 } else { 0.7 });
+    if let Some(g) = &w.rules.flight.pilot_grades {
+        let (_, sprints) = g.of(grade_of(w, ship, st), w.rules.difficulty);
+        if sprints && dist > g.sprint_beyond {
+            c.hold_speed = Some(top * g.sprint_throttle);
         }
     }
-    // Close in fast when far; slow to stay on the target's tail when near.
-    c.hold_speed = Some(class.max_speed * p.speed * if dist > 1500.0 { 1.0 } else { 0.7 });
     let firing = in_burst(st, p);
     c.fire_beams = firing && ahead >= p.fire_cone.to_radians().cos() && dist < p.range.min(reach * 0.95);
+    let (pitch_err, yaw_err) = aim_errors(ship, aim);
+    // The original's fire mode: near the aim point the pilot fires every mount of the
+    // type with the chance (intelligence + accuracy) / 2, otherwise one mount.
+    if skill.fire_mode_from_pilot {
+        let rec = st.pilot.unwrap_or(PilotStats::NONE);
+        let all = yaw_err.abs() < 5.0 && next_random(&mut st.rng) * 100.0 < (rec.intelligence + rec.accuracy) * 0.5;
+        c.link = Some(if all { super::LinkMode::Full } else { super::LinkMode::Unlinked });
+    }
     // Missiles: only once closing in (2.5× the attack range, at least 2 km) — a pilot
-    // does not empty its racks from the edge of radar — and each interval varies by
-    // ±25 %, so a flight's launches do not arrive together.
+    // does not empty its racks from the edge of radar.
     let missile_reach = if p.missile_range > 0.0 { p.missile_range } else { (p.range * 2.5).max(2000.0) };
-    if p.missile_interval > 0.0 && ship.lock.locked && st.missile_timer <= 0.0 && dist <= missile_reach {
+    if p.missile_interval > 0.0 && p.lock_cone > 0.0 {
+        // The original's own lock (flight README §5.1 step 6, verified as read): a timer
+        // starts when both errors are inside the cone and is dropped when either leaves;
+        // missiles may go during the sensor's lock time after it started, at least the
+        // interval apart, with a chance per tick. (That the window is *before* the lock
+        // time is how the code reads; the notes allow it may be inverted, derived.)
+        if pitch_err.abs() <= p.lock_cone && yaw_err.abs() <= p.lock_cone {
+            st.lock_start.get_or_insert(w.time);
+        } else {
+            st.lock_start = None;
+        }
+        let window = lock_time(w, ship) as f64;
+        let ready = st.lock_start.is_some_and(|t0| w.time < t0 + window)
+            && w.time - st.last_missile >= p.missile_interval as f64
+            && dist <= missile_reach;
+        if ready && next_random(&mut st.rng) < p.missile_chance {
+            c.fire_missile = true;
+            c.guide_missile = true;
+            st.last_missile = w.time;
+        }
+    } else if p.missile_interval > 0.0 && ship.lock.locked && st.missile_timer <= 0.0 && dist <= missile_reach {
+        // The engine's own rule: on a full sensor lock, each interval varying by ±25 %
+        // so a flight's launches do not arrive together.
         c.fire_missile = true;
         st.missile_timer = p.missile_interval * (0.75 + 0.5 * next_random(&mut st.rng));
     }
-    if dist < 120.0 + class.max_speed * 0.15 && ahead > 0.5 {
+    let breaks =
+        if p.break_off > 0.0 { dist < p.break_off } else { dist < 120.0 + class.max_speed * 0.15 && ahead > 0.5 };
+    if breaks {
         st.break_timer = 2.0;
     }
     // Strafe with VCT to dodge when the target faces us.
@@ -901,6 +1078,17 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
         c.slide = Vec2::new(if (w.time as i64 / 2) % 2 == 0 { 1.0 } else { -1.0 }, 0.0);
     }
     c
+}
+
+/// How long an AI pilot's own lock window lasts, seconds: its sensor's `lock_time`, or the
+/// selected missile's when the sensor gives none; 0 without a sensor (the original's
+/// `0x458c12` returns 0 then, so such a ship cannot fire on its own lock).
+fn lock_time(w: &World, ship: &Ship) -> f32 {
+    let Some((_, sensor)) = ship.system(SystemKind::Sensors) else { return 0.0 };
+    match w.rules.system(sensor.id).lock_time {
+        t if t > 0.0 => t,
+        _ => ship.missiles.get(ship.selected_rack).map(|(m, _)| w.rules.missile(*m).lock_time).unwrap_or(0.0),
+    }
 }
 
 /// Station guns: no flying; swivelling beams track the target (the `turret` manoeuvre).
@@ -927,7 +1115,7 @@ fn tow(w: &World, me: ShipId, st: &mut AiState, p: &Params) -> (Controls, Option
         let far = ship.position.distance(from) >= p.escape;
         let mut c = retreat(w, me, far);
         c.afterburner = false;
-        c.hold_speed = Some(w.rules.ship(ship.class).max_speed * 0.2);
+        c.hold_speed = Some(top_speed(w, ship) * 0.2);
         return (c, ship.towing);
     }
     st.anchor = None;
@@ -938,7 +1126,7 @@ fn tow(w: &World, me: ShipId, st: &mut AiState, p: &Params) -> (Controls, Option
     let to = w.ships[prize.index as usize].position;
     let dist = to.distance(ship.position);
     let (pitch, yaw, roll, _) = steer_towards(ship, to);
-    let max = w.rules.ship(ship.class).max_speed;
+    let max = top_speed(w, ship);
     let mut c =
         Controls { pitch, yaw, roll, hold_speed: Some((dist - reach * 0.4).clamp(0.0, max)), ..Default::default() };
     c.requests.tractor = dist <= reach * 0.9 && ship.target == Some(prize);
@@ -962,7 +1150,7 @@ fn escort(w: &World, me: ShipId, st: &mut AiState, p: &Params, skill: &Skill) ->
     match (threat, leader) {
         (Some(t), _) => (attack(w, me, t, st, p, skill), Some(t)),
         (None, Some(l)) => {
-            if let Some(c) = avoid_collision(w, me) {
+            if let Some(c) = avoid(w, me) {
                 return (c, None);
             }
             let slot = formation_slot(w, ship, l, st.offset);
@@ -977,8 +1165,7 @@ fn escort(w: &World, me: ShipId, st: &mut AiState, p: &Params, skill: &Skill) ->
 fn travel(w: &World, me: ShipId, st: &mut AiState, p: &Params) -> Controls {
     let ship = w.get(me).expect("think only visits live ships");
     let from = *st.anchor.get_or_insert(ship.position);
-    let class = w.rules.ship(ship.class);
-    let mut c = Controls { hold_speed: Some(class.max_speed * p.speed), ..Default::default() };
+    let mut c = Controls { hold_speed: Some(top_speed(w, ship) * p.speed), ..Default::default() };
     c.requests.hyperspace = ship.position.distance(from) >= p.range
         && ship.hyperspace.is_none()
         && ship.efficiency(SystemKind::Hyperdrive) > 0.0;
@@ -996,7 +1183,7 @@ fn evade(w: &World, me: ShipId, centre: Vec3) -> Controls {
         pitch: (phase * 1.3).sin(),
         yaw: (phase * 0.7).cos(),
         roll: (phase * 0.5).sin() * 0.6,
-        hold_speed: Some(class.max_speed),
+        hold_speed: Some(top_speed(w, ship)),
         ..Default::default()
     };
     if class.vct {
@@ -1022,7 +1209,7 @@ fn retreat(w: &World, me: ShipId, jump: bool) -> Controls {
         None => ship.position + ship.forward() * 1000.0,
     };
     let (pitch, yaw, roll, _) = steer_towards(ship, away);
-    let mut c = Controls { pitch, yaw, roll, hold_speed: Some(class.max_speed), ..Default::default() };
+    let mut c = Controls { pitch, yaw, roll, hold_speed: Some(top_speed(w, ship)), ..Default::default() };
     c.afterburner = ship.energy > 0.2 * class.energy;
     c.requests.hyperspace = jump && ship.hyperspace.is_none() && ship.efficiency(SystemKind::Hyperdrive) > 0.0;
     c
@@ -1118,6 +1305,175 @@ mod tests {
             Quat::IDENTITY,
             Pilot::Ai(AiState::new(b, leader, Vec3::new(-60.0, 0.0, 30.0))),
         )
+    }
+
+    /// The test rules plus the original's AI keys (#118): turning rates, a drive, pilot
+    /// grades (225 / 250 / 100 m, grade 0 does not sprint, everyone from level 3), and an
+    /// `orig` behaviour with the original's steering, pilot accuracy and fire mode, the
+    /// 250 m break-off and the pilot's own 5° missile lock.
+    fn original_ai_world() -> World {
+        let rules = crate::sim::test_support::rules_with(
+            "flight:
+  turning: {ai_rates: {pitch: 2, yaw: 2, roll: 3}}
+  drive: {drag: 2}
+  pilot_grades:
+    lookahead: 250m
+    grades: [{lookahead: 225m, sprint: false}, {lookahead: 250m}, {lookahead: 100m}]
+    sprint: {beyond: 3km, throttle: 106.25%, from_level: 3}
+ships:
+  ace: {inherit: raider, ai_speed: 500, pilot_grade: 1, behaviour: orig}
+behaviours:
+  orig:
+    states: {go: {do: attack, range: 2.5km, fire_cone: 2.5, burst: 1s, pause: 0s, missiles: 5s, missile_range: 1.25km, break_off: 250m, lock_cone: 5, missile_chance: 100%}}
+    skill: {accuracy: pilot, pilot_clamp: {below_level: 2, own: [50, 100], others: [25, 50], per_level: 10}, steer: original, fire_mode: pilot, reaction: 0.1s}
+",
+            &Default::default(),
+        );
+        let shapes = crate::sim::test_support::shapes(&rules);
+        World::new(rules, shapes, 7)
+    }
+
+    fn orig_skill(w: &World) -> Skill {
+        w.rules.behaviours[w.rules.behaviour_id("orig").unwrap().0 as usize].skill
+    }
+
+    #[test]
+    fn the_original_steering_closes_a_small_error_within_two_ticks() {
+        let mut w = original_ai_world();
+        let me = spawn_ai(&mut w, "ace", 1, Vec3::ZERO, Behaviour::Idle, None);
+        // A point 1° to the right of the nose.
+        let point = Vec3::new(1000.0 * 1f32.to_radians().tan(), 0.0, -1000.0);
+        let rules = w.rules.clone();
+        for _ in 0..2 {
+            let s = w.get(me).unwrap();
+            let (pitch, yaw) = steer_original(&w, s, point, false);
+            let s = w.get_mut(me).unwrap();
+            s.controls = Controls { pitch, yaw, ..Default::default() };
+            crate::sim::flight::step(s, rules.ship(s.class), &rules.flight, TICK);
+        }
+        let (_, yaw) = aim_errors(w.get(me).unwrap(), point);
+        assert!(yaw.abs() < 0.01, "D-21: 1° closed within two ticks, {yaw}° left");
+        // The engine's smooth law is far softer.
+        let mut w = original_ai_world();
+        let me = spawn_ai(&mut w, "ace", 1, Vec3::ZERO, Behaviour::Idle, None);
+        for _ in 0..2 {
+            let (pitch, yaw, _, _) = steer_towards(w.get(me).unwrap(), point);
+            let s = w.get_mut(me).unwrap();
+            s.controls = Controls { pitch, yaw, ..Default::default() };
+            crate::sim::flight::step(s, rules.ship(s.class), &rules.flight, TICK);
+        }
+        assert!(aim_errors(w.get(me).unwrap(), point).1 > 0.5);
+    }
+
+    #[test]
+    fn pilot_records_set_accuracy_within_the_easy_level_bands() {
+        let mut w = original_ai_world();
+        let player = w.spawn(
+            w.rules.ship_id("fighter").unwrap(),
+            FactionId(0),
+            "me",
+            Vec3::ZERO,
+            Quat::IDENTITY,
+            Pilot::External,
+        );
+        let foe = spawn_ai(&mut w, "ace", 1, Vec3::new(0.0, 0.0, -2000.0), Behaviour::Enemy, None);
+        let wing = spawn_ai(&mut w, "ace", 0, Vec3::new(50.0, 0.0, 0.0), Behaviour::Wingman, Some(player));
+        let skill = orig_skill(&w);
+        let acc = |w: &World, id: ShipId, pilot: Option<PilotStats>| {
+            let s = w.get(id).unwrap();
+            let Pilot::Ai(st) = &s.pilot else { unreachable!() };
+            pilot_skill(w, s, &AiState { pilot, ..st.clone() }, &skill).accuracy.unwrap()
+        };
+        let ace = Some(PilotStats { accuracy: 90.0, ..PilotStats::NONE });
+        assert_eq!(acc(&w, foe, None), 0.5, "no record: 50 %");
+        // Beginner (level 0): own side 50–100, others 25–50.
+        assert_eq!((acc(&w, wing, ace), acc(&w, foe, ace)), (0.9, 0.5));
+        let mut r = (*w.rules).clone();
+        r.difficulty = 1;
+        w.rules = std::sync::Arc::new(r);
+        assert!((acc(&w, foe, ace) - 0.6).abs() < 1e-6, "others 35–60 on level 1");
+        let mut r = (*w.rules).clone();
+        r.difficulty = 2;
+        w.rules = std::sync::Arc::new(r);
+        assert!((acc(&w, foe, ace) - 0.9).abs() < 1e-6, "the record itself from level 2");
+    }
+
+    #[test]
+    fn grades_set_the_look_ahead_and_the_sprint() {
+        let w = original_ai_world();
+        let g = w.rules.flight.pilot_grades.as_ref().unwrap();
+        assert_eq!(
+            (g.of(Some(0), 0), g.of(Some(1), 0), g.of(Some(2), 0), g.of(None, 0)),
+            ((225.0, false), (250.0, true), (100.0, true), (250.0, true))
+        );
+        assert_eq!(g.of(Some(0), 3), (225.0, true), "everyone sprints from level 3");
+        // An object 180 m ahead: grade 0 (225 m) slows to ¾ of top speed (beyond half the
+        // look-ahead); grade 2 (100 m) does not see it.
+        let mut w = original_ai_world();
+        let me = spawn_ai(&mut w, "ace", 1, Vec3::ZERO, Behaviour::Idle, None);
+        spawn_ai(&mut w, "ace", 2, Vec3::new(0.0, 0.0, -180.0), Behaviour::Idle, None);
+        w.get_mut(me).unwrap().velocity = Vec3::new(0.0, 0.0, -100.0);
+        let pilot = |w: &mut World, grade: u8| {
+            if let Pilot::Ai(st) = &mut w.get_mut(me).unwrap().pilot {
+                st.pilot = Some(PilotStats { grade: Some(grade), ..PilotStats::NONE });
+            }
+        };
+        pilot(&mut w, 0);
+        let top = top_speed(&w, w.get(me).unwrap());
+        assert_eq!(top, w.get(me).unwrap().drive_factor / 2.0);
+        let c = avoid(&w, me).expect("seen at 225 m");
+        assert!((c.hold_speed.unwrap() - 0.75 * top).abs() < 1e-3);
+        pilot(&mut w, 2);
+        assert!(avoid(&w, me).is_none(), "100 m does not reach it");
+        // Sprint: a grade-1 pilot far from its target asks for 106.25 % of top speed.
+        let mut w = original_ai_world();
+        let me = spawn_ai(&mut w, "ace", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        let t = spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -5000.0), Behaviour::Idle, None);
+        let b = w.rules.behaviour_id("orig").unwrap();
+        let def = &w.rules.behaviours[b.0 as usize];
+        let (p, skill) = (def.states[0].params, def.skill);
+        let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+        let c = attack(&w, me, t, &mut st, &p, &skill);
+        let top = top_speed(&w, w.get(me).unwrap());
+        assert!((c.hold_speed.unwrap() - 1.0625 * top).abs() < 1e-3);
+        st.pilot = Some(PilotStats { grade: Some(0), ..PilotStats::NONE });
+        let c = attack(&w, me, t, &mut st, &p, &skill);
+        assert!((c.hold_speed.unwrap() - top).abs() < 1e-3, "grade 0 does not sprint on level 0");
+    }
+
+    #[test]
+    fn the_pilots_own_lock_fires_guided_missiles_in_its_window() {
+        let mut w = original_ai_world();
+        let me = spawn_ai(&mut w, "ace", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        let t = spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -1000.0), Behaviour::Idle, None);
+        let b = w.rules.behaviour_id("orig").unwrap();
+        let def = &w.rules.behaviours[b.0 as usize];
+        let (p, skill) = (def.states[0].params, def.skill);
+        let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+        st.pilot = Some(PilotStats { accuracy: 100.0, intelligence: 100.0, ..PilotStats::NONE });
+        // On the nose at 1 km, inside the 1.25 km missile range: fires at once, guided.
+        let c = attack(&w, me, t, &mut st, &p, &skill);
+        assert!(c.fire_missile && c.guide_missile, "D-22: no full sensor lock needed");
+        assert_eq!(c.link, Some(crate::sim::LinkMode::Full), "(100 + 100) / 2: every mount");
+        // Not again within the 5 s interval.
+        w.time += 1.0;
+        assert!(!attack(&w, me, t, &mut st, &p, &skill).fire_missile);
+        // After the interval, but past the sensor's lock time since the lock started
+        // (1 s in the test sensor's missile): the window has closed.
+        w.time += 5.0;
+        assert!(!attack(&w, me, t, &mut st, &p, &skill).fire_missile);
+        // The aim leaves the 5° cone: the timer is dropped; back on, a new window opens.
+        st.seen = None;
+        w.get_mut(t).unwrap().position = Vec3::new(1000.0, 0.0, -100.0);
+        attack(&w, me, t, &mut st, &p, &skill);
+        assert!(st.lock_start.is_none());
+        w.get_mut(t).unwrap().position = Vec3::new(0.0, 0.0, -1000.0);
+        st.seen = None;
+        assert!(attack(&w, me, t, &mut st, &p, &skill).fire_missile);
+        // Inside 250 m the pilot breaks off.
+        w.get_mut(t).unwrap().position = Vec3::new(0.0, 0.0, -240.0);
+        attack(&w, me, t, &mut st, &p, &skill);
+        assert!(st.break_timer > 0.0);
     }
 
     #[test]
