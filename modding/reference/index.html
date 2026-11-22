@@ -8091,6 +8091,12 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td>none</td>
 <td>Wide screens: the bands left and right of narrower 2D cockpit art. <code>blackout: true</code> fills them with <code>color</code> (default black), hiding the 3D view there; <code>from</code> (design-space y, default 0) starts them lower, e.g. at the dashboard's top so space still shows beside the canopy; <code>left</code>/<code>right</code> are your own images stretched over each band (<a href="../../specification/requirements/cockpit-hud/#r-hud-013-wide-screen-side-bands">R-HUD-013</a>).</td>
 </tr>
+<tr>
+<td><code>ship_status</code></td>
+<td><code>{rings, width, tilt, arc, craft}</code></td>
+<td>engine look</td>
+<td>Where the <code>ship_status</code> instrument's shield bands lie on the art: band radii (fractions of the half-size, in lighting order), thickness, a counter-clockwise tilt in degrees, each half's arc in degrees, and the craft's size (app 0.22.2, <a href="../cockpits/#matching-painted-rings-app-0222">Cockpits › Matching painted rings</a>).</td>
+</tr>
 </tbody>
 </table>
 <p>An anchor:</p>

@@ -5001,6 +5001,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The ship status display">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#matching-painted-rings-app-0222" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Matching painted rings (app 0.22.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6533,6 +6550,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The ship status display">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#matching-painted-rings-app-0222" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Matching painted rings (app 0.22.2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6693,6 +6727,53 @@ shows your craft from above in the middle of a round instrument, in the manner o
 <p>Give it a square rectangle: the display is drawn in the largest circle that fits. On the glass
 HUD it gets a thin ring of its own; over cockpit art it draws only the bands and the craft, so
 put it over a round display in the art.</p>
+<h3 id="matching-painted-rings-app-0222">Matching painted rings (app 0.22.2)<a class="headerlink" href="#matching-painted-rings-app-0222" title="Permanent link">&para;</a></h3>
+<p>When the art paints its own rings, the cockpit's <code>ship_status</code> key (beside <code>instruments</code>, not
+inside it) lays the bands exactly on them. Centre the instrument rectangle on the rings, then:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">cockpits</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">a</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">instruments</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">ship_status</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">110.25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">408.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">58</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">58</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">ship_status</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">rings</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.833</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.586</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.327</span><span class="p p-Indicator">],</span><span class="nt"> width</span><span class="p">:</span><span class="w"> </span><span class="nv">0.09</span><span class="p p-Indicator">,</span><span class="nt"> tilt</span><span class="p">:</span><span class="w"> </span><span class="nv">6.8</span><span class="p p-Indicator">,</span><span class="nt"> arc</span><span class="p">:</span><span class="w"> </span><span class="nv">166</span><span class="p p-Indicator">,</span><span class="nt"> craft</span><span class="p">:</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rings</code></td>
+<td><code>[0.989, 0.8405, 0.692]</code></td>
+<td>Radius of each band's centre line, as a fraction of the rectangle's half-size, in the order the bands light (the first stays lit at the lowest shield level).</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td><code>0.11</code></td>
+<td>Band thickness, a fraction of the half-size.</td>
+</tr>
+<tr>
+<td><code>tilt</code></td>
+<td><code>0</code></td>
+<td>Rotates the whole display counter-clockwise by this many degrees (the craft too), for art drawn at an angle: the fore/aft split then follows the painted divider.</td>
+</tr>
+<tr>
+<td><code>arc</code></td>
+<td><code>140</code></td>
+<td>Degrees each half spans; <code>180</code> leaves no gap at the sides.</td>
+</tr>
+<tr>
+<td><code>craft</code></td>
+<td><code>0.42</code></td>
+<td>Size of the craft silhouette, a fraction of the half-size.</td>
+</tr>
+</tbody>
+</table>
+<p>The X-COM cockpits' values were measured from the art (DERIVED): three concentric rings per
+display, with cockpit A's divider tilted 6.8° (right end up) and B's and C's level.</p>
 <table>
 <thead>
 <tr>
