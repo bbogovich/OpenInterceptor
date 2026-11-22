@@ -6746,6 +6746,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-32-history-the-clock-by-screen-and-message-boxes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-32 — History, the clock by screen, and message boxes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12340,6 +12351,17 @@
     <span class="md-ellipsis">
       
         MT-6-31 — Sprite buttons, release semantics and radio groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-32-history-the-clock-by-screen-and-message-boxes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-32 — History, the clock by screen, and message boxes
       
     </span>
   </a>
@@ -20470,6 +20492,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: while held inside, the button shows its pressed sprite; outside, the art's up look; releasing outside still opens Bases. 2: Research opens on release, not on press. 3: each shows its pressed image while held and opens its screen on release. 4: the radios switch screens; the current screen's radio shows pressed. 5: the clicked tab stays pressed and the others are released. No coloured box around any sprite.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-32-history-the-clock-by-screen-and-message-boxes">MT-6-32 — History, the clock by screen, and message boxes<a class="headerlink" href="#mt-6-32-history-the-clock-by-screen-and-message-boxes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's Interceptor data.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. <code>openinterceptor --campaign interceptor --strategy</code>; set the dial to 1 hour; watch the clock. 2. Open Bases; wait; then its close button (top-left). 3. CSD → Bases → Purchase → the manufacture radio → close; close again. 4. CSD → Research → close. 5. <code>--strategy --notice "Hello"</code>; click <em>OK (5-SECS)</em>; repeat with <em>OK</em>. 6. Play until a module finishes building.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the clock runs. 2: on Bases the clock stands still; closing returns to the CSD and it runs again at 1 hour. 3: the first close returns from Manufacture to Bases (the radio did not add a step), the second to the CSD. 4: back on the CSD. 5: a message box with the original's fill and two capsule buttons; <em>OK (5-SECS)</em> sets the dial to 5 s, <em>OK</em> leaves it. 6: the module report shows both buttons and the speed is unchanged until one is chosen.</td>
 </tr>
 </tbody>
 </table>

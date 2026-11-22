@@ -9328,9 +9328,9 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 </tr>
 <tr>
 <td><code>dialog</code></td>
-<td><code>{design, width, title_font, body_font, title_y, body_top, button_step}</code></td>
+<td><code>{design, width, title_font, body_font, title_y, body_top, button_step, fill, capsule, frame}</code></td>
 <td>none (plain prompts)</td>
-<td>Prompts as the original's message boxes (app 0.22.7). Defaults 640 × 480, 320, —, —, 20, 32, 22.</td>
+<td>Prompts as the original's message boxes (app 0.22.7). Defaults 640 × 480, 320, —, —, 20, 32, 22. Since app 0.22.12: <code>fill</code> (an image tiled over the body), <code>capsule</code> (message-box capsule buttons from a base sprite), <code>frame</code> (pieces <code>{image, at, offset, tile}</code>).</td>
 </tr>
 </tbody>
 </table>
@@ -9370,6 +9370,18 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 <td>bool</td>
 <td><code>false</code></td>
 <td>A screen set's dialog: drawn over the screen under it (app 0.17.0).</td>
+</tr>
+<tr>
+<td><code>clock</code></td>
+<td><code>run</code>, <code>pause</code></td>
+<td><code>run</code></td>
+<td>Whether the campaign clock runs while this screen is on top (app 0.22.12; <code>interceptor</code>: the CSD only). Another value is a load error.</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td>number</td>
+<td>29</td>
+<td>On the first screen: how many screens Back remembers (app 0.22.12; at least 1).</td>
 </tr>
 </tbody>
 </table>
@@ -9413,7 +9425,7 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td><code>action</code></td>
 <td>text</td>
 <td>none</td>
-<td>A button's action: <code>open(&lt;screen&gt;)</code> (the screen must exist), <code>back</code>, <code>speed(n)</code> (an index into the campaign's <a href="../strategy/#clock"><code>clock.speeds</code></a>, 0 = the first; a number past the last picks the last), <code>save</code>, <code>menu</code>, <code>testbed</code>. Another is a load error.</td>
+<td>A button's action: <code>open(&lt;screen&gt;)</code> (the screen must exist), <code>menu(&lt;screen&gt;)</code>, <code>replace(&lt;screen&gt;)</code> (app 0.22.12; <a href="../screens/#history-and-the-clock">History and the clock</a>), <code>back</code>, <code>speed(n)</code> (an index into the campaign's <a href="../strategy/#clock"><code>clock.speeds</code></a>, 0 = the first; a number past the last picks the last), <code>save</code>, <code>menu</code>, <code>testbed</code>. Another is a load error.</td>
 </tr>
 <tr>
 <td><code>value</code></td>

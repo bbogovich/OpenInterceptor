@@ -7201,8 +7201,29 @@ original's three frame kits) is #127.</p>
 <td>22</td>
 <td>The buttons' spacing (<strong>derived</strong>).</td>
 </tr>
+<tr>
+<td><code>dialog.fill</code></td>
+<td>asset</td>
+<td>the skin's panel</td>
+<td>An image tiled over the box's body (app 0.22.12). <code>interceptor</code>: the message boxes' fill surface, WrappersDLL 5006 (sprite row 430, <strong>verified</strong>; tiled: <strong>derived</strong>).</td>
+</tr>
+<tr>
+<td><code>dialog.capsule</code></td>
+<td>asset</td>
+<td>text buttons</td>
+<td>The message-box capsule's base sprite (app 0.22.12): left cap, middle tiled to the width and right cap are rows N, N+1, N+2; pressed N+3 … N+5. The caption is in <code>title_font</code> at (centre x, centre y − 2), pressed (+1, +1) (<strong>verified</strong>). Capsules sit in a centred row, 25 px above the bottom, each its caption + its caps wide (<strong>derived</strong>). <code>interceptor</code>: <code>original:sprite#258</code>.</td>
+</tr>
+<tr>
+<td><code>dialog.frame</code></td>
+<td>list of <code>{image, at, offset, tile}</code></td>
+<td>none</td>
+<td>Frame pieces drawn around the box (app 0.22.12). <code>at</code> is one of <code>top_left</code>, <code>top</code>, <code>top_right</code>, <code>left</code>, <code>right</code>, <code>bottom_left</code>, <code>bottom</code>, <code>bottom_right</code>. A piece sits inside the box at that corner or side, or centred on it, and is moved by <code>offset</code>. <code>tile: x</code> (or <code>y</code>) repeats it along the side, inset by the offset at both ends, with the last copy cut to fit.</td>
+</tr>
 </tbody>
 </table>
+<p>The original has three frame kits (sprite rows 163 – 178, 179 – 188 and 189 – 198, the third in
+red with an ornament at the top). Which piece goes where is not recovered yet, so <code>interceptor</code>
+draws no frame; a mod can assemble its own with <code>frame</code>. <code>--check</code> loads every dialog image.</p>
 <p>The default campaign uses both, in its own colours, with <code>font_title</code> and <code>font_body</code>. To see a
 dialog, run <code>openinterceptor --no-original --strategy --notice "Hello"</code>.</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>

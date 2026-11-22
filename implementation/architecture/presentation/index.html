@@ -3634,6 +3634,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#history-clock-and-message-boxes-apphistory-appcaption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History, clock and message boxes (app::history, app::caption)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6776,6 +6787,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#history-clock-and-message-boxes-apphistory-appcaption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History, clock and message boxes (app::history, app::caption)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7262,6 +7284,40 @@ ListBox's rules (0x51b7c6) as pure functions:</p>
 <li><code>content::screens::tests</code>: the new keys and their errors.</li>
 <li><code>check::tests</code>: a missing sprite.</li>
 </ul>
+<h3 id="history-clock-and-message-boxes-apphistory-appcaption">History, clock and message boxes (<code>app::history</code>, <code>app::caption</code>)<a class="headerlink" href="#history-clock-and-message-boxes-apphistory-appcaption" title="Permanent link">&para;</a></h3>
+<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #127; RQ-UI-14/15/16, RQ-S-18).</em></p>
+<ul>
+<li><strong><code>app::history::History</code></strong> replaces the screen set's <code>Vec&lt;String&gt;</code> stack. It holds <code>home</code>,
+  <code>current</code>, <code>trail</code> (Back's screens), <code>dialogs</code> and <code>limit</code>. Its operations follow the exe
+  (0x4b5bfe – 0x4b5e5b):</li>
+<li><code>push</code>: home clears; no duplicates; nothing added when full.</li>
+<li><code>menu</code>: a run of menu switches remembers once.</li>
+<li><code>replace</code>, <code>back</code>, <code>open_dialog</code>.</li>
+<li><code>shown()</code> lists what to draw.</li>
+<li><code>UiAction</code> gained <code>MenuOpen</code> and <code>Replace</code>.</li>
+<li><strong>The clock.</strong> <code>draw_set</code> sets <code>screen_holds_clock</code> from the top screen's
+  <code>ScreenLayout::clock_runs</code>, and the time step skips while it is set (set mode only). Prompts
+  already stop time through <code>prompting</code>.</li>
+<li><strong>RQ-S-18.</strong> <code>ClockDef::notices</code> (<code>NoticeClock::{Drop, Keep, Ask}</code>) and <code>notice_buttons</code>
+  decide whether a notice changes the speed. With <code>Ask</code> the Report prompt shows both buttons,
+  and the second sets <code>on_event</code>.</li>
+<li><strong><code>caption::dialog</code></strong> draws, in order: the <code>fill</code> tiled over the body, the <code>frame</code> pieces
+  (<code>frame_piece</code>: anchor, offset, tiling along a side), then the buttons. The buttons are
+  message-box capsules (<code>capsule_parts</code>: caps and a tiled middle; <code>capsule_row</code>; caption at
+  <code>capsule_caption</code>) when the style has a <code>capsule</code>, else stacked text buttons.</li>
+<li><strong><code>Ui</code> loads the dialog's images</strong> once at start (<code>Ui::image</code>), unsmoothed.</li>
+<li><strong><code>--check</code></strong> loads them too.</li>
+</ul>
+<p>Tests:</p>
+<ul>
+<li><code>app::history::tests</code>: home clears, duplicates and the limit, menu runs, replace, dialogs.</li>
+<li><code>app::caption::tests</code>: frame anchors and tiling, the original's ornament position,
+  capsules, a capsule-row layout.</li>
+<li><code>content::skin::tests</code>: fill, capsule and frame keys and errors.</li>
+<li><code>content::strategy</code> clock tests: <code>notices</code>, <code>notice_buttons</code>.</li>
+<li><code>content::screens::tests</code>: <code>clock</code>, <code>history</code>, <code>menu(x)</code>, <code>replace(x)</code>.</li>
+<li><code>check::tests</code>: a missing dialog image.</li>
+</ul>
 <h3 id="the-main-menu-and-credits-appmenu-appcredits">The main menu and credits (<code>app::menu</code>, <code>app::credits</code>)<a class="headerlink" href="#the-main-menu-and-credits-appmenu-appcredits" title="Permanent link">&para;</a></h3>
 <p>Since app 0.14.0 <code>app::run</code> opens <code>Screen::Menu(MainMenu)</code> instead of the launcher when the
 campaign has a strategy layer (<code>rules.strategy.is_some()</code>); <code>Next::Menu</code> — from the launcher's
@@ -7412,6 +7468,11 @@ play without it.</p>
 <td><code>caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}</code>; <code>StrategyScreen::draw_list_art</code>, <code>notice</code></td>
 <td><code>app::caption</code>, <code>app::strategy</code></td>
 <td>Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7).</td>
+</tr>
+<tr>
+<td><code>history::{History, DEFAULT_LIMIT}</code>; <code>UiAction::{MenuOpen, Replace}</code>; <code>ScreenLayout::{clock_runs, history, empty}</code>; <code>StrategyScreen::{history, screen_holds_clock}</code>; <code>NoticeClock</code>, <code>ClockDef::{notices, notice_buttons}</code>; <code>caption::{frame_piece, capsule_parts, capsule_row}</code>; <code>DialogStyle::{fill, capsule, frame, images}</code>, <code>FramePiece</code>, <code>Anchor</code>; <code>Ui::image</code></td>
+<td><code>app::history</code>, <code>content::screens</code>, <code>app::strategy</code>, <code>content::strategy</code>, <code>app::caption</code>, <code>content::skin</code>, <code>app::ui</code></td>
+<td>The history stack, the clock by screen and notice, message-box fills, capsules and frames (app 0.22.12).</td>
 </tr>
 <tr>
 <td><code>spritetable::{SpriteRow, parse, hot_offset, parse_index}</code>; <code>Content::sprite</code>; <code>tga::key_corner</code>; <code>button::{look, Look, Press, sprite_rect, latch}</code>; <code>Place</code>, <code>WidgetKind::Check</code>, <code>WidgetDef::{sprite, states, place, fire_on_press, repeat, group, selected}</code>; <code>StrategyScreen::{presses, radios, checks}</code>, <code>widget_rect</code>, <code>draw_widget_image</code></td>

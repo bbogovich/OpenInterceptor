@@ -8603,18 +8603,33 @@ and 1 hour, 6 hours, 1 day and 5 days per second.</p>
 <td>3</td>
 <td>The speed Space toggles to from <code>on_event</code>.</td>
 </tr>
+<tr>
+<td><code>notices</code></td>
+<td><code>drop</code>, <code>keep</code>, <code>ask</code></td>
+<td><code>drop</code></td>
+<td>What a notice (a Report prompt) does to the speed (app 0.22.12): drop to <code>on_event</code>, keep it, or ask with two buttons — the first keeps it, the second drops to <code>on_event</code>. Battles, offers and choices still drop it.</td>
+</tr>
+<tr>
+<td><code>notice_buttons</code></td>
+<td>two captions</td>
+<td><code>[OK, "OK (slow)"]</code></td>
+<td>With <code>ask</code>: the Report's buttons (text or <code>@key</code>). <code>interceptor</code>: <code>[@orig.S_OK, @orig.S_OK5SECS]</code>, the original's "OK" and "OK (5 secs)" (RQ-S-18, <strong>verified</strong>: 0x46bdc4 → <code>SetSpeed(0)</code>).</td>
+</tr>
 </tbody>
 </table>
 <p>The screen-set action <code>speed(n)</code> picks speed <code>n</code> (<a href="../screens/#actions">Screen layouts</a>); the
 testbed layout shows one button per speed (<code>||</code>, <code>5s</code>, <code>30m</code>, <code>1d</code> …); the number keys pick the
 speeds after <code>on_event</code> (with a pause first, 1 is the first running speed). Errors:
 <code>clock.speeds: 'fast' is not a time per second (e.g. 5s, 1h, 1d)</code>; <code>clock.run: 7 is not one of
-the 3 speeds (0–2)</code> (the index is then clamped to the last speed).</p>
+the 3 speeds (0–2)</code> (the index is then clamped to the last speed); <code>clock.notices: 'x' is not drop,
+keep or ask</code>; <code>clock.notice_buttons: expected two captions [keep, slow]</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/strategy/campaign.yaml — the original's dial (verified)</span>
 <span class="nt">clock</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">speeds</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">30min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1h</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1d</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># six speeds and no pause</span>
 <span class="w">  </span><span class="nt">on_event</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                               </span><span class="c1"># events drop to 5 s per second</span>
 <span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">                                    </span><span class="c1"># Space: 30 min per second</span>
+<span class="w">  </span><span class="nt">notices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ask</span><span class="w">                              </span><span class="c1"># a Report offers OK and OK (5 secs)</span>
+<span class="w">  </span><span class="nt">notice_buttons</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"@orig.S_OK"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"@orig.S_OK5SECS"</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <p>The original's dial has six holes and no pause: its slowest speed is five times real time, and
 its "(5 secs)" buttons select it.</p>

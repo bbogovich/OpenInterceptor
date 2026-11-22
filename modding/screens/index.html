@@ -4936,6 +4936,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#history-and-the-clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History and the clock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6808,6 +6819,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#history-and-the-clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        History and the clock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7046,6 +7068,18 @@ in error messages and to replace it from a later pack); its <code>kind</code> sa
 <td>Drawn over the screen under it instead of on its own.</td>
 </tr>
 <tr>
+<td><code>clock</code></td>
+<td><code>run</code>, <code>pause</code></td>
+<td><code>run</code></td>
+<td>Whether the campaign clock runs while this screen is on top (app 0.22.12).</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td>whole number</td>
+<td>29</td>
+<td>On the first screen: how many screens Back remembers (app 0.22.12).</td>
+</tr>
+<tr>
 <td><code>widgets</code></td>
 <td>map name → widget</td>
 <td>none</td>
@@ -7256,11 +7290,19 @@ and kept; one that cannot be loaded is reported on standard error once
 <tbody>
 <tr>
 <td><code>open(&lt;screen&gt;)</code></td>
-<td>Shows that screen. A full screen closes any dialogs over the current one first; a dialog opens over it. The screen must exist (checked at load).</td>
+<td>Shows that screen and remembers this one for Back (<a href="#history-and-the-clock">History and the clock</a>). A full screen closes any dialogs over the current one first; a dialog opens over it. The screen must exist (checked at load).</td>
+</tr>
+<tr>
+<td><code>menu(&lt;screen&gt;)</code></td>
+<td>Since app 0.22.12: like <code>open</code>, but a run of menu switches remembers only the first screen left (the original's menu bar). Without a screen, <code>menu</code> returns to the main menu (below).</td>
+</tr>
+<tr>
+<td><code>replace(&lt;screen&gt;)</code></td>
+<td>Since app 0.22.12: switches without remembering this screen (radio-style switches between screens).</td>
 </tr>
 <tr>
 <td><code>back</code></td>
-<td>Closes the top screen or dialog, back to the one under it (not past the first).</td>
+<td>Closes the top dialog, else returns to the last remembered screen.</td>
 </tr>
 <tr>
 <td><code>speed(&lt;n&gt;)</code></td>
@@ -7503,6 +7545,27 @@ sprite widget's first and last state.</p>
 </ul>
 <p>A pack's own PNG buttons use <code>images: {up, down, disabled}</code>; the <code>default</code> campaign has no screen
 set yet.</p>
+<h3 id="history-and-the-clock">History and the clock<a class="headerlink" href="#history-and-the-clock" title="Permanent link">&para;</a></h3>
+<p>Since app 0.22.12 (plan M2 #127, RQ-UI-15/16) a screen set navigates as the original does
+(Interceptor.exe 0x4b5bfe – 0x4b5e5b, <strong>verified</strong>):</p>
+<ul>
+<li><strong>The first screen is home.</strong> Opening it — from anywhere — clears the history.</li>
+<li><strong><code>open(x)</code> remembers</strong> the screen it leaves, unless that screen is already remembered or the
+  history is full (<code>history</code>, the original's 29). <code>menu(x)</code> remembers only the first of a run
+  of menu switches; <code>replace(x)</code> never remembers. <code>back</code> closes the top dialog, else returns to the
+  last remembered screen.</li>
+<li><strong>Dialogs</strong> (<code>dialog: true</code>) stack over the current screen and close when the screen changes;
+  they are not remembered.</li>
+<li><strong>The clock</strong> runs only while the top screen has <code>clock: run</code> (the default). The original runs
+  it on the CSD only: every other screen of <code>interceptor</code> has <code>clock: pause</code>, so leaving the
+  CSD stops time and returning starts it again at the same speed. Prompts (an interception, a
+  report …) always stop it while they are up. The testbed layout ignores <code>clock</code>.</li>
+</ul>
+<p><code>interceptor</code> since app 0.22.12: every screen with the art's red close button in its top-left
+corner has <code>back</code> there, a 22 px hot spot centred on (16, 16), <strong>derived</strong> from the art. The old
+<code>[596, 440]</code> hot spot was wrong. The UFOpedia's art has no close button and its exit control is
+not recovered, so it keeps the old hot spot. Purchase and Manufacture switch between each other with
+<code>replace</code>, as the original's category radios do.</p>
 <h3 id="the-testbed-layout-and-screen">The testbed layout and <code>--screen</code><a class="headerlink" href="#the-testbed-layout-and-screen" title="Permanent link">&para;</a></h3>
 <p><strong>Ctrl+T</strong> switches between the screen set and the testbed layout at any time; a <code>testbed</code>
 button does the same one way. A campaign without <code>strategy_screen</code> uses the testbed layout only.

@@ -6961,6 +6961,12 @@ one looks like a bug.</p>
 <td>Everything verified is data (<code>modules</code> with <code>at</code>/<code>facing</code>/<code>chance</code>, <code>hard_points</code>, <code>minefields</code>); the derived parts are one value or one key away from the original once traced.</td>
 <td>4 (A4; #114)</td>
 </tr>
+<tr>
+<td>DEV-089</td>
+<td><strong>Message boxes are partly the original's.</strong> Built (<strong>verified</strong>): the fill surface, capsule buttons and their captions, the history stack, the clock running on the CSD only, and "OK (5 secs)". Not built: the three frame kits (which piece goes where is not recovered, so <code>interceptor</code> boxes have no frame), MsgBoxOpen/capsule sounds (#126), per-dialog sizes and the frame-style-3 caption at top + 54. The fill's tiling, the capsules' row and widths, the box's width and the close buttons' hot spots are <strong>derived</strong>. Every notice asks, where the original asks only for its queued-event dialogs. The UFOpedia's exit is not recovered.</td>
+<td>The frame layout needs more reading of MsgBox.cpp (0x51941f, 0x518604; RE #136).</td>
+<td>M2 (#127)</td>
+</tr>
 </tbody>
 </table>
 
