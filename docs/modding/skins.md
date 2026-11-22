@@ -317,9 +317,10 @@ With kits the box follows the exe step by step (§4.2):
 
 - **Content size.** Width = max(325, caption, body), 100 tall. A body wider than 425 wraps: the
   box is 425 wide and (line height + 2) × body width / 425 taller, at most 400 tall.
-- **Width from the buttons.** The one-row sum is Σ(button width + 10). Past 465 the content
-  width becomes the sum − 100 (**derived** from the RE's one worked example, 550 → 450); if the box
-  is narrower than the sum, it becomes the sum − 40.
+- **Width from the buttons.** The one-row sum is Σ(10 + button width). When adding a button
+  makes it pass 465, the content width becomes the width of the buttons that fit + 10 (§14.1,
+  **verified**; five 100 px buttons give 450); if the box is narrower than the sum, it becomes the
+  sum − 40.
 - **Side edges.** The style kit's side edges are added, the box is centred on (320, 240) and
   pushed on screen. The style's change and the bands come after the push, so a wide box can
   overhang the screen, as in the exe.
@@ -355,8 +356,9 @@ With kits, `width`, `title_y`, `body_top`, `button_step` and `frame` are not use
 **Derived:**
 
 - Only style 3 draws a caption: the exe's "title" routine draws the message itself.
-- A row of three or more buttons is centred, 10 px apart. The exe positions only rows of one or
-  two buttons and leaves larger rows unplaced (§4.9); its dialogs use `~` buttons instead.
+- A row of three or more buttons is centred, 10 px apart: an engine choice. The exe positions
+  only rows of one or two buttons and leaves larger rows unplaced (§4.9, §14.1); its dialogs use
+  `~` buttons instead.
 
 A mod can still build its own frame from pieces with `frame`. `--check` loads every dialog image.
 
