@@ -382,6 +382,12 @@ the original's positions (the base's each with 75 − 5 × level %), the alien b
 point (1,400, 124 m) and its two minefields. `default`: unchanged. Manual case MT-4-69; **519**
 `#[test]` functions. Not yet: the tendrils (positions not traced), turret fire control (#115).
 
+**#114 follow-up** (app NEXT; `notes/re/flight` §8.4 and `notes/re/unknowns-2026-11.md` §9): hard points
+take what reaches them whole (no overflow to the hull), with `hits: direct | any` and an `explosion`;
+the alien base is destroyed by hull or all four points, its tendrils placed at the model's attachment
+points 1 – 3 (derived) with a 100 m radius (assumed); mine rings start from the unit X vector as the
+original's; mines with `range: 0` go off on contact (the alien base's).
+
 ## Stage 5 progress
 
 App **0.10.0** (`485d01e`, the story core), **0.10.1** (`66d0b5a`, the default campaign's serial),
