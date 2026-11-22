@@ -655,3 +655,14 @@ it with `text::draw_text` / `Ui::draw_glyphs` in the widget's sheet font. The la
 pixels scaled by the text scale). Star-class icons are textures loaded once per frame through the
 keyed image cache (`star_icons`). Tests: `app::maplabel::tests`, `content::content tests`
 (`list_section`), `campaign::tests::readouts_never_show_negative_zero`.
+
+### Report graphs (`app::graph`)
+
+`graph::layout(rect, margin, values, lines)` places a status report's line graph in design
+pixels — the plot area, the grid lines with their values (a 1 / 2 / 5 step from `nice_step`), the
+last 16 months' x positions and the series' points — and `activity_class(total, months)` picks an
+activity map's colour class. `StrategyScreen::draw_graph` and `draw_activity_map` draw them from
+`Campaign::history` (`MonthRecord`s closed each month), `this_month` and `activity` (per system,
+`count_activity`), which the campaign layer fills and saves. Tests: `app::graph::tests`,
+`campaign::tests` (records, `roll_count`), `campaign::save::tests` (the history round-trips).
+

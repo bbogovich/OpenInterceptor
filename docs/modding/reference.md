@@ -709,7 +709,7 @@ keeps its shape (one scale factor, centred) instead of stretching.
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info`, `check` (app 0.22.10), `anim` (app 0.22.15) | `image` | What it is; another kind is a load error. |
+| `kind` | `image`, `button`, `value`, `text`, `list`, `map`, `info`, `check` (app 0.22.10), `anim` (app 0.22.15), `graph` (app NEXT) | `image` | What it is; another kind is a load error. |
 | `rect` | 4 numbers | *required* | x, y, w, h in the screen's design space. |
 | `image` | asset | none | An `image`'s picture (a button's `up` image). |
 | `images` | `{up, down, hover, disabled}` | none | A button's state images; a missing state draws `up`. |
@@ -744,7 +744,8 @@ keeps its shape (one scale factor, centred) instead of stretching.
 | `with_clock` | bool | `false` | An `anim` that moves only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport; `round` clips it to the circle inside the rectangle. |
 | `labels` | map | none | A map's hover labels, the original's way (app 0.22.17; [Screens › Map labels](screens.md#map-labels)). |
-| `slots`, `slot_size`, `slot_font` | list, `[w, h]`, name | none | A compact list's sockets on the art (app 0.22.17; [Widget keys](screens.md#widget-keys)). |
+| `slots`, `slot_size`, `slot_icons`, `slot_unusable`, `slot_selected` | list, `[w, h]`, map, asset, asset | none | A hangar list's sockets on the art, icons only (app NEXT; [Widget keys](screens.md#widget-keys)). |
+| `zoom_levels`, `months`, `legend` | lists | none | A map's fixed zoom levels; a graph's month names and legend (app NEXT; [Screens](screens.md#report-graphs)). |
 
 ### `console`
 
