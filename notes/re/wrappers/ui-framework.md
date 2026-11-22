@@ -117,7 +117,8 @@ An animation holds an id list (0x46d548(count, ids)) and a position (0x46ddce(x,
 frame it advances when now ≥ next, next = now + interval (`+0x28`, ticks). CSD: the status lamp
 (618, 453) cycles 5060-5064 (an alternate set 5065-5069 exists, use unknown) every **6 ticks
 (100 ms)**; the four map-corner lamps cycle SpritesDLL 1900-1909 at (59,70), (348,70),
-(348,354), (59,354) — their interval is **unknown** (0 = every frame unless set elsewhere).
+(348,354), (59,354) — one frame every **4 ticks (≈ 67 ms)**, looping (0.67 s per cycle; `0x440240`, see
+`../unknowns-2026-11.md` §1.4).
 
 ### 2.6 Interface sounds — verified
 
@@ -244,15 +245,15 @@ resumes it on close (0x4120b7 / 0x41207f, two calls each in MsgBox.cpp, derived 
   S_CSD_RESEARCH, S_CSD_STATUSREPORTS, S_CSD_DATABANK, S_CSD_EQUIPSHIP, S_CSD_EQUIPPERS), panel
   close S_CSD_CLOSEPANEL, the six report buttons (S_CSD_INCOME_REPORT … S_CSD_PLAYER_REPORT),
   the nine UFOpedia buttons DATABANK_CATEGORY1-9.
-* Map icons: sprite group 1 rows 434-563 keep their source format (keep_format = 1),
-  resources 17030+ (derived: the per-kind icon set). **Unknown:** icon per location kind,
-  label placement, zoom levels and the view/recentre maths (CSD.cpp 0x4431ad, 0x447a14,
-  0x44c240 not yet read); a removed zoom level shows a fixed message (DrawTextRect, 23011).
+* Map icons, labels, zoom levels, the world↔screen transform and the map counters: **settled** in
+  `../unknowns-2026-11.md` §1 (galaxy 60,000 units square; zoom 0 = 2.5 ly and 1 = 1.67 ly across the round
+  333 px window; star icons by class; hover-only labels in the 6 px font; a removed zoom level shows a
+  fixed message, DrawTextRect 23011).
 * Corner and status lamps: §2.5.
 
 ## 7. Still unknown
 
-Corner-lamp interval; map icon per kind, label layout, zoom/recentre maths; the clock rate per
+The clock rate per
 speed; which tooltips are disabled by an option (window flag +0xd7); the alternate status-lamp
 set 5065-5069; exact glyph trim (assumed right/bottom trim of the key colour); the 23006-23008
 roles; the per-dialog caption font (+0x614) for each dialog type.

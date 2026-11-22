@@ -336,8 +336,8 @@ S per hull class (agent factory `0x5a3152`, jump table by hull class; then `0x58
 
 So the difficulty term only matters for AlienType1–3 (every fighter class is at the 500 cap).
 
-**Look-ahead** +0x144 (`0x5863dd`, from pilot record +0xa0 via `0x410a56`, called
-"temperament" here; its meaning is unknown): 0 → 225 m, 2 → 100 m, anything else (and no pilot) → 250 m. `0x587065` / `0x58f33b`
+**Look-ahead** +0x144 (`0x5863dd`, from pilot record **+0x28** via `0x410a56` — the pilot **grade** 0–4,
+`../unknowns-2026-11.md` §5; earlier called "temperament"): 0 → 225 m, 2 → 100 m, anything else (and no pilot) → 250 m. `0x587065` / `0x58f33b`
 cast `XCGENLineOfSight` from the ship along its **velocity** for that distance and steer and slow
 when it hits something.
 
@@ -499,15 +499,16 @@ PassiveCloaking expiry). Off-screen battles (§13) and how results reach the cam
 
 Still open:
 
-* AI: what the pilot "temperament" field (pilot record +0xa0) means. It is read only by `0x58645f`
+* Settled (`../unknowns-2026-11.md`): the "temperament" field is the pilot grade, pilot +0x28 (§5); the
+  gimballed turret aim (§6); outpost/OPP pools (§8).
+* AI: (was) what the pilot "temperament" field means. It is read only by `0x58645f`
   (look-ahead) and by two strategy routines (`0x5b35a9`, `0x5b4262`), and no pilot screen labels
-  it. Whether alien ships carry pilot records: the AlienType3 agent reads one when it exists, with
+  it — now settled as the pilot grade. Whether alien ships carry pilot records: the AlienType3 agent reads one when it exists, with
   a fallback when it does not (§8.8), so this is still not settled. Whether the AI missile-lock
   comparison (§5.1 step 6) is really inverted.
 * Missiles: whether xcgen drag applies to missile objects, and the final use of missile
   `HitPoints` beyond point defence.
-* Stations: whether destroying a hub also destroys its modules (no cascade code was found). The
-  aim solution of the gimballed turret kinds 1–3 (`0x59878d`). The per-difficulty interval
+* Stations: whether destroying a hub also destroys its modules (no cascade code was found). The per-difficulty interval
   formulas of the capital-ship turrets (§8.8).
 * Auto-resolve: what `0x406a1a(side, −1500 / −1000)` stands for after a successful defence of an
   outpost or OPP (§13.5). It is applied to the side's money field (+0xd0 + 4·side) on `0x6c7a70`
@@ -535,8 +536,9 @@ addresses. `0x41f9fe` chooses the chart by side and subtype:
 | 0xa | 1 / 2 / other | PirateArmsHP / PirateRaiderHP / PirateBaseHP |
 | other | 3 / 4 / other | ScienceHP / NovaScienceHP / XCOMBaseHP |
 
-The Outpost and OPP charts are never selected. Outposts and OPPs keep their own HP in other
-managers (§8.3).
+The Outpost and OPP charts are never selected here, but `0x5f0bc1` copies their **HP1 and SD** into the
+outpost manager's table at 0x73f3f8 (HP max and shield max of outposts and OPPs; `../unknowns-2026-11.md`
+§8). Outposts and OPPs keep their own HP in other managers (§8.3).
 
 ### 8.2 Station shields: one pool
 
@@ -554,6 +556,9 @@ The INI has no key for these capacities. Only one shield module counts; generato
 * **Recharge.** `0x45a17a`, called from the 1 s systems tick `0x45a3cf`, adds `min(max − pool, 2)`,
   so **2 points per second**. A quirk of the original: the maximum is read through the rt at
   `0x684720` (the mission's station, derived), not through the station being recharged.
+* **Generator destroyed:** the pool **drops to 0** — module removal `0x4244ff` (reached from module damage
+  `0x4204cd` when the module's HP hits 0) clears slot +0xc4 and sets the pool +0x38 = 0; the recharge has no
+  `max > 0` test but adds nothing when `max ≤ pool`. A newly added generator starts full.
 * **Outposts and OPPs.** rt types 4 and 5 recharge their own pools in the same way (+2 per tick,
   `0x427d0b` / `0x427a7c` and `0x427d5d` / `0x427b21`).
 
@@ -654,7 +659,9 @@ accuracy % +0x2c (clamped 1–99), kind +0x28 (0 = fixed beam, 1–3 = gimballed
 
 It uses **no energy and no charge**, and its damage is the beam's `Damage`. The gimballed kinds
 (`0x5992b9` / `0x599d0a` / `0x59970f`) slew two axes by at most 0x4000 angle units per frame and
-fire alternately from two barrels (±1.2 m) once aligned.
+fire alternately from two barrels (±1.2 m) once aligned. Their aim leads the target at a fixed 2,000 m/s,
+they apply **no accuracy error**, and they accept only targets in front of the mount
+(`../unknowns-2026-11.md` §6).
 
 **Missile turret** (class `0x59abcb`, per frame `0x59afa7`). Range 5,000 m, arc 85°, a 2,000 ms
 value at +0x2c (lock time, derived), interval `5000 − 25d + rand[0, 50)` ms, a count at +0x34

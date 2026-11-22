@@ -497,6 +497,32 @@ Priority: **P1** = changes how often battles are won or lost, **P2** = visible i
 
 ---
 
+### RQ-C-22 Gimballed turrets aim perfectly (P2)
+
+* **Original:** gimballed station turrets (kinds 1–3) lead the target at a fixed 2,000 m/s, slew up to
+  90° per frame, fire only when aligned and only at targets in front of the mount, and apply **no
+  accuracy error**; fixed turrets keep their accuracy roll (`../unknowns-2026-11.md` §6).
+* **Pack key:** `turret.aim: {lead_speed: 2000, slew_deg_per_frame: 90, accuracy: none|roll}`.
+* **Default:** same for the default campaign's turrets.
+* **Test:** U — aim point for a moving synthetic target; no error for gimballed kinds.
+
+### RQ-C-23 Pilot grade (P2)
+
+* **Original:** pilot +0x28 is a grade 0–4 (X-COM 0, pirates 1, outpost freighter crews 2, aliens 1–4 by
+  hull and month); it adds a generation bonus to stats and sets the AI look-ahead (225/100/250 m) and
+  sprint (`../unknowns-2026-11.md` §5).
+* **Pack key:** `pilots.grades: {<n>: {stat_bonus, lookahead_m, sprint}}`, hull `pilot_grade`.
+* **Default:** same.
+* **Test:** U — look-ahead per grade; generated stats include the bonus.
+
+### RQ-C-24 Station shield pool on generator loss; outpost/OPP pools (P1) — #113
+
+* **Original:** destroying the shield-generator module sets the station's pool to 0; a new generator
+  starts full; outposts and OPPs recharge +2/s up to their chart's SD with HP max = HP1 (§8).
+* **Pack key:** `stations.shield_on_generator_loss: drop`, outpost/OPP `hp`, `shield` from the charts.
+* **Default:** same.
+* **Test:** U — pool after generator destruction; outpost pool recharge cap.
+
 ## Order by player impact
 
 1. RQ-C-01 (station hull).

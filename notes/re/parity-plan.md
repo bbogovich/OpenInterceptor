@@ -72,6 +72,12 @@ different layers and can run in parallel.
 
 ### Still unknown (more RE or reference play)
 
-CSD map icons/labels/zoom and lamp interval (RQ-UI-17); delivery travel and interception, per-seller stock,
-ship travel speed (RQ-S-19); alien raid planner and base growth; MissionScores indices; pilot "temperament";
-gimballed turret aim; the save format beyond one file.
+Settled on 2026-11-22 (#136) in [`unknowns-2026-11.md`](unknowns-2026-11.md): the CSD map (RQ-UI-18…22),
+deliveries and strategic speed (RQ-S-21…23), the alien raid planner and base growth (RQ-S-24…26), the
+mission rating (RQ-S-27), the pilot "temperament" = pilot grade (RQ-C-23), gimballed turret aim (RQ-C-22),
+the save layout (RQ-S-28), station/outpost shield pools (RQ-C-24, for #113).
+
+What truly remains: `MissionScores` counters 36–90 and 95–104 (objective events) and the debrief field
++0x30c; raid fleet sizes per target type and difficulty (two jump tables in `0x573998`); the alien base
+variant A/B flag; alien ship build time; Doomsday piece costs; the two small ints per outpost/OPP chart;
+the byte layout inside each save chunk (not needed for our own format).

@@ -198,8 +198,8 @@ value or the feature off. Every new key is documented on the Modding pages in th
 * **Original:** purchases travel on the seller outpost's freighter (a flight plan, so interceptable);
   arrival checks cargo/personnel/hangar space; ships without a bay are returned with a refund (§2.6).
 * **Engine:** `delivery: 72h` (DERIVED) with no route.
-* **Gap:** travel time and interception still need RE (README §8).
-* **Test:** after RE: a delivery to a full hangar refunds the ship.
+* **Settled:** see RQ-S-21…23 (`../unknowns-2026-11.md` §2).
+* **Test:** a delivery to a full hangar refunds the ship.
 
 ## RQ-S-20 Save file layout (D) — none (#31 closed)
 
@@ -207,8 +207,79 @@ value or the feature off. Every new key is documented on the Modding pages in th
 * **Engine:** its own format; importing original saves is not planned.
 * **Use:** reference only, unless a save importer is requested.
 
+## RQ-S-21 Shipment queue carried by outpost freighters (D) — #137
+
+* **Original:** purchases, transfers, hires and manufacturing output become shipment records (kind,
+  id, quantity, load-at side/outpost/base, destination). Paid at order; **no stock or restock**.
+  Idle player freighters at an outpost/base load matching records into **100 units** (a ship fills a
+  freighter; pilots 1; items size × qty, split when too big), then fly to the destination; 30 min
+  unloading and 1 h refuelling per stop (`../unknowns-2026-11.md` §2.1–2.2).
+* **Pack key:** `logistics: {freighter_capacity: 100, unload_s: 1800, refuel_s: 3600, stock: none}`.
+* **Default:** same rules with the default campaign's freighter hull.
+* **Test:** U — loading order, splitting, one ship per trip; arrival after distance ÷ speed.
+
+## RQ-S-22 Strategic speed by mass (D) — #137
+
+* **Original:** map speed (units/s) by ship mass bracket 0.1875 … 0.0375, × 1.15 / × 1.4 for engine
+  types 2 / 3; a fleet moves at its slowest ship × a 0–1 factor; mass = hull base + armour + shield +
+  missiles + specials (§2.3). Freighters ≈ 1.85 days per light year.
+* **Pack key:** hull `mass`, `strategy.speed_by_mass: [[7001, 0.1875], …]`, engine `strategic_factor`.
+* **Default:** same table; default hulls get masses.
+* **Test:** U — speed for synthetic masses and engines; fleet speed = min.
+
+## RQ-S-23 Alien harassment of plans near alien outposts (D) — #135
+
+* **Original:** every (6 − d) h each X-COM plan in space within 4,000 units of an alien outpost (2,000
+  of a base) is attacked with chance 50 + 5d % (§2.4).
+* **Pack key:** `aliens.harass: {every_h: "6-d", outpost_radius: 4000, base_radius: 2000, chance: "50+5d"}`.
+* **Default:** same for the rival faction.
+* **Test:** U — seeded check fires only inside the radius.
+
+## RQ-S-24 Alien raid timing and target choice (D) — #135
+
+* **Original:** next raid after rand[9,12) … [6,9) days by month; target = X-COM base (5/25/40 + 5d %
+  by month), else richest-or-random outpost (and possibly one OPP), else mission 3; fleet from the
+  nearest alien base with ≥ 3 queued ships, escorts by tech level, speed factor 0.75–0.95 (§3.1–3.3).
+* **Pack key:** `aliens.raids: {interval_days_by_month, target_weights, escort_rules}`.
+* **Default:** a simpler rival using the same keys.
+* **Test:** U — seeded target choice and interval per month.
+
+## RQ-S-25 Alien expansion: outposts and bases (D) — #135
+
+* **Original:** every 25 days 0–3 new alien outposts (by month), every 20 h a possible new alien base
+  (< 8 bases and the four triggers), re-found a base when none is left (§3.1).
+* **Pack key:** `aliens.expansion: {outposts_every_days: 25, base_check_h: 20, max_bases: 8}`.
+* **Default:** same for the rival.
+* **Test:** U — seeded counts per month.
+
+## RQ-S-26 Alien base growth: ship queue and modules (D) — #135
+
+* **Original:** each alien base queues one ship every 6 h (class by tech level, research progress,
+  class shares and month), builds a module every 40–51 h from a hard-coded tree when funds allow,
+  sends a 3-ship scout every 5 days; `Think.ini` Priority/Reserves are unused, DCount only advances a
+  stage nothing reads (§3.4).
+* **Pack key:** `aliens.base_growth: {queue_every_h: 6, build_every_h: [40, 51], module_order: [...]}`.
+* **Default:** same structure with the default rival's modules.
+* **Test:** U — seeded queue choice for given shares and tech level.
+
+## RQ-S-27 Mission rating from event counters (D) — #134
+
+* **Original:** rating 1–5 from win/loss, craft destroyed (Σ 2…8: +1 / +0.5 / −0.5), X-COM craft lost
+  (−0.5), stations/outposts/OPPs destroyed (+1/+0.5/+0.5), and other terms; thresholds 3 / 1 / −1 / −2
+  (`../unknowns-2026-11.md` §4). Score = Σ counter × MissionScores.
+* **Pack key:** `debrief.rating: [{counters: [...], rule, value}]`, `mission_scores: {<event>: n}`.
+* **Default:** same rules on the engine's events.
+* **Test:** U — rating for synthetic counter sets.
+
+## RQ-S-28 Save game: tagged chunks (D) — #137
+
+* **Original:** header (magic, check, version, name) + tagged, versioned chunks per subsystem (§7).
+* **Engine:** own format; adopt the shape: a small header and one versioned section per subsystem
+  (`player`, `ships`, `pilots`, `clock`, `history`, `shipments`, `universe`, `bases`, `outposts`,
+  `ai`, `flight_plans`), each refusing to load on a version mismatch.
+* **Test:** U — round trip; a changed section version is rejected with a message.
+
 ---
 
-Still needed from RE before the remaining features can be specified: `MissionScores` index meanings, the
-alien tactical planner (raids, base attacks), delivery timing, strategic ship speed, Doomsday piece costs,
-recruiting and promotion, module limits and dismantling (README §8).
+Still needed from RE: `MissionScores` counters 36–90 and 95–104, raid fleet sizes per target type, Doomsday
+piece costs, recruiting and promotion, module limits and dismantling (README §8, `../unknowns-2026-11.md` §9).
