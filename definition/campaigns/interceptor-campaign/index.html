@@ -6672,8 +6672,9 @@ silently wrong.</p>
 <div class="admonition note">
 <p class="admonition-title">As built (app 0.8.0)</p>
 <p>The table is generated from the player's executable by <code>tools/interceptor_strategy.py</code> into
-<code>packs/interceptor/strategy/references.yaml</code> (<em>derived</em>: the executable's 12-byte entries of
-<code>R_</code> name pointer, string id and tech id). <code>--check</code> checks that every research id the table
+<code>packs/interceptor/strategy/references.yaml</code> (<em>verified</em> since app 0.22.3: the numbered topic
+list in <code>GameSettings.ini</code>, which the executable indexes its topics by; before that a databank
+table, off by one). <code>--check</code> checks that every research id the table
 gives is a defined topic once a condition uses it, but it does <strong>not</strong> compare the table with
 the original file again: a number the table does not list is left out of the condition
 silently (by design for the alien ids 75 and up). Research <code>unlocks</code> are not authored; items,

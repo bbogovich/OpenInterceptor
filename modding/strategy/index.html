@@ -9423,12 +9423,15 @@ own <code>GameSettings.ini</code> and <code>Interceptor.exe</code>; the pack hol
 <span class="w">    </span>&gt;<span class="w"> </span>packs/interceptor/strategy/references.yaml
 </code></pre></div>
 <ul>
-<li>The tech-id table comes from the executable, which keeps it as 12-byte entries of a pointer
-  to an <code>R_</code> section name, a string id and the tech id; the tool finds the run of entries whose
-  pointers lead to <code>R_</code> names. <em>Derived</em> (the layout is inferred, not documented). With it, 67
-  of the 69 <code>TechRequired</code> values resolve to topics; eight <code>Prereq</code> links point to a topic of a
-  higher <code>Level</code>; ids 75 and up (alien craft and installations) are not in it and are left out
-  of conditions.</li>
+<li>The tech-id numbering is the numbered topic list in a comment of the player's
+  <code>GameSettings.ini</code> (<code>00 ACCUMULATOR_SHIELDS</code> … <code>73 VECTOR_CONTROL_THRUSTERS</code>): the executable
+  indexes its topic records by it and its loader is called with that index (<em>verified</em> from the
+  executable, app 0.22.3). A numbered name maps to the <code>R_&lt;NAME&gt;</code> section; numbers without a
+  section (the minefield placeholders 21/32/41, the alien craft and modules from 74, and 127,
+  "special": an artefact must be recovered) are left out of conditions. With it, 4 <code>Prereq</code>
+  links point to a topic of a higher <code>Level</code>, as in the original's own data. Up to app 0.22.2
+  the tool read a 12-byte table in the executable whose third field is a databank entry number,
+  not the tech id; that shifted every id from 4 on by one and made 16 topics unreachable.</li>
 <li><code>packs/interceptor/strategy/campaign.yaml</code> is written by hand on top: a generated <strong>Frontier</strong>
   map, <strong>downlink</strong> research (<code>research_model.rate</code> from the three downlink module types,
   switching loses progress), hulls inheriting <code>Ship_IntType1</code> – <code>Ship_IntType3</code>, missile
