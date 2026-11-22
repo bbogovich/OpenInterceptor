@@ -291,6 +291,10 @@ pub struct ClockDef {
     pub run: usize,
     /// What a notice (a Report prompt) does to the speed (RQ-S-18).
     pub notices: NoticeClock,
+    /// The speed the number key 1 picks (2 the next …). Default: the one after
+    /// `on_event` (with a pause first, 1 is the first running speed); the original's
+    /// keys 1-6 pick its six speeds from the first (`first_key: 0`).
+    pub first_key: usize,
     /// With `NoticeClock::Ask`: the Report's two buttons — keep the speed, or drop it
     /// to `on_event` (the original: "OK" and "OK (5 secs)").
     pub notice_buttons: [String; 2],
@@ -318,6 +322,7 @@ impl Default for ClockDef {
             run: 3,
             notices: NoticeClock::Drop,
             notice_buttons: ["OK".into(), "OK (slow)".into()],
+            first_key: 1,
         }
     }
 }
@@ -374,7 +379,8 @@ impl ClockDef {
             [ok, slow] => notice_buttons = [ok.clone(), slow.clone()],
             _ => errors.push("clock.notice_buttons: expected two captions [keep, slow]".into()),
         }
-        ClockDef { speeds, labels, on_event, run, notices, notice_buttons }
+        let first_key = index("first_key", on_event + 1, errors);
+        ClockDef { speeds, labels, on_event, run, notices, notice_buttons, first_key }
     }
 
     /// A short button caption for a rate of `hours` per second ("||", "5s", "30m", "1d").
@@ -1491,6 +1497,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("run", Ty::Num, "the speed the Space key toggles to"),
                 f("notices", Ty::Enum(&["drop", "keep", "ask"]), "what a notice does to the speed: drop to on_event (default), keep it, or ask with two buttons"),
                 f("notice_buttons", Ty::List(Box::new(Ty::Text)), "with ask: the two captions [keep the speed, drop to on_event]"),
+                f("first_key", Ty::Num, "the speed the number key 1 picks (default: the one after on_event)"),
             ]),
             "the time controls (default: a pause, then 1 h, 6 h, 1 d and 5 d per second)",
         ),
@@ -1536,6 +1543,8 @@ pub(crate) mod tests {
         assert_eq!(ClockDef::short(c.speeds[3]), "30m");
         assert_eq!(ClockDef::short(0.0), "||");
         assert_eq!(c.notices, NoticeClock::Drop, "notices drop the speed unless told otherwise");
+        assert_eq!(c.first_key, 1, "key 1: the speed after on_event");
+        assert_eq!(ClockDef::parse(Some(&g("speeds: [5s, 1min]\nfirst_key: 0")), &mut errors).first_key, 0);
         let a = ClockDef::parse(Some(&g("notices: ask\nnotice_buttons: [Fine, Slow down]")), &mut errors);
         assert_eq!((a.notices, a.notice_buttons[1].as_str()), (NoticeClock::Ask, "Slow down"));
         let mut e2 = Vec::new();

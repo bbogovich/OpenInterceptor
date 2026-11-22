@@ -29,6 +29,7 @@
 
 use super::button;
 use super::caption;
+use super::floater;
 use super::history::History;
 use super::listbox;
 use super::text;
@@ -273,6 +274,12 @@ pub struct StrategyScreen {
     radios: std::collections::HashMap<(usize, String), String>,
     /// Check rows that are on, by (screen, widget) index.
     checks: std::collections::HashMap<(usize, usize), bool>,
+    /// The hover help box that is open, by (screen, widget) index.
+    floater: floater::Floater<(usize, usize)>,
+    /// Real seconds the campaign clock has run (the clock-driven animations).
+    clock_seconds: f64,
+    /// A prompt was up last frame (to play the box's opening sound once).
+    prompt_up: bool,
     /// Drawing over art: panels are not framed (the art frames them).
     art: bool,
     /// The map is clipped to a circle.
@@ -440,6 +447,9 @@ impl StrategyScreen {
             presses: Default::default(),
             radios: Default::default(),
             checks: Default::default(),
+            floater: Default::default(),
+            clock_seconds: 0.0,
+            prompt_up: false,
             art: false,
             map_round: false,
             minimap: false,
@@ -1074,7 +1084,7 @@ impl StrategyScreen {
     fn prompts(&mut self, ctx: &AppContext, def: &StrategyDef, input: &Input) -> Option<Next> {
         let ui = &ctx.ui;
         if let Some((title, text)) = self.card.clone() {
-            if widgets::modal(ui, input, &title, &text, &["Continue"]).is_some() || input.clicked {
+            if ask(ctx, input, &title, &text, &["Continue"]).is_some() || input.clicked {
                 self.card = None;
             }
             return Some(Next::Stay);
@@ -1092,7 +1102,7 @@ impl StrategyScreen {
                 "{name} is in range. {} of your craft can engage. Fly the battle yourself, or break off and let it pass.",
                 party.len()
             );
-            match widgets::modal(ui, input, "Interception", &body, &["Fly the battle", "Auto-resolve", "Break off"]) {
+            match ask(ctx, input, "Interception", &body, &["Fly the battle", "Auto-resolve", "Break off"]) {
                 Some(1) => {
                     // Fought without the player: the odds from both sides' strength, the
                     // mission's own outcome actions for the result.
@@ -1204,7 +1214,7 @@ impl StrategyScreen {
             let keys = [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4, KeyCode::Key5];
             let typed = keys.iter().take(labels.len()).position(|k| is_key_pressed(*k));
             let no_keys = Input { enter: false, escape: false, ..*input };
-            if let Some(k) = widgets::modal(ui, &no_keys, "A decision", "Choose:", &labels).or(typed) {
+            if let Some(k) = ask(ctx, &no_keys, "A decision", "Choose:", &labels).or(typed) {
                 self.choice = None;
                 for e in self.campaign.choose(def, ev, k) {
                     if let crate::campaign::Event::Ending { ending } = e {
@@ -1217,7 +1227,7 @@ impl StrategyScreen {
         if let Some(m) = self.offer.clone() {
             let name =
                 ctx.content.rules.missions.iter().find(|x| x.id == m).map(|x| x.name.clone()).unwrap_or(m.clone());
-            match widgets::modal(ui, input, "Mission offered", &name, &["Fly it", "Decline"]) {
+            match ask(ctx, input, "Mission offered", &name, &["Fly it", "Decline"]) {
                 Some(0) => {
                     self.offer = None;
                     match self.ready_craft() {
@@ -1235,7 +1245,7 @@ impl StrategyScreen {
         }
         if let Some(v) = self.convoy {
             let body = "A supply convoy is under attack. Fly its escort, or let it fight through on its own.";
-            match widgets::modal(ui, input, "Convoy ambushed", body, &["Fly the escort", "Let it fight"]) {
+            match ask(ctx, input, "Convoy ambushed", body, &["Fly the escort", "Let it fight"]) {
                 Some(0) => {
                     self.convoy = None;
                     let mission = def.logistics.as_ref().and_then(|l| l.ambush_mission.clone());
@@ -1265,7 +1275,7 @@ impl StrategyScreen {
                 .unwrap_or_default();
             let body =
                 format!("The survey ship at {at} is under attack. Fly its escort, or let it try to get away alone.");
-            match widgets::modal(ui, input, "Survey ship attacked", &body, &["Fly the escort", "Let it be"]) {
+            match ask(ctx, input, "Survey ship attacked", &body, &["Fly the escort", "Let it be"]) {
                 Some(0) => {
                     self.survey = None;
                     let mission = def.logistics.as_ref().and_then(|l| l.survey_mission.clone());
@@ -1296,7 +1306,7 @@ impl StrategyScreen {
                 .unwrap_or_default();
             let mission = def.logistics.as_ref().and_then(|l| l.strikes.as_ref()).and_then(|s| s.mission.clone());
             let body = format!("Enemy craft are striking the {what} under construction. Fly its defence, or let the strike set the work back.");
-            match widgets::modal(ui, input, "Construction under attack", &body, &["Fly the defence", "Let it be"]) {
+            match ask(ctx, input, "Construction under attack", &body, &["Fly the defence", "Let it be"]) {
                 Some(0) => {
                     self.strike = None;
                     match (self.ready_craft(), mission) {
@@ -1320,8 +1330,8 @@ impl StrategyScreen {
             return Some(Next::Stay);
         }
         if self.saving {
-            match widgets::modal(
-                ui,
+            match ask(
+                ctx,
                 input,
                 "Save game",
                 "Choose a slot. (F5 and leaving the map save automatically.)",
@@ -1344,13 +1354,13 @@ impl StrategyScreen {
             // to the slowest (its "OK (5 secs)"). Captions may be text keys.
             let clock = &def.clock;
             let caption = |t: &str| ctx.content.text.resolve(t).unwrap_or_else(|k| k);
-            let ask = clock.notices == NoticeClock::Ask;
+            let asks = clock.notices == NoticeClock::Ask;
             let labels: Vec<String> =
-                if ask { clock.notice_buttons.iter().map(|t| caption(t)).collect() } else { vec!["OK".into()] };
+                if asks { clock.notice_buttons.iter().map(|t| caption(t)).collect() } else { vec!["OK".into()] };
             let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
-            if let Some(k) = widgets::modal(ui, input, "Report", &b, &refs) {
+            if let Some(k) = ask(ctx, input, "Report", &b, &refs) {
                 self.banner = None;
-                if ask && k == 1 {
+                if asks && k == 1 {
                     self.speed = clock.on_event;
                 }
             }
@@ -1536,6 +1546,11 @@ impl StrategyScreen {
                 ui.text_in(t, map[0] + 12.0, map[1] + map[3] - 12.0, 18.0 * k, YELLOW);
             }
         }
+        // A prompt opening plays the box's sound once (the original's MsgBoxOpen).
+        if prompting && !self.prompt_up {
+            play_ui(ctx, None, ctx.ui.skin.sounds.box_open.as_deref());
+        }
+        self.prompt_up = prompting;
         if prompting {
             if let Some(n) = self.prompts(ctx, def, &input) {
                 return n;
@@ -1591,6 +1606,8 @@ impl StrategyScreen {
         // CSD) stops it while it is on top; the testbed layout never does.
         let held = self.screen_holds_clock && set_mode;
         if dt > 0.0 && !prompting && !held {
+            // The clock-driven animations (the dial's globe) move with it.
+            self.clock_seconds += get_frame_time().min(0.1) as f64;
             let mut video: Option<String> = None;
             let mut cutscene: Option<String> = None;
             for e in self.campaign.advance(def, dt) {
@@ -1665,11 +1682,11 @@ impl StrategyScreen {
             let clock = &def.clock;
             self.speed = if self.speed == clock.on_event { clock.run } else { clock.on_event };
         }
-        // The number keys pick the speeds after the event speed: with a pause first, 1 is
-        // the first running speed.
+        // The number keys pick speeds from `clock.first_key` (by default the one after the
+        // event speed: with a pause first, 1 is the first running speed).
         let keys = [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4, KeyCode::Key5, KeyCode::Key6];
         for (k, key) in keys.into_iter().enumerate() {
-            let speed = def.clock.on_event + k + 1;
+            let speed = def.clock.first_key + k;
             if is_key_pressed(key) && speed < def.clock.speeds.len() {
                 self.speed = speed;
             }
@@ -1886,6 +1903,8 @@ impl StrategyScreen {
                     );
                 }
             }
+            // The control under the cursor that has hover help (screen, widget, rect).
+            let mut hovered_tip: Option<(usize, usize, [f32; 4])> = None;
             for (wi, wd) in screen.items.iter().enumerate() {
                 let r = layout.rect(wd.rect);
                 let size = wd.size * layout.scale;
@@ -1899,6 +1918,14 @@ impl StrategyScreen {
                     };
                     ui.text_in(s, x, r[1] + r[3] * 0.5 + size * 0.35, size, colour);
                 };
+                // Hover help on any other widget (buttons register theirs with their
+                // placed rect below).
+                if wd.tip.is_some()
+                    && wd.kind != WidgetKind::Button
+                    && widgets::contains(layout.rect(wd.rect), input.mouse)
+                {
+                    hovered_tip = Some((si, wi, wd.rect));
+                }
                 match wd.kind {
                     WidgetKind::Image => {
                         let img = wd.sprite.clone().or_else(|| wd.images[0].clone());
@@ -1925,20 +1952,36 @@ impl StrategyScreen {
                                 && !(went_down && inside);
                         }
                         let pressed_inside = press.held && inside;
-                        // A radio group's member stays latched once chosen.
-                        let latched = match &wd.group {
-                            Some(g) => {
-                                let members: Vec<(&str, bool)> = screen
-                                    .items
-                                    .iter()
-                                    .filter(|w| w.group.as_ref() == Some(g))
-                                    .map(|w| (w.name.as_str(), w.selected))
-                                    .collect();
-                                let chosen = self.radios.get(&(si, g.clone())).map(String::as_str);
-                                button::latch(chosen, &members) == Some(wd.name.as_str())
-                            }
-                            None => false,
-                        };
+                        // The press plays the control's sound (the exe plays it on press,
+                        // before the release fires the action).
+                        if went_down && inside && top {
+                            let default = if wd.label.is_some() && wd.sprite.is_none() && wd.images[0].is_none() {
+                                ctx.ui.skin.sounds.text_button.as_deref()
+                            } else {
+                                ctx.ui.skin.sounds.button.as_deref()
+                            };
+                            play_ui(ctx, wd.sound.as_deref(), default);
+                        }
+                        if inside && wd.tip.is_some() {
+                            hovered_tip = Some((si, wi, dr));
+                        }
+                        // A radio group's member stays latched once chosen; a speed button
+                        // stays lit while its speed is the clock's (the dial's hole lamps).
+                        let speed_lit = matches!(&wd.action, Some(UiAction::Speed(n)) if *n == self.speed);
+                        let latched = speed_lit
+                            || match &wd.group {
+                                Some(g) => {
+                                    let members: Vec<(&str, bool)> = screen
+                                        .items
+                                        .iter()
+                                        .filter(|w| w.group.as_ref() == Some(g))
+                                        .map(|w| (w.name.as_str(), w.selected))
+                                        .collect();
+                                    let chosen = self.radios.get(&(si, g.clone())).map(String::as_str);
+                                    button::latch(chosen, &members) == Some(wd.name.as_str())
+                                }
+                                None => false,
+                            };
                         if fire {
                             if let Some(g) = &wd.group {
                                 self.radios.insert((si, g.clone()), wd.name.clone());
@@ -2002,6 +2045,19 @@ impl StrategyScreen {
                             action = wd.action.clone();
                         }
                     }
+                    WidgetKind::Anim => {
+                        // A lamp or animation: frame (ticks / interval) mod n; `with_clock`
+                        // ones only move while the campaign clock runs.
+                        let t = if wd.with_clock { (self.clock_seconds * 60.0) as u64 } else { ticks };
+                        let k = floater::anim_frame(t, wd.interval, wd.frames.len());
+                        if let Some(f) = wd.frames.get(k).cloned() {
+                            // The original's art is keyed by its corner colour.
+                            let key = f.starts_with("original:");
+                            if let Some(tex) = self.image_keyed(ctx, &f, screen.pack, key) {
+                                draw_widget_image(&tex, wd, &layout);
+                            }
+                        }
+                    }
                     WidgetKind::Check => {
                         // A check row: a lamp that toggles (latched = on), its label 20 px to
                         // the right in the caption font (the original's TextButton2).
@@ -2010,6 +2066,9 @@ impl StrategyScreen {
                         let went_up = top && is_mouse_button_released(MouseButton::Left);
                         let (press, _) = self.presses.entry((si, wi)).or_default();
                         let fire = press.update(inside, input.clicked, went_up, wd.fire_on_press);
+                        if input.clicked && inside && top {
+                            play_ui(ctx, wd.sound.as_deref(), ctx.ui.skin.sounds.button.as_deref());
+                        }
                         let on = self.checks.entry((si, wi)).or_insert(wd.selected);
                         if fire {
                             *on = !*on;
@@ -2120,6 +2179,29 @@ impl StrategyScreen {
                             if let Some(a) = hit {
                                 self.act(def, a);
                             }
+                        }
+                    }
+                }
+                // Hover help on the top screen: a floating box once the cursor rests (RQ-UI-10).
+                if top {
+                    let cursor = [
+                        (input.mouse.x - layout.offset.x) / layout.scale,
+                        (input.mouse.y - layout.offset.y) / layout.scale,
+                    ];
+                    let held = is_mouse_button_down(MouseButton::Left) || is_mouse_button_down(MouseButton::Right);
+                    let hovered = hovered_tip.map(|(s, w, _)| (s, w));
+                    if let Some((s, w)) = self.floater.update(hovered, [cursor[0] as i32, cursor[1] as i32], held) {
+                        if let (Some((_, _, rect)), Some(wd)) =
+                            (hovered_tip, rules.screens.get(s).and_then(|sc| sc.items.get(w)))
+                        {
+                            draw_floater(
+                                ctx,
+                                wd.tip.as_deref().unwrap_or(""),
+                                rect,
+                                cursor[0] as i32,
+                                &layout,
+                                &mut self.glyphs,
+                            );
                         }
                     }
                 }
@@ -2446,6 +2528,9 @@ impl StrategyScreen {
             let sr = layout.rect(arrow.rect);
             let inside = widgets::contains(sr, input.mouse);
             let fire = self.arrows[k].update(ticks, enabled && input.clicked && inside, held && inside, 20, 5);
+            if enabled && input.clicked && inside {
+                play_ui(ctx, None, ui.skin.sounds.arrow.as_deref());
+            }
             if fire && enabled {
                 self.list.scroll(if k == 0 { -1 } else { 1 }, rows.len(), visible);
             }
@@ -2501,6 +2586,7 @@ impl StrategyScreen {
                     None => widgets::button(ui, input, layout.rect(br.map(|v| v as f32)), label, true),
                 };
                 if clicked {
+                    play_ui(ctx, None, ui.skin.sounds.text_button.as_deref());
                     hit = Some(*act);
                 }
             }
@@ -2740,6 +2826,62 @@ impl StrategyScreen {
 /// The history size of a screen set: the first screen's `history`, else the original's 29.
 fn history_limit(rules: &crate::content::rules::Ruleset, first: &str) -> usize {
     rules.screens.iter().find(|s| s.id == first).and_then(|s| s.history).unwrap_or(super::history::DEFAULT_LIMIT)
+}
+
+/// A prompt (`widgets::modal`) that plays the skin's sound for its button when one is
+/// chosen by a click: a capsule's, else a text button's (RQ-UI-09).
+fn ask(ctx: &AppContext, input: &Input, title: &str, body: &str, buttons: &[&str]) -> Option<usize> {
+    let chosen = widgets::modal(&ctx.ui, input, title, body, buttons);
+    if chosen.is_some() && input.clicked {
+        let s = &ctx.ui.skin.sounds;
+        let capsule = ctx.ui.skin.dialog.as_ref().is_some_and(|d| d.capsule.is_some());
+        let sound = if capsule { s.capsule.as_deref() } else { s.text_button.as_deref() };
+        play_ui(ctx, None, sound);
+    }
+    chosen
+}
+
+/// Plays a control's interface sound: its own (`none`: silent), else the skin's default.
+fn play_ui(ctx: &AppContext, own: Option<&str>, default: Option<&str>) {
+    match own {
+        Some("none") => {}
+        Some(name) => ctx.sounds.play_ui(name),
+        None => {
+            if let Some(name) = default {
+                ctx.sounds.play_ui(name);
+            }
+        }
+    }
+}
+
+/// Draws a hover help box for the control `rect` (design space) with the cursor at
+/// `cursor_x`: the skin's tooltip style, lines split at `~` (or newlines).
+fn draw_floater(
+    ctx: &AppContext,
+    tip: &str,
+    rect: [f32; 4],
+    cursor_x: i32,
+    layout: &crate::hud::Layout,
+    buf: &mut Vec<text::Placed>,
+) {
+    let ui = &ctx.ui;
+    let Some(style) = ui.skin.tooltip.as_ref() else { return };
+    let Some(sheet) = style.font.as_deref().and_then(|f| ui.sheet(f)) else { return };
+    let face = sheet.face();
+    let text = ctx.content.text.resolve(tip).unwrap_or_else(|k| k);
+    let lines: Vec<&str> = text.split(['~', '\n']).collect();
+    let widths: Vec<i32> = lines.iter().map(|l| text::width(&face, l, false)).collect();
+    let (b, at) = floater::tip_box(&widths, rect.map(|v| v as i32), cursor_x, style.right);
+    let s = layout.rect(b.map(|v| v as f32));
+    let c = |v: [f32; 4]| Color::new(v[0], v[1], v[2], v[3]);
+    draw_rectangle(s[0], s[1], s[2], s[3], c(style.fill));
+    draw_rectangle_lines(s[0], s[1], s[2], s[3], 1.0, c(style.frame));
+    buf.clear();
+    for (l, [x, y]) in lines.iter().zip(at) {
+        // `y` is the line's top: the DrawText anchor is the glyph top + the font's `top`.
+        text::draw_text(&face, l, x, y + face.top, text::Align::Left, false, buf);
+    }
+    ui.draw_glyphs(sheet, buf, layout, WHITE);
 }
 
 /// A widget's rect in its design space: a placed sprite's from its image's size

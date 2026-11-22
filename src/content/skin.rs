@@ -54,7 +54,47 @@ pub struct Skin {
     pub text_button: Option<TextButtonStyle>,
     /// How prompts look over a screen set (`dialog`). `None`: the skin's plain prompts.
     pub dialog: Option<DialogStyle>,
+    /// The interface sounds by control (`sounds`: `sounds:` names). RQ-UI-09.
+    pub sounds: UiSounds,
+    /// How hover help looks (`tooltip`). `None`: no hover help.
+    pub tooltip: Option<TooltipStyle>,
     pub pack: usize,
+}
+
+/// The interface sounds a skin plays by default, each a name in the rules' `sounds:`
+/// (`None`: silent). A widget's own `sound` wins.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct UiSounds {
+    /// A sprite or plain button (the original: Click).
+    pub button: Option<String>,
+    /// A text button (the original: sndBeep29b).
+    pub text_button: Option<String>,
+    /// A message-box capsule (the original: MsgBoxBtn).
+    pub capsule: Option<String>,
+    /// A message box opening (the original: MsgBoxOpen).
+    pub box_open: Option<String>,
+    /// A list's scroll arrow (the original: Beep8).
+    pub arrow: Option<String>,
+}
+
+/// `tooltip`: the original's floating help box (Floaters.cpp 0x4b2ed5): text in `font`,
+/// lines 16 px apart, the box the widest line + 20 wide, over a translucent fill with a
+/// 1 px frame.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TooltipStyle {
+    pub font: Option<String>,
+    /// The fill's colour (the original: RGB(0, 0, 100)) and how opaque (its level 75).
+    pub fill: [f32; 4],
+    /// The frame's colour.
+    pub frame: [f32; 4],
+    /// The rightmost x the box may reach (the original: 630).
+    pub right: i32,
+}
+
+impl Default for TooltipStyle {
+    fn default() -> Self {
+        TooltipStyle { font: None, fill: [0.0, 0.0, 100.0 / 255.0, 0.75], frame: [0.6, 0.6, 0.6, 1.0], right: 630 }
+    }
 }
 
 /// `text_button`: the original's TextButton (Interceptor.exe paint 0x41932d): a caption
@@ -315,6 +355,8 @@ impl Skin {
             fonts: Vec::new(),
             text_button: None,
             dialog: None,
+            sounds: UiSounds::default(),
+            tooltip: None,
             pack: 0,
         }
     }
@@ -351,12 +393,37 @@ impl Skin {
         if let Some(n) = g.node("dialog") {
             s.dialog = Some(DialogStyle::parse(Get(n)).map_err(|e| format!("dialog: {e}"))?);
         }
+        if let Some(n) = g.node("sounds") {
+            let sg = Get(n);
+            let name = |k: &str| sg.str(k).filter(|v| *v != "none").map(str::to_string);
+            s.sounds = UiSounds {
+                button: name("button"),
+                text_button: name("text_button"),
+                capsule: name("capsule"),
+                box_open: name("box_open"),
+                arrow: name("arrow"),
+            };
+        }
+        if let Some(n) = g.node("tooltip") {
+            let tg = Get(n);
+            let mut t = TooltipStyle { font: tg.str("font").map(str::to_string), ..Default::default() };
+            for (k, slot) in [("fill", &mut t.fill), ("frame", &mut t.frame)] {
+                if let Some(c) = tg.node(k) {
+                    *slot = colour(c).ok_or(format!("tooltip.{k}: expected [r, g, b] or [r, g, b, a]"))?;
+                }
+            }
+            if let Some(r) = tg.num("right") {
+                t.right = r as i32;
+            }
+            s.tooltip = Some(t);
+        }
         // A style naming a font the skin does not define is a mistake worth stopping on.
         let named = |f: &Option<String>| f.as_ref().filter(|f| !s.fonts.iter().any(|d| &d.name == *f)).cloned();
         let missing = [
             s.text_button.as_ref().and_then(|t| named(&t.font)).map(|f| ("text_button.font", f)),
             s.dialog.as_ref().and_then(|d| named(&d.title_font)).map(|f| ("dialog.title_font", f)),
             s.dialog.as_ref().and_then(|d| named(&d.body_font)).map(|f| ("dialog.body_font", f)),
+            s.tooltip.as_ref().and_then(|t| named(&t.font)).map(|f| ("tooltip.font", f)),
         ];
         if let Some((k, f)) = missing.into_iter().flatten().next() {
             return Err(format!("{k}: '{f}' is not one of this skin's fonts"));
@@ -432,6 +499,27 @@ pub fn schema() -> Ty {
                 f("fill", Ty::List(Box::new(Ty::Num)), "pressed fill, RGBA (original: 0,200,0 translucent)"),
             ]),
             "the original's text button: list actions, labelled buttons, dialog buttons",
+        ),
+        f(
+            "sounds",
+            Ty::Struct(vec![
+                f("button", Ty::Name, "a sprite or plain button (a sounds: name, or none)"),
+                f("text_button", Ty::Name, "a text button"),
+                f("capsule", Ty::Name, "a message-box capsule"),
+                f("box_open", Ty::Name, "a message box opening"),
+                f("arrow", Ty::Name, "a list's scroll arrow"),
+            ]),
+            "the interface sounds by control (names in the rules' sounds:)",
+        ),
+        f(
+            "tooltip",
+            Ty::Struct(vec![
+                f("font", Ty::Name, "a sheet font of this skin"),
+                f("fill", Ty::List(Box::new(Ty::Num)), "the box's fill, RGBA (original: 0,0,100 at 75 %)"),
+                f("frame", Ty::List(Box::new(Ty::Num)), "the box's 1 px frame"),
+                f("right", Ty::Num, "the rightmost x the box may reach (original: 630)"),
+            ]),
+            "hover help boxes (widgets' tip)",
         ),
         f(
             "dialog",
@@ -549,6 +637,14 @@ mod tests {
         assert_eq!(fd.images()[2], "original:sprite#258+1");
         let badf = yaml::parse("dialog: {frame: [{image: a.png, at: middle}]}").unwrap();
         assert!(Skin::parse("x", Get(&badf), 0).unwrap_err().contains("frame[0]: at"));
+        let snd = yaml::parse(
+            "fonts: {body: b.png}\nsounds: {button: ui_click, arrow: none}\ntooltip: {font: body, right: 600}",
+        )
+        .unwrap();
+        let ss = Skin::parse("x", Get(&snd), 0).unwrap();
+        assert_eq!((ss.sounds.button.as_deref(), ss.sounds.arrow.as_deref()), (Some("ui_click"), None));
+        let tt = ss.tooltip.unwrap();
+        assert_eq!((tt.font.as_deref(), tt.right, tt.fill), (Some("body"), 600, TooltipStyle::default().fill));
         let bad = yaml::parse("dialog: {width: 1.5}").unwrap();
         assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("dialog: width"));
     }

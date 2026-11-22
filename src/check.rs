@@ -216,6 +216,18 @@ pub fn run(content: &Content) -> Report {
                 Err(e) => r.errors.push(format!("skins.{}.dialog: {img}: {e}", skin.id)),
             }
         }
+        let ui = &skin.sounds;
+        for (k, snd) in [
+            ("button", &ui.button),
+            ("text_button", &ui.text_button),
+            ("capsule", &ui.capsule),
+            ("box_open", &ui.box_open),
+            ("arrow", &ui.arrow),
+        ] {
+            if let Some(snd) = snd.as_deref().filter(|s| !rules.sounds.contains_key(*s)) {
+                r.errors.push(format!("skins.{}.sounds.{k}: '{snd}' is not in sounds:", skin.id));
+            }
+        }
         for f in &skin.fonts {
             match crate::content::skin::load_sheet(content, f, skin.pack) {
                 Ok(_) => r.images += 1,
@@ -234,6 +246,16 @@ pub fn run(content: &Content) -> Report {
                     if let Err(e) = content.load_image(img, screen.pack, false) {
                         r.errors.push(format!("screens.{}.widgets.{}: sprite {img}: {e}", screen.id, w.name));
                     }
+                }
+            }
+            // A widget's sound must be a name of the rules' sounds: (or none).
+            if let Some(snd) = w.sound.as_deref().filter(|s| *s != "none" && !rules.sounds.contains_key(*s)) {
+                r.errors.push(format!("screens.{}.widgets.{}: sound '{snd}' is not in sounds:", screen.id, w.name));
+            }
+            // An animation's frames must load.
+            for img in &w.frames {
+                if let Err(e) = content.load_image(img, screen.pack, false) {
+                    r.errors.push(format!("screens.{}.widgets.{}: frame {img}: {e}", screen.id, w.name));
                 }
             }
             // A list's scroll-arrow images must load.
@@ -376,7 +398,7 @@ mod tests {
              skins: {k: {fonts: {f: fonts/none.png}, dialog: {fill: img/fill.png}}}\n\
              screens: {s: {widgets: {w: {kind: value, value: time, rect: [0, 0, 1, 1], font: nope}, \
              l: {kind: list, rect: [0, 0, 1, 1], up: {rect: [0, 0, 1, 1], images: [img/gone.png]}}, \
-             b: {kind: button, centre: [1, 1], images: {sprite: img/none.png, states: 1}}}}}\n",
+             b: {kind: button, centre: [1, 1], images: {sprite: img/none.png, states: 1}, sound: beep}}}}\n",
         )
         .unwrap();
         std::fs::write(dir.join("scenarios/s.yaml"), "id: s\nobjects:\n  o: {class: ghost}\n").unwrap();
@@ -403,6 +425,7 @@ mod tests {
             "screens.s.widgets.w: font 'nope'",
             "screens.s.widgets.l: arrow image img/gone.png",
             "screens.s.widgets.b: sprite img/none.png",
+            "screens.s.widgets.b: sound 'beep'",
         ] {
             assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
         }

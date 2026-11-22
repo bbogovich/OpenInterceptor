@@ -22,6 +22,7 @@ clock:
   # (RQ-S-18, VERIFIED: 0x46bdc4 -> SetSpeed(0)). The engine asks on every notice.
   notices: ask
   notice_buttons: ["@orig.S_OK", "@orig.S_OK5SECS"]
+  first_key: 0                              # keys 1-6 pick the six speeds (VERIFIED, OnCommand 49-54)
 
 start:
   date: 2067-01-01                          # DERIVED from the manual's opening
