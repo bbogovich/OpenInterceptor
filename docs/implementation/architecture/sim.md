@@ -336,6 +336,20 @@ modules survives ("STATION SHIELDS DOWN") or, for a `shield_pool` station, sets 
 maximum from its first standing generator (`Ruleset::pool_capacity`) and clears
 `Ship::pool_powered` (and, with `drop`, the points) when none stands.
 
+**Module layouts, hard points and minefields** (app NEXT, #114). `rules::ModuleSlot` is a
+`modules:` entry: an attachment `slot` or an `at` position with `facing`, and a `chance`;
+`spawn_modules` rolls `World::random` only for entries with a chance below 1 (so worlds without
+them draw the same numbers as before). `World::spawn_minefields(hub)` (after `spawn_modules` in
+`spawn_placement`) lays each `rules::Minefield` its `chance` allows: per ring
+(`euler(yaw, pitch, roll)`) `count` mines at `center + ring × rot_y(2πk/count) × (0, 0, radius)`,
+named `<hub>.mine<n>`. `rules::HardPoint`s give each ship `hard_hp: Vec<f32>`; in
+`combat::apply_hit` a `DamageMode::Normal` hit on a class with hard points notes whether the
+struck shields (or pool) were already down, and after armour and systems the first standing
+hard point whose sphere holds the impact point takes the rest (overflow to the hull) and emits
+`SimEvent::HardPointDestroyed` when it falls (`app::flight::event_messages` shows its text).
+`DestroyedWhen` (`Hull`, `HardPoints`, `Either`) decides destruction from the hull and
+`hard_hp`.
+
 **`sim::stations`** (app 0.22.4, #113) holds the station shield rules. A pool is stored in both
 banks (`shield_fore == shield_aft`), so the HUD, the remote console and the AI read it without
 knowing pools exist; only `stations::absorb`, `stations::recharge` and `update_shields` change

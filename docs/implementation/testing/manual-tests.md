@@ -1376,6 +1376,7 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-66 | Station shield pool and covered modules | `base-assault` (`interceptor`), Lightning; `outpost-strike` (default) | not run | | | App 0.22.4; #113, `shield_pool`, `shielded_by_hub`, `damage_model: station`, hull = `HP1` |
 | MT-4-67 | `interceptor`: system damage, mounts and repair | `duel-wraith` (`interceptor`), Lightning | not run | | | App NEXT; #116, `system_table`, `repair_order`, `efficiency`, `disables_below` |
 | MT-4-68 | `interceptor`: AI flying and missiles | `duel-wraith`, `duel-pirate-lightning`, a scenario with wingmen (`interceptor`), Lightning | not run | | | App NEXT; #118, `steer`, `lock_cone`, `pilot_grades`, speed requests |
+| MT-4-69 | `interceptor`: station layouts, the connection point and minefields | `base-assault`, `station-tour` (`interceptor`) | not run | | | App NEXT; #114, `hard_points`, `modules` by `at`, `minefields` |
 
 ## Stage 4 cases
 
@@ -1920,6 +1921,15 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-pirate-lightning --ship lightning`, then `duel-wraith`, then a scenario with wingmen (`mixed-dogfight` or `escort`). |
 | Steps | 1. Fly straight and level, then jink, while the pirates attack; watch how they hold their aim. 2. Let a pirate close head-on. 3. In `duel-wraith`, count missile launches over a minute; note whether one comes while the Wraith's nose points well away from you. 4. Run away from the Wraiths, more than 3 km. 5. With wingmen, fly at about 200 m/s and watch them hold formation. |
 | Expected | 1: pirates track you tightly (their aim corrects within a frame or two), but half the time lead too little or too much. 2: they break off at about 250 m. 3: Wraiths fire missiles only just after swinging onto you (within about 2.5 s of the aim settling), never with the nose away; launches are at least 5 s apart. 4: pirates and Wraiths sprint after you (slightly faster than their normal top speed); they never light an afterburner. 5: wingmen hold their slots at your speed instead of falling behind; an AI ship never runs out of energy from burning. |
+
+
+### MT-4-69 — `interceptor`: station layouts, the connection point and minefields
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario station-tour`; then `--scenario base-assault --difficulty superhuman` and `--difficulty beginner`. |
+| Steps | 1. Fly round the pirate base and the arms dealer; count their turrets and watch where they sit. 2. Restart `station-tour` a few times. 3. In `base-assault` on Superhuman, look round the alien base from a distance before closing. 4. Bring its shields down, then fire at the underside of the hub (the connection point, about 217 m below its centre) until it is destroyed. 5. Repeat 3 on Beginner. |
+| Expected | 1: the arms dealer has five laser turrets — on top, two on the underside angled down, and one on each side; the pirate base up to six — top, bottom and on its mid-ring — each standing on the hull and firing outwards. 2: the pirate base's turret count varies (each is there 75 % of the time on Beginner). 3: mines ring the base (most likely: two rings of four missile mines 4 km out and two of nine explosive mines 2 km out); they go off when you fly near. 4: shots at the underside drain the connection point first (the hull does not drop); "Connection Point Destroyed" appears; the base is not destroyed by it alone. 5: no minefields on Beginner. |
 
 ## Stage 5 results
 

@@ -126,6 +126,77 @@ In `default`'s `outpost-strike` the Dominion outpost's pods are covered: wear th
 first, then the shield pod falls and the pool is gone for good. `interceptor`'s outposts and ore
 plants keep the ship damage model: the original's own hull routines for them are not traced.
 
+## Modules by position and chance
+
+Since app NEXT (issue #114) a module may be placed by position instead of an attachment point,
+and may be there only by chance — the original's pirate stations have turrets on fixed points
+of their own model, some of which are missing:
+
+```yaml
+objects:
+  pirate_base:
+    modules:
+      - {at: [0, 337, 0], facing: [0, 1, 0], class: pirate_turret_long, chance: {per_level: [75%, 70%, 65%, 60%, 55%]}}
+      - {slot: '3', class: xcom_shield_generator}      # attachment points still work
+```
+
+- **`at`** — the module's position in the station's model space (engine axes: x right, y up,
+  −z ahead; metres). **`facing`** — the direction its front (−Z) points (default `[0, 0, -1]`).
+  An entry needs `slot` or `at`.
+- **`chance`** — the chance (per difficulty level, if you like) that the module is there when
+  the station is placed; rolled on the battle's seeded generator, so a seed replays the same
+  layout. Default 100 %.
+
+## Hard points
+
+A station can have **weak points** with hit points of their own, as the original's alien base
+has its connection point (app NEXT; flight notes §8.4, **verified**):
+
+```yaml
+objects:
+  alien_base:
+    hard_points:
+      - {name: connection_point, hit_points: 1400, at: [0, -217, 0], radius: 124m, message: "@orig.S_GREP_363"}
+    destroyed_when: hull        # hull (default), hard_points, or either
+```
+
+- A **direct** hit — a beam bolt or an ordinary missile, not a shield-bypassing or enveloping
+  one — that lands within `radius` of a standing hard point's centre (`at`, model space) while
+  the station's shields on that side (or its pool) were already down damages the hard point
+  instead of the hull. What the hard point cannot hold goes on to the hull (*derived*).
+- When one falls, its `message` (a text or `@key`) appears on every player's message line.
+- **`destroyed_when`**: `hull` — only the hull destroys the station (hard points just soak
+  hits); `hard_points` — only all hard points at 0 do; `either` — whichever comes first (the
+  original's alien base, with its connection point and three tendrils).
+
+`interceptor`'s alien base has its connection point. Its three 550-point tendrils are not placed
+yet — where they are on the model is not traced — so it is still destroyed by its hull alone.
+
+## Minefields
+
+An object can lay **mines** around itself when it is placed (app NEXT):
+
+```yaml
+objects:
+  alien_base:
+    minefields:
+      - mine: alien_explosive_mine           # a kind: mine object
+        count: {per_level: [0, 6, 7, 8, 9]}  # mines per ring
+        chance: {per_level: [0%, 30%, 35%, 40%, 45%]}
+        radius: 2km
+        center: [0, 500, 0]                  # model space
+        rings: [[45, 0, 0], [-45, 0, 0]]     # yaw, pitch, roll of each ring
+```
+
+Each ring is the horizontal circle of `radius` round `center`, turned by its yaw, pitch and roll;
+`count` mines sit on it evenly spaced, with the object's faction. The whole field is laid with
+`chance` (rolled once on the seeded generator). An object placed in a construction `state` lays
+none. `interceptor`'s alien base lays the original's fields (flight notes §8.6, **verified** but
+for the ring planes): from Superhuman, 70 %, two rings of four missile mines 4 km out; from
+Experienced, 25 + 5 × level %, two rings of level + 5 explosive mines 2 km round a point 500 m
+above the base. What the original's mines do when triggered is not traced: here they are
+ordinary `kind: mine` objects with the original's warhead damage (300 and 250) and 50 hit points.
+
 ## Cargo containers and moving hubs
 
 Since app 0.9.2 a hub need not be a station: any ship class may carry `modules`, and they ride
@@ -173,7 +244,9 @@ ships:
 | `default` | Guard station | six ray turrets, two force-field generators |
 | `default` | Dominion outpost | six death-ray pods, a shield pod |
 | `interceptor` | X-COM base (`XBASE7`, 33 attachment points) | beam-defence turrets, shield generators, a hangar |
-| `interceptor` | Alien base (`AL-BASE01`, 28 attachment points) | plasma gun pods, shield pods |
+| `interceptor` | Alien base (`AL-BASE01`, 28 attachment points) | plasma gun pods, shield pods; the connection point; minefields |
+| `interceptor` | Pirate base (`PBASE3`) | six laser turrets by position, each there with 75 − 5 × level % (the exe's table, **verified**) |
+| `interceptor` | Arms dealer (`ARMS4`) | five laser turrets by position (**verified**) |
 
 The interceptor modules' hit points come from the original module sections (`M_XCOM*`,
 `M_ALIEN*` in `GameSettings.ini`, verified); their meshes are the original turret and pod meshes;
