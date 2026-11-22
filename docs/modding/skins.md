@@ -325,8 +325,8 @@ With a kit, `width`, `title_y`, `body_top`, `button_step` and `frame` are not us
 
 - The fill is clipped to the text rect, not the whole box, so it does not show through the kit's
   open margins.
-- The box grows when its wrapped text would leave the text rect.
-- The lowest button row ends 25 px above the box's bottom.
+- The box grows when its wrapped text and button rows would leave the text rect.
+- The button rows sit at the foot of the text rect: the lowest 4 px above its bottom, centred on it, with two buttons kept inside it.
 - Captions of styles 1 and 2 sit 23 px above the text rect.
 - `interceptor` uses style 3 for every prompt, because which dialog uses which style is not
   settled.
