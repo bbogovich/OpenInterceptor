@@ -634,7 +634,7 @@ report lists them; `default`: one colony beside the stipend. DEV-098.
 follows the destroyed ships' fits (`salvage_fits`; battles now report `destroyed(<class>)`); the
 saucer, probe and drone artefact items are gone. DEV-097 rewritten.
 
-**#132** (app NEXT; RQ-S-08/09/16; README §2.5, §3.1 – §3.2): a new base's price from its template
+**#132** (app 0.22.29; RQ-S-08/09/16; README §2.5, §3.1 – §3.2): a new base's price from its template
 (`price_share`, `hub_cost`), `centre_distance(s)` for placement, the hub's `hull` and its `repair`
 over time (`strike_damage` from unopposed strikes), production by outpost technicians
 (`manufacture:`). `interceptor`: 0.75 × (1.5M + the template), 29 days, 20 bases, within 5,850 of a

@@ -380,7 +380,7 @@ Module `maintenance`, hull `upkeep` and pilot `salary` are charged monthly on th
 
 ### `manufacture`
 
-`manufacture: {per_outpost, per_opp}` (app NEXT, RQ-S-09) — production by the
+`manufacture: {per_outpost, per_opp}` (app 0.22.29, RQ-S-09) — production by the
 [outposts](#outposts)' technicians instead of the bases' `production_rate`: the capacity is
 `per_outpost` + `per_opp` × its OPPs technicians for each outpost (default 10 and 10), and a job
 gains one work unit per technician-hour, so an item's `prod_time` is in technician-hours. The
