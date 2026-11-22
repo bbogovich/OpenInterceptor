@@ -70,13 +70,13 @@ objects:
 
 Each shot draws a tracer and plays the `point_defence` event sound. Point defence is fitted to
 the dreadnought and the stations (`default`); the numbers are derived (DEV-038). The original has
-no automatic point defence: since app NEXT `interceptor` has none, and instead every beam bolt
+no automatic point defence: since app 0.22.19 `interceptor` has none, and instead every beam bolt
 can strike a missile (`flight.beams_hit_missiles`, 90 % to apply its damage against the missile's
 `hit_points`).
 
 ## The original's missile flight
 
-With `flight: original` (app NEXT) a missile flies as the original's: straight for 250 ms, then
+With `flight: original` (app 0.22.19) a missile flies as the original's: straight for 250 ms, then
 homing at most 2.5 rad/s, losing throttle while it is off target, so a hard turn slows it. Its
 warhead can hit everything round it:
 
@@ -107,7 +107,7 @@ blast** reaching four times the warhead's `proximity_radius` (at least 100 m), d
 
 | Campaign | Missiles |
 |---|---|
-| `interceptor` | X-Winder (homing), Sidestep, Permeator (`permeator`), Fusion, Enveloping torpedo, Parallax torpedo (two images after 1 s), Passive Cloaking torpedo (`cloaked_wait`, 10 s), Doppelganger (hostiles turn to it every 5 – 6 s), all with the original's flight, fuse, blast, launcher rate and rounds (app NEXT, **verified**); the Super Avenger's testbed load carries one of each. |
+| `interceptor` | X-Winder (homing), Sidestep, Permeator (`permeator`), Fusion, Enveloping torpedo, Parallax torpedo (two images after 1 s), Passive Cloaking torpedo (`cloaked_wait`, 10 s), Doppelganger (hostiles turn to it every 5 – 6 s), all with the original's flight, fuse, blast, launcher rate and rounds (app 0.22.19, **verified**); the Super Avenger's testbed load carries one of each. |
 | `default` | Seeker rockets, atomic torpedoes, cluster rockets (Thunderbolt), decoy rockets (Meteor), Dominion space-mine warheads (`dominion-raid`). |
 
 ## The Nova bomb
@@ -116,7 +116,7 @@ A missile with a `fuse` is a Nova bomb: it never goes off on contact; it flies o
 `fuse` after launch, doing no damage (the original's detonation damages nothing, **verified**); it
 sets the `nova_time` mission query running, sends every pilot with `retreat_on_nova` to its roll,
 and `ends_battle_after` later turns `battle_over` true — the battle then ends as a draw unless an
-objective decides it (app NEXT). Its `warnings` are voice lines of the launcher's wingmen and/or
+objective decides it (app 0.22.19). Its `warnings` are voice lines of the launcher's wingmen and/or
 texts at given times:
 
 ```yaml

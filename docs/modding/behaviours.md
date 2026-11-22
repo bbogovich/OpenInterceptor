@@ -327,7 +327,7 @@ behaviours:
 - On success the pilot switches to state `to`; a Nova roll happens once per pilot.
 
 `interceptor`'s `original_attack` uses the original's tables and no longer flees on hull damage.
-Its break-off is the original's (app NEXT, `reengage_beyond`): under 250 m the pilot breaks off;
+Its break-off is the original's (app 0.22.19, `reengage_beyond`): under 250 m the pilot breaks off;
 when a break-off manoeuvre ends it comes round if the target is beyond 1,200 m, or — once
 5 s − 0.5 s × level have passed — with a 25 % chance, otherwise it flies another; breaking off at
 anyone but the player it may make a radio call (`break_call`).

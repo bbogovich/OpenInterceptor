@@ -419,7 +419,7 @@ on hull damage), breaks off for 5 s − 0.5 s × level, and the `nova_bomb` goes
 launch with the battle over 60 s later. `default`: unchanged. Manual case MT-4-72; **549**
 `#[test]` functions.
 
-**#119 follow-up** (app NEXT; `notes/re/flight` §10, §12): the original's break-off (`reengage_beyond`,
+**#119 follow-up** (app 0.22.19; `notes/re/flight` §10, §12): the original's break-off (`reengage_beyond`,
 `reengage_chance`, `break_manoeuvre`, `break_call`); the Nova's warnings as wingman voice lines
 (`line`; waves 33 – 36); `RadioLine` events voiced by the speaker or a wingman; a battle ended by
 `battle_over` with no deciding objective is a draw. Then (unknowns §11): `interceptor`'s voice sets
@@ -427,7 +427,7 @@ launch with the battle over 60 s later. `default`: unchanged. Manual case MT-4-7
 `mpilot1`); the final missions' (5, 3) / (5, 1) are music stingers, played as for any won or lost
 mission.
 
-**#120** (app NEXT; audit D-09, D-10, D-12, D-13, D-15, D-17; `notes/re/flight` §3 – 5, §12):
+**#120** (app 0.22.19; audit D-09, D-10, D-12, D-13, D-15, D-17; `notes/re/flight` §3 – 5, §12):
 beam bolts strike missiles (`flight.beams_hit_missiles`, missile `hit_points`; `interceptor` has no
 point defence any more); the cloak's `drain`, `shields_off` and `no_missiles`; the original's missile
 flight (`flight: original`, `pass_fuse`, `blast`, `dud_on_expiry`, `lose_lock_beyond`); `launcher_rate`

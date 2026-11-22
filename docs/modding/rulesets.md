@@ -180,7 +180,7 @@ systems of one kind (`ecm`, `advanced_ecm`) with different numbers. Keys:
 | `hyperdrive` | Leaving the battle (`H`); a damaged drive takes twice as long (unless its `efficiency` is `ignore`). | 100 / 0 / 0 / 0 |
 | `vct` | Vector-control slides. | 150 / 0 / 0 / 0 |
 | `tractor` | Holds and drags the target; beams cannot fire while it is on. | 250 / 2 / 250 m / 60 |
-| `cloak` | Hidden from enemy sensors beyond `range`; firing drops it. With `drain`, `shields_off` and `no_missiles` (app NEXT) it costs energy instead of the shield recharge, drops at 0 energy, leaves the shields out of hits and keeps the missiles in their racks ([reference](reference.md#systems)). | 100 / 3 / 400 m / 25 |
+| `cloak` | Hidden from enemy sensors beyond `range`; firing drops it. With `drain`, `shields_off` and `no_missiles` (app 0.22.19) it costs energy instead of the shield recharge, drops at 0 energy, leaves the shields out of hits and keeps the missiles in their racks ([reference](reference.md#systems)). | 100 / 3 / 400 m / 25 |
 | `ecm` | Incoming missiles within `range` may lose their lock; halves enemy lock speed. | 100 / 1 / 250 m / 10 |
 | `damage_control` | Multiplies repair speed by `repair_rate` (default 4). | 150 / 0 / 0 / 0 |
 
