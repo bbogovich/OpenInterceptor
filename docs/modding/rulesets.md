@@ -296,7 +296,7 @@ Every beam or missile hit goes through the same pipeline (`sim::combat::apply_hi
    `damage × shield_factor` stops the hit, one that holds less stops `bank / shield_factor`
    and falls. `bypass_shields` missiles skip this step; `enveloping` ones put half on each
    facing. A station with a `shield_pool` has one pool that takes the whole hit from any side.
-   Since app NEXT: `enveloping` runs half the damage through the fore chain (fore shield, fore
+   Since app 0.22.14: `enveloping` runs half the damage through the fore chain (fore shield, fore
    armour, hull) and half through the aft chain; `permeator` runs half the struck side's chain and
    half past the shield; their halves take no shield factor. A class with
    `accumulator_shields` takes an ordinary hit on a raised bank as a quarter of itself *added*

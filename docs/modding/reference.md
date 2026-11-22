@@ -90,8 +90,8 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `range` | distance | 3000 m | Reach (`2.4km`, `2400m`; a plain number is metres). An original `Range` inherited from `GameSettings.ini` is read as kilometres (DEV-008; confirmed from the original program in app 0.21.0). |
 | `shield_factor` | number | 1 | Shield points lost per point of damage the shields stop (app 0.21.0). A bank that holds `damage × shield_factor` stops the hit; one that holds less stops `bank / shield_factor` of it and falls ([Rulesets › How a hit lands](rulesets.md#how-a-hit-lands)). `interceptor`: the Phase Cannon 1.5 (verified). |
 | `color` | RGB | 1, 0.2, 0.2 | Bolt colour. |
-| `effect` | `normal`, `systems` | `normal` | `systems` (app NEXT): the struck shield bank absorbs the hit 1:1 (no shield factor); what is left skips armour and hull and strikes the systems through [`damage.tachyon_table`](#damage) (or one random system). Stations ignore it. `interceptor`: the Tachyon Pulser (**verified**). |
-| `repair_slowdown` | number | 1 | With `effect: systems`: the ship hit repairs this many times more slowly until nothing is left to repair (app NEXT). `interceptor`: 10 (the original repairs once every 10 s instead of every second, **verified**). |
+| `effect` | `normal`, `systems` | `normal` | `systems` (app 0.22.14): the struck shield bank absorbs the hit 1:1 (no shield factor); what is left skips armour and hull and strikes the systems through [`damage.tachyon_table`](#damage) (or one random system). Stations ignore it. `interceptor`: the Tachyon Pulser (**verified**). |
+| `repair_slowdown` | number | 1 | With `effect: systems`: the ship hit repairs this many times more slowly until nothing is left to repair (app 0.22.14). `interceptor`: 10 (the original repairs once every 10 s instead of every second, **verified**). |
 | `hit_points` | number | 0 | A mount's hit points (app 0.22.6), struck by [`damage.system_table`](#damage); damaged, it fires at half rate or not at all (`damage.mounts`). 0: it cannot be damaged. `interceptor`: the beam section's `HitPoints` (inherited; Laser Cannon 20, **verified**). |
 | `sound` | asset | none | Firing sound. |
 
@@ -114,7 +114,7 @@ Times take `s`, `min`, `h` and, since app 0.6.7, `d` (days): `10d`.
 | `sound` | asset | none | Launch sound (or `cue:<Name>`). |
 | `explosion` | id | a 25 m, 0.8 s fireball | Effect of its detonation ([effects](#effects)); its `size` is in metres, and its `sound`, if any, plays instead of the `explosion` event sound. |
 | `guidance` | `homing`, `dumbfire`, `sidestep`, `parallax`, `cloaked_wait`, `cluster`, `doppelganger` | `homing` | How it steers ([Missiles and mines](weapons.md)). |
-| `damage` | `normal`, `bypass_shields`, `enveloping`, `permeator` | `normal` | How the warhead's damage lands ([Missiles and mines](weapons.md)); `permeator` app NEXT, `enveloping` splits fore/aft chains since app NEXT. The halves of `enveloping` and `permeator` take no shield factor and are not *direct* hits. |
+| `damage` | `normal`, `bypass_shields`, `enveloping`, `permeator` | `normal` | How the warhead's damage lands ([Missiles and mines](weapons.md)); `permeator` app 0.22.14, `enveloping` splits fore/aft chains since app 0.22.14. The halves of `enveloping` and `permeator` take no shield factor and are not *direct* hits. |
 | `decoys` | number | 2 | `parallax`: decoys released at launch. |
 | `cluster` | `{missile, count, at}` | count 6, at 600 m | `cluster`: the submunition missile id, how many, and how close to the target it splits. |
 | `trigger_range` | distance | 800 m | `cloaked_wait`: it wakes when a hostile comes this close. |
@@ -268,10 +268,10 @@ A state:
 | `lead_speed` | number | 2000 | Gimballed turret: the shot speed its lead assumes, m/s. |
 | `accuracy` | `[from, to]`, number or `pilot` | 50 | Fixed turret: accuracy in %, a band rolled once per turret, or the pilot record's (25 with none). |
 | `accuracy_factor` | fraction | 100 % | With `accuracy: pilot`: times this. |
-| `accuracy_unpiloted` | `[from, to]` | 25, 25 | With `accuracy: pilot` and no pilot record: the band the turret rolls once (app NEXT). |
-| `accuracy_minus` | `[from, to]` | 0, 0 | Fixed turret: a band rolled once and taken off its accuracy (app NEXT; the original's `S − rand[5, 15)`). |
+| `accuracy_unpiloted` | `[from, to]` | 25, 25 | With `accuracy: pilot` and no pilot record: the band the turret rolls once (app 0.22.14). |
+| `accuracy_minus` | `[from, to]` | 0, 0 | Fixed turret: a band rolled once and taken off its accuracy (app 0.22.14; the original's `S − rand[5, 15)`). |
 | `miss`, `miss_beyond` | distance | 20 m, 200 m | Fixed turret: the largest sideways miss on a failed roll, and the range inside which it never misses. |
-| `interval` | time or `rate_of_fire` | 0 (0.5 s with `aim`) | Turret: seconds between shots (0 without `aim` = `burst` and `pause`); `rate_of_fire` = once per beam rate of fire. With `aim: fixed`/`gimballed` an unset `range` is 2.5 km (app NEXT). |
+| `interval` | time or `rate_of_fire` | 0 (0.5 s with `aim`) | Turret: seconds between shots (0 without `aim` = `burst` and `pause`); `rate_of_fire` = once per beam rate of fire. With `aim: fixed`/`gimballed` an unset `range` is 2.5 km (app 0.22.14). |
 | `interval_jitter` | time | 0 | Turret: up to this much more per shot, at random. |
 | `line_of_sight` | bool | `false` | Turret: fire only when the 5 km line ahead meets nothing, the target or another side. |
 | `free_fire` | bool | `false` | Turret: shots draw no energy and ignore the mounts' cooldown. |

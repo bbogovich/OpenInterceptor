@@ -286,7 +286,7 @@ fire, 5 km); the alien base's plasma pods fixed (85°, 5 km, accuracy rolled in 
 NEXT). The pirate base's and arms dealer's turrets are fixed with their table's accuracy,
 interval and line-of-sight flag; the X-COM and rogue freighters carry two fixed laser turrets
 each (2 km, the pilot's Accuracy fore and ¾ of it aft — 25 and 18 with no pilot — 750 ms −
-25 ms × level + 0 – 100 ms, line of sight) instead of beams of their own. Since app NEXT the
+25 ms × level + 0 – 100 ms, line of sight) instead of beams of their own. Since app 0.22.14 the
 alien ships carry the original's fixed turrets too (flight notes §8.8, **verified**): the
 Phantasm a phase turret below, a plasma turret below and one above (besides its guns); the
 Shade a phase turret aft; the Harbinger two tachyon turrets ahead and a 275 m one behind (no

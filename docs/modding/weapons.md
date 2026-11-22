@@ -47,8 +47,8 @@ sound — or a 25 m, 0.8 s fireball.
 |---|---|
 | `normal` (default) | On the shield facing that was hit, then armour, then hull. |
 | `bypass_shields` | Ignores shields: straight to armour and hull. |
-| `enveloping` | Half the damage runs the fore chain (fore shield, fore armour, hull) and half the aft chain, whatever side was hit (the original's Enveloping torpedo, **verified**; until app NEXT both halves met the struck side's armour, which is the same with one armour pool). |
-| `permeator` | Half runs the struck side's normal chain, half skips the shield and goes armour → hull (app NEXT; the original's Permeator, **verified**). |
+| `enveloping` | Half the damage runs the fore chain (fore shield, fore armour, hull) and half the aft chain, whatever side was hit (the original's Enveloping torpedo, **verified**; until app 0.22.14 both halves met the struck side's armour, which is the same with one armour pool). |
+| `permeator` | Half runs the struck side's normal chain, half skips the shield and goes armour → hull (app 0.22.14; the original's Permeator, **verified**). |
 
 ## Point defence
 

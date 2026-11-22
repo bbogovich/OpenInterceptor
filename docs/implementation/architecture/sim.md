@@ -350,7 +350,7 @@ hull gets nothing — and emits `SimEvent::HardPointDestroyed { position, explos
 (`Hull`, `HardPoints`, `Either`) decides destruction from the hull and `hard_hp`. A `mine` state
 with `range: 0` goes off when its hull touches a hostile's.
 
-**Damage modes** (app NEXT, #117). `combat::apply_hit` dispatches on `DamageMode`: `Normal` and
+**Damage modes** (app 0.22.14, #117). `combat::apply_hit` dispatches on `DamageMode`: `Normal` and
 `BypassShields` run one `hit_chain` (with or without the shield step); `Enveloping` runs two half
 chains with the side forced fore and aft (`front: Some(true/false)`) at the same impact point;
 `Permeator` a half with the shield and a half without; `Systems` calls `tachyon_hit` (shield 1:1,
