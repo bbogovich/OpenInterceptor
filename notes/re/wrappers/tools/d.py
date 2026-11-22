@@ -1,6 +1,6 @@
-import sys; sys.path.insert(0,'/private/tmp/claude-501/-Users-brianbogovich-Local-Documents-Projects-OpenGameEngines-OpenInterceptor/cb2da82a-1c08-4902-94ca-d0cda9aed3fd/scratchpad/wrappers')
+import sys; sys.path.insert(0,"/Users/brianbogovich/Documents/Projects/Dev/Games/OpenGameEngines/OpenInterceptor/notes/re/wrappers/tools")
 from pe import PE; from dis import disasm
-EXE='/Users/brianbogovich/Local Documents/Projects/OpenGameEngines/OpenInterceptor/resources/xcom-cd/Game/ProgramFiles/Interceptor.exe'
+EXE="/Users/brianbogovich/Documents/Projects/Dev/Games/OpenGameEngines/OpenInterceptor/resources/xcom-cd/Game/ProgramFiles/Interceptor.exe"
 pe=PE(EXE); IMP=pe.imports()
 def show(va,n=None,end=None):
     for I in disasm(pe,va,n=n,end=end):
