@@ -329,7 +329,7 @@ With kits the box follows the exe step by step (§4.2):
 - **Frame.** Every edge is tiled at its natural size, never stretched, in the order top, bottom,
   left, right; the corners go on last.
 - **Fill.** `fill` (or `fill_large` when the box is bigger) is centred on the text rect, clipped
-  to it and drawn before the frame (§4.8, **verified**; until app NEXT it was centred on the box and
+  to it and drawn before the frame (§4.8, **verified**; until app 0.22.18 it was centred on the box and
   clipped to the box, so it showed outside the art).
 - **Worked example** (§4.8): a one-line style-1 notice with one button is 539 × 266 at
   (56, 97); its text rect is (92, 147) – (551, 318) and its button row's top is 331.
