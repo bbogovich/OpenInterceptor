@@ -3601,6 +3601,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#captions-text-buttons-lists-and-dialogs-appcaption-contentsmallfont" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Captions, text buttons, lists and dialogs (app::caption, content::smallfont)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6710,6 +6721,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#captions-text-buttons-lists-and-dialogs-appcaption-contentsmallfont" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Captions, text buttons, lists and dialogs (app::caption, content::smallfont)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7086,6 +7108,55 @@ the status bar; wrapping, forced breaks and both block placements),
 <code>content::skin::tests::sheet_fonts_parse_with_their_anchor_rules</code> and
 <code>the_default_campaigns_generated_fonts_are_grid_sheets</code>, and <code>check::tests</code> (bad sheet, unknown
 widget font).</p>
+<h3 id="captions-text-buttons-lists-and-dialogs-appcaption-contentsmallfont">Captions, text buttons, lists and dialogs (<code>app::caption</code>, <code>content::smallfont</code>)<a class="headerlink" href="#captions-text-buttons-lists-and-dialogs-appcaption-contentsmallfont" title="Permanent link">&para;</a></h3>
+<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #123; RQ-UI-05/06, audit D-32 – D-40).</em> In the
+original every caption is drawn by its control's paint routine from the control's rectangle.
+<code>app::caption</code> holds those rules as pure functions over integer design-space rectangles:</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Rule (Interceptor.exe)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text_button(rect)</code></td>
+<td>Caption anchor at the centre (flag 1 with the 6 px font: y − 2), lines on the rect inflated (−5, +2), pressed fill on (0, −4) (0x41932d).</td>
+</tr>
+<tr>
+<td><code>capsule_caption(rect, pressed)</code></td>
+<td>(cx, cy − 2), pressed (cx + 1, cy − 1), font 23010 (0x41835a). Used by the dialog frames (#127).</td>
+</tr>
+<tr>
+<td><code>check_label(rect)</code></td>
+<td>left + 20 on the centre line (0x419997).</td>
+</tr>
+<tr>
+<td><code>stack_buttons(dialog, n, step)</code></td>
+<td>20 px buttons, width − 20, the last at bottom − 25 − 20 (MsgBox.cpp).</td>
+</tr>
+<tr>
+<td><code>dialog_layout</code>, <code>button_block</code>, <code>rows_that_fit</code>, <code>ellipsize</code></td>
+<td>A prompt's parts; a list's action buttons as a row or a column; rows by pitch and size; "..." cutting.</td>
+</tr>
+</tbody>
+</table>
+<p><code>draw_text_button</code> and <code>dialog</code> draw them through the skin. <code>widgets::modal</code> asks for
+<code>caption::dialog</code> first when the skin has a <code>dialog</code> style. <code>StrategyScreen::draw_list_art</code>
+replaces <code>draw_panel</code> for a list with a sheet font. It places the title, rows, detail and buttons
+from the widget's <code>ListStyle</code> rectangles, clamped to them, and reuses the screen's glyph buffer.</p>
+<p><strong><code>builtin:small</code></strong> (<code>content::smallfont</code>) is the engine's own 6-row pixel font, with the exe's
+per-character advances (<code>advances()</code>, read from the width routine 0x617487's jump table). It is
+built in memory as a grid sheet (<code>sheet()</code>), so it goes through <code>SheetFont::parse</code> and the same
+texture path as any sheet. <code>SheetFont::with_advances</code> makes the given advances replace the glyph
+widths. <code>Face::centre_raise</code> is the font's <code>y −= 2</code> when centred.</p>
+<p>Tests: <code>app::caption::tests</code> (the parts of a TextButton, capsule and check-row anchors, dialog
+stacking and layout, rows that fit, button blocks, "..."), <code>content::smallfont::tests</code> (the exe's
+advances, every design narrower than its advance, the sheet reads),
+<code>formats::sheetfont::tests</code> (given advances win), <code>app::text::tests</code> (centre raise, top-aligned
+detail text), <code>content::skin::tests::text_button_and_dialog_styles_parse_over_the_originals_look</code>,
+<code>content::screens::tests</code> (list keys), <code>cli::tests</code> (<code>--notice</code>).</p>
 <h3 id="the-main-menu-and-credits-appmenu-appcredits">The main menu and credits (<code>app::menu</code>, <code>app::credits</code>)<a class="headerlink" href="#the-main-menu-and-credits-appmenu-appcredits" title="Permanent link">&para;</a></h3>
 <p>Since app 0.14.0 <code>app::run</code> opens <code>Screen::Menu(MainMenu)</code> instead of the launcher when the
 campaign has a strategy layer (<code>rules.strategy.is_some()</code>); <code>Next::Menu</code> — from the launcher's
@@ -7233,7 +7304,17 @@ play without it.</p>
 <td><code>skins.&lt;id&gt;.fonts.&lt;name&gt;</code>; reading a sheet with its background made transparent.</td>
 </tr>
 <tr>
-<td><code>text::{Face, Placed, Align, draw_text, draw_text_rect, wrap, width}</code></td>
+<td><code>caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}</code>; <code>StrategyScreen::draw_list_art</code>, <code>notice</code></td>
+<td><code>app::caption</code>, <code>app::strategy</code></td>
+<td>Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7).</td>
+</tr>
+<tr>
+<td><code>smallfont::{REFERENCE, advances, sheet}</code>; <code>SheetFont::with_advances</code>; <code>TextButtonStyle</code>, <code>DialogStyle</code>, <code>ListStyle</code></td>
+<td><code>content::smallfont</code>, <code>formats::sheetfont</code>, <code>content::skin</code>, <code>content::screens</code></td>
+<td>The built-in 6 px caption font; the skin's <code>text_button</code> and <code>dialog</code>; a list's part rectangles.</td>
+</tr>
+<tr>
+<td><code>text::{Face, Placed, Align, draw_text, draw_text_rect, draw_text_top, wrap, width}</code></td>
 <td><code>app::text</code></td>
 <td>The original's DrawText and DrawTextRect as pure layout (app 0.22.5).</td>
 </tr>

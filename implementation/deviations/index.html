@@ -6925,6 +6925,18 @@ one looks like a bug.</p>
 <td>The language-specific rewrite belongs to text loading, not the font; not built.</td>
 <td>M2 (#122)</td>
 </tr>
+<tr>
+<td>DEV-083</td>
+<td><strong>The engine's own 6-pixel caption font.</strong> <code>builtin:small</code> stands in for the font compiled into the original program. The glyph shapes are this project's design; the advances, so the widths and centring, are the original's (<strong>verified</strong>). Accented letters reuse the plain letter's shape.</td>
+<td>The original's glyphs are art and are not copied (project rule).</td>
+<td>M2 (#123)</td>
+</tr>
+<tr>
+<td>DEV-084</td>
+<td><strong>Lists show the selected row's text and actions, and prompts are sized to their text.</strong> The original's screens have their own controls (spinners, radio buttons, sprite buttons) where the engine has a row's actions; the engine puts the row's full text and its actions as text buttons in black boxes of the art (<strong>derived</strong> placement). Its prompts use the original's message-box rules (caption, stacked text buttons), but the width, caption offset and button spacing are <strong>derived</strong> until the frame art (#127).</td>
+<td>The engine's strategy layer has one generic list per screen; the original's per-screen controls come with M2 #124 – #128.</td>
+<td>M2 (#123)</td>
+</tr>
 </tbody>
 </table>
 

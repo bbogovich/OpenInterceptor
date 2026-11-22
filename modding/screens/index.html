@@ -4897,6 +4897,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#lists-in-sheet-fonts-app-0227" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lists in sheet fonts (app 0.22.7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6730,6 +6741,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#lists-in-sheet-fonts-app-0227" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lists in sheet fonts (app 0.22.7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-testbed-layout-and-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7067,7 +7089,7 @@ and kept; one that cannot be loaded is reported on standard error once
 <td><code>font</code></td>
 <td>name</td>
 <td>none</td>
-<td>A <a href="../skins/#sheet-fonts-app-next">sheet font</a> of the skin: the text is placed by the original's rules (<a href="#text-in-sheet-fonts-app-next">below</a>) and <code>size</code> is unused (app 0.22.5).</td>
+<td>A <a href="../skins/#sheet-fonts-app-0225">sheet font</a> of the skin: the text is placed by the original's rules (<a href="#text-in-sheet-fonts-app-0225">below</a>) and <code>size</code> is unused (app 0.22.5).</td>
 </tr>
 <tr>
 <td><code>at</code></td>
@@ -7080,6 +7102,12 @@ and kept; one that cannot be loaded is reported on standard error once
 <td>bool</td>
 <td><code>false</code></td>
 <td>With <code>font</code>: every character in a cell of the widest glyph.</td>
+</tr>
+<tr>
+<td><code>row_height</code>, <code>row_size</code>, <code>header</code>, <code>title_font</code>, <code>detail</code>, <code>detail_font</code>, <code>buttons</code></td>
+<td></td>
+<td></td>
+<td>A <code>list</code> in a sheet font: where its parts go (<a href="#lists-in-sheet-fonts-app-next">Lists in sheet fonts</a>, app 0.22.7).</td>
 </tr>
 <tr>
 <td><code>shape</code></td>
@@ -7211,7 +7239,7 @@ and kept; one that cannot be loaded is reported on standard error once
 </table>
 <p>A name the engine does not know shows as <code>?&lt;name&gt;</code>.</p>
 <h3 id="text-in-sheet-fonts-app-0225">Text in sheet fonts (app 0.22.5)<a class="headerlink" href="#text-in-sheet-fonts-app-0225" title="Permanent link">&para;</a></h3>
-<p>A <code>value</code> or <code>text</code> widget with <code>font: &lt;name&gt;</code> is drawn in that <a href="../skins/#sheet-fonts-app-next">sheet font</a>
+<p>A <code>value</code> or <code>text</code> widget with <code>font: &lt;name&gt;</code> is drawn in that <a href="../skins/#sheet-fonts-app-0225">sheet font</a>
 of the skin and placed by the two routines the original game uses for all its screen text
 (Interceptor.exe, <strong>verified</strong>):</p>
 <ul>
@@ -7235,6 +7263,44 @@ the skin lacks) the widget keeps the TrueType path: <code>size</code>, <code>col
 <span class="nt">funds</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">money</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">495</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">426</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">133</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> font</span><span class="p">:</span><span class="w"> </span><span class="nv">readout</span><span class="p p-Indicator">,</span><span class="nt"> at</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">561</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">430</span><span class="p p-Indicator">],</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">centre</span><span class="p p-Indicator">}</span>
 <span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">value</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="nv">selection</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">344</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">457</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">276</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">15</span><span class="p p-Indicator">],</span><span class="nt"> font</span><span class="p">:</span><span class="w"> </span><span class="nv">readout</span><span class="p p-Indicator">,</span><span class="nt"> align</span><span class="p">:</span><span class="w"> </span><span class="nv">centre</span><span class="p p-Indicator">}</span>
 </code></pre></div>
+<h3 id="lists-in-sheet-fonts-app-0227">Lists in sheet fonts (app 0.22.7)<a class="headerlink" href="#lists-in-sheet-fonts-app-0227" title="Permanent link">&para;</a></h3>
+<p>A <code>list</code> with <code>font: &lt;name&gt;</code> is laid out from rectangles of its own instead of the testbed panel's
+fixed layout. The fixed layout had put the title, the selected row's text and the buttons over
+the art (audit D-32 – D-38). Each part goes where the art has room for it:</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Placed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Title</td>
+<td>In a strip <code>header</code> pixels tall at the top of <code>rect</code>, left, in <code>title_font</code> (no strip, no title).</td>
+</tr>
+<tr>
+<td>Rows</td>
+<td>Below the strip, one every <code>row_height</code> (default: the font's line height + 2, the original's list box), each <code>row_size</code> tall, text centred in it and cut with "..." to fit. The selected row has the skin's <code>highlight</code> behind it. Rows with no action are dimmed. A thin scroll bar shows when there are more rows than fit; the wheel scrolls by one.</td>
+</tr>
+<tr>
+<td>Selected row in full</td>
+<td>Wrapped from the top of <code>detail</code>, in <code>detail_font</code>; lines that would end below it are left out.</td>
+</tr>
+<tr>
+<td>Its actions</td>
+<td>Text buttons (<a href="../skins/#text-buttons-and-dialogs-app-next">skin <code>text_button</code></a>) in <code>buttons</code>: a row of equal buttons when each is at least 60 px wide (at most 150), else a column of 20 px buttons.</td>
+</tr>
+</tbody>
+</table>
+<p>A double click on a row still does its first action. The compact list style of the original
+(columns, the pulsing bar, scroll arrows) is plan M2 #124.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/screens.yaml: Research's topics on the art's eight slots</span>
+<span class="nt">topics</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">list</span><span class="p p-Indicator">,</span><span class="nt"> source</span><span class="p">:</span><span class="w"> </span><span class="nv">research</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">330</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">49</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">250</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">264</span><span class="p p-Indicator">],</span><span class="nt"> font</span><span class="p">:</span><span class="w"> </span><span class="nv">body</span><span class="p p-Indicator">,</span><span class="nt"> row_height</span><span class="p">:</span><span class="w"> </span><span class="nv">34</span><span class="p p-Indicator">,</span><span class="nt"> row_size</span><span class="p">:</span><span class="w"> </span><span class="nv">25</span><span class="p p-Indicator">,</span>
+<span class="nt">         detail</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">26</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">374</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">412</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">],</span><span class="nt"> buttons</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">26</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">442</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">412</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">20</span><span class="p p-Indicator">]}</span>
+</code></pre></div>
+<p>A <code>button</code> with a <code>label</code> and no images is drawn as a <strong>text button</strong> when the skin has
+<code>text_button</code>: its caption is centred on its own rectangle in the caption font.</p>
 <h3 id="the-testbed-layout-and-screen">The testbed layout and <code>--screen</code><a class="headerlink" href="#the-testbed-layout-and-screen" title="Permanent link">&para;</a></h3>
 <p><strong>Ctrl+T</strong> switches between the screen set and the testbed layout at any time; a <code>testbed</code>
 button does the same one way. A campaign without <code>strategy_screen</code> uses the testbed layout only.
@@ -7259,8 +7325,13 @@ original has one, its links and a back button.</p>
 <li><strong>Since app 0.22.5</strong> the readouts, the status bar, the base names and the Equipment &amp; Personnel
   funds use the original's sheet fonts and anchors: the four readouts in 23010 centred on x 561 at
   y 370, 390, 410 and 430 (the time monospaced), the status bar centred in its bar, and the funds
-  centred in the readout slot [299, 229, 145, 22] (was drawn 20 px above it, audit D-34). Lists,
-  button captions and map labels are still in the TrueType font (plan M2, #123 – #128).</li>
+  centred in the readout slot [299, 229, 145, 22] (was drawn 20 px above it, audit D-34).</li>
+<li><strong>Since app 0.22.7</strong> every list is in the body font (23011) on the art's own panels (D-32 – D-38).
+  Research's topics sit on its eight slots, 25-px rows every 34 px (<strong>verified</strong>). The selected
+  row's text and actions go in a nearby black box (<strong>derived</strong>): E&amp;P's info boxes 2 and 3, the
+  Equip Ships stat panel, the Research description pane, the UFOpedia article box. The base names
+  are centred on the drop-down strip (D-40). Prompts are message boxes in 23010 and 23011 with text
+  buttons. The map labels are still in the TrueType font (#128).</li>
 <li><strong>Unknown</strong>: the buttons' own state images, which live in the original's sprite table
   (<code>SpritesDLL</code>), not yet read; until then the buttons are hot spots over the art.</li>
 </ul>

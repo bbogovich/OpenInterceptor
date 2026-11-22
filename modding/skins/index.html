@@ -4874,6 +4874,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#text-buttons-and-dialogs-app-0227" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text buttons and dialogs (app 0.22.7)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#not-built-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6702,6 +6713,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#text-buttons-and-dialogs-app-0227" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text buttons and dialogs (app 0.22.7)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#not-built-yet" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6908,7 +6930,7 @@ the screens still draw, with colours and the built-in font.</p>
 <p>The strategy screen clips each list row to its width by measuring it in the skin's font (app
 0.16.0) and shows the selected row in full beneath the list, so a wide font costs only room.</p>
 <h2 id="sheet-fonts-app-0225">Sheet fonts (app 0.22.5)<a class="headerlink" href="#sheet-fonts-app-0225" title="Permanent link">&para;</a></h2>
-<p>A skin can also carry <strong>bitmap sheet fonts</strong> by name, under <code>fonts:</code>. A <a href="../screens/#text-in-sheet-fonts-app-next">screen set</a>
+<p>A skin can also carry <strong>bitmap sheet fonts</strong> by name, under <code>fonts:</code>. A <a href="../screens/#text-in-sheet-fonts-app-0225">screen set</a>
 widget that names one with <code>font: &lt;name&gt;</code> is drawn in it, placed by the original game's own text
 rules — the fix for the playtest finding that text on the strategy screens was <em>sized differently
 and not aligned with the UI elements it belongs to</em> (plan M2, issue #122, RQ-UI-03/04).</p>
@@ -6959,8 +6981,17 @@ and not aligned with the UI elements it belongs to</em> (plan M2, issue #122, RQ
 <td>0</td>
 <td>Extra pixels after every character (the original's glyphs carry their own gap).</td>
 </tr>
+<tr>
+<td><code>fonts.&lt;name&gt;.centre_raise</code></td>
+<td>whole number</td>
+<td>0</td>
+<td>How far a line centred on an anchor moves up (app 0.22.7). The original's 6-pixel font: 2.</td>
+</tr>
 </tbody>
 </table>
+<p><code>sheet: "builtin:small"</code> (app 0.22.7) names the engine's own <strong>6-pixel caption font</strong>, available
+to every campaign: our own design, drawn with the original's advances so a caption is exactly as
+wide as the original's (below).</p>
 <h3 id="the-grid-sheet-format">The grid sheet format<a class="headerlink" href="#the-grid-sheet-format" title="Permanent link">&para;</a></h3>
 <p>A sheet is one image with the glyphs in a grid of square cells. The engine reads it the way the
 original's font loader does (Interceptor.exe 0x5fd750, <strong>verified</strong>):</p>
@@ -7049,13 +7080,137 @@ run time from the player's own <code>SpritesDLL.dll</code> — nothing is copied
 </tr>
 </tbody>
 </table>
-<p>The original also has a tenth, small 6-pixel font compiled into the program for text-button
-captions; it is not a sheet and is not available yet (plan M2, #123).</p>
+<p>| <code>caption</code> | <code>builtin:small</code> | 0 (<code>centre_raise</code> 2) | Text-button captions (since app 0.22.7). |</p>
+<p>The original's tenth font, a small 6-pixel one, is compiled into the program, not stored as a
+sheet (<code>PortDrawString</code> 0x5ffa81). Its glyphs are original art and are <strong>not</strong> copied:
+<code>builtin:small</code> is this project's own 6-row design, with capitals and digits on rows 0–4 and
+descenders on row 5. Its <strong>advances</strong> are the original's own, read from the width routine
+(0x617487, <strong>verified</strong>; for example <code>I</code> 2, <code>A</code> 6, <code>W</code> 8, space 3, and <code>/</code> 0). The text is white
+and takes the colour it is drawn in. <code>y</code> is the glyph top, and a centred line moves up 2.</p>
+<h2 id="text-buttons-and-dialogs-app-0227">Text buttons and dialogs (app 0.22.7)<a class="headerlink" href="#text-buttons-and-dialogs-app-0227" title="Permanent link">&para;</a></h2>
+<p>Two skin styles draw controls the way the original does. Each control places its caption <strong>from
+its own rectangle</strong> (plan M2, #123, RQ-UI-06):</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/skin.yaml</span>
+<span class="nt">skins</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">xcom</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">fonts</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">caption</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">sheet</span><span class="p">:</span><span class="w"> </span><span class="s">"builtin:small"</span><span class="p p-Indicator">,</span><span class="nt"> top</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nt"> centre_raise</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">text_button</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">font</span><span class="p">:</span><span class="w"> </span><span class="nv">caption</span><span class="p p-Indicator">,</span><span class="nt"> colour</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.784</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.784</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.784</span><span class="p p-Indicator">],</span><span class="nt"> line</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.588</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">],</span><span class="nt"> fill</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.784</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="nt">dialog</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">width</span><span class="p">:</span><span class="w"> </span><span class="nv">300</span><span class="p p-Indicator">,</span><span class="nt"> title_font</span><span class="p">:</span><span class="w"> </span><span class="nv">readout</span><span class="p p-Indicator">,</span><span class="nt"> body_font</span><span class="p">:</span><span class="w"> </span><span class="nv">body</span><span class="p p-Indicator">,</span><span class="nt"> title_y</span><span class="p">:</span><span class="w"> </span><span class="nv">18</span><span class="p p-Indicator">,</span><span class="nt"> body_top</span><span class="p">:</span><span class="w"> </span><span class="nv">28</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p><strong><code>text_button</code></strong> is the original's TextButton (paint 0x41932d, <strong>verified</strong>). Each part is
+placed from the button's rectangle:</p>
+<ul>
+<li>the caption is centred on the rectangle's centre, in <code>font</code>;</li>
+<li>two frame lines run 5 px in from each side, 2 px above and below the rectangle;</li>
+<li>while pressed, a translucent <code>fill</code> covers the rectangle less 4 px top and bottom.</li>
+</ul>
+<p>Screens use it for a screen-set <code>button</code> with a <code>label</code>, a list's action buttons and dialog
+buttons. Without <code>text_button</code>, those buttons are the skin's plain buttons. The end caps (sprites)
+come with the sprite work (#125).</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text_button.font</code></td>
+<td>name</td>
+<td>the TrueType font</td>
+<td>A sheet font of this skin for the caption.</td>
+</tr>
+<tr>
+<td><code>text_button.colour</code></td>
+<td>colour</td>
+<td>200, 200, 200</td>
+<td>Caption colour (tints the font).</td>
+</tr>
+<tr>
+<td><code>text_button.line</code></td>
+<td>colour</td>
+<td>0, 150, 0</td>
+<td>The frame lines.</td>
+</tr>
+<tr>
+<td><code>text_button.fill</code></td>
+<td>colour</td>
+<td>0, 200, 0 at 50 %</td>
+<td>The pressed fill (the original's level 50, read as half: <strong>derived</strong>).</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>dialog</code></strong> draws every strategy prompt as the original's message box: an interception, an offer,
+a choice, a report. The box is laid out in its own design space, scaled to the window and centred:</p>
+<ul>
+<li>the caption is centred on the box at <code>title_y</code>, in <code>title_font</code>;</li>
+<li>the text is wrapped from <code>body_top</code>, in <code>body_font</code>;</li>
+<li>the buttons are text buttons 20 px tall and the box's width − 20 wide, stacked up from 25 px
+  above the bottom (the exe's Interceptor Orders dialog, <strong>verified</strong>), <code>button_step</code> apart.</li>
+</ul>
+<p>The box's height follows from its text and buttons. Enter chooses the first button, Esc the last.
+Without <code>dialog</code>, or when its fonts are missing, prompts keep the plain look. The frame art (the
+original's three frame kits) is #127.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dialog.design</code></td>
+<td><code>[w, h]</code></td>
+<td>640, 480</td>
+<td>The design space.</td>
+</tr>
+<tr>
+<td><code>dialog.width</code></td>
+<td>whole number</td>
+<td>320</td>
+<td>The box's width (at least 60).</td>
+</tr>
+<tr>
+<td><code>dialog.title_font</code>, <code>dialog.body_font</code></td>
+<td>name</td>
+<td><em>required for the look</em></td>
+<td>Sheet fonts of this skin.</td>
+</tr>
+<tr>
+<td><code>dialog.title_y</code></td>
+<td>whole number</td>
+<td>20</td>
+<td>The caption's anchor below the top (the original's frame style 3: 54, with its ornament).</td>
+</tr>
+<tr>
+<td><code>dialog.body_top</code></td>
+<td>whole number</td>
+<td>32</td>
+<td>Where the text starts.</td>
+</tr>
+<tr>
+<td><code>dialog.button_step</code></td>
+<td>whole number</td>
+<td>22</td>
+<td>The buttons' spacing (<strong>derived</strong>).</td>
+</tr>
+</tbody>
+</table>
+<p>The default campaign uses both, in its own colours, with <code>font_title</code> and <code>font_body</code>. To see a
+dialog, run <code>openinterceptor --no-original --strategy --notice "Hello"</code>.</p>
 <h2 id="not-built-yet">Not built yet<a class="headerlink" href="#not-built-yet" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Custom panels bound to queries, buttons with hover images, skin sounds. Sheet fonts are used
-  by screen-set <code>value</code> and <code>text</code> widgets only (app 0.22.5); lists, buttons, the map labels and the
-  testbed layout still draw with <code>font</code> (the TrueType font). Screen layouts are built for the strategy screen only (<a href="../screens/">Screen layouts</a>).</li>
+  by screen-set <code>value</code> and <code>text</code> widgets (app 0.22.5) and, since app 0.22.7, <code>list</code> widgets, text
+  buttons and dialogs. The map labels, the menus and the testbed layout's panels still draw with
+  <code>font</code> (the TrueType font). Screen layouts are built for the strategy screen only (<a href="../screens/">Screen layouts</a>).</li>
 <li>Main menu option values too long for their room are drawn smaller (down to half size, app
   0.14.2), not wrapped.</li>
 <li>A full graphics options page (the menu has <em>Full screen</em> since app 0.16.14; brightness is in
@@ -7097,7 +7252,19 @@ captions; it is not a sheet and is not available yet (plan M2, #123).</p>
 </tr>
 <tr>
 <td><code>screens.s.widgets.w: font 'y' is not a font of the campaign's skin</code> (<code>--check</code>)</td>
-<td>A widget names a font the campaign's skin does not define.</td>
+<td>A widget's <code>font</code>, <code>title_font</code> or <code>detail_font</code> names a font the campaign's skin does not define.</td>
+</tr>
+<tr>
+<td><code>skins.x: text_button.font: 'y' is not one of this skin's fonts</code> (also <code>dialog.title_font</code>, <code>dialog.body_font</code>)</td>
+<td>A style names a font the skin does not define.</td>
+</tr>
+<tr>
+<td><code>skins.x: dialog: width: 1.5 is not a whole number of pixels</code></td>
+<td>A <code>dialog</code> size not a whole number (also <code>title_y</code>, <code>body_top</code>, <code>button_step</code>), or <code>design</code> not <code>[w, h]</code>.</td>
+</tr>
+<tr>
+<td><code>skins.x: text_button: line: expected [r, g, b] or [r, g, b, a]</code></td>
+<td>A colour with the wrong number of values.</td>
 </tr>
 </tbody>
 </table>

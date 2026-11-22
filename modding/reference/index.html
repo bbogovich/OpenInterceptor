@@ -9183,9 +9183,21 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 </tr>
 <tr>
 <td><code>fonts.&lt;name&gt;</code></td>
-<td>asset or <code>{sheet, top, wrap_offset, spacing}</code></td>
+<td>asset or <code>{sheet, top, wrap_offset, spacing, centre_raise}</code></td>
 <td>none</td>
-<td>Grid sheet bitmap fonts for screen-set widgets' <code>font:</code> (app 0.22.5; <a href="../skins/#sheet-fonts-app-next">Skins › Sheet fonts</a>). <code>sheet</code>: the image; <code>top</code>: glyph top = anchor y − <code>top</code> (default half the line height); <code>wrap_offset</code>: extra drop of wrapped text; <code>spacing</code>: extra pixels per character. <code>interceptor</code>: the original's nine SpritesDLL fonts.</td>
+<td>Grid sheet bitmap fonts for screen-set widgets' <code>font:</code> (app 0.22.5; <a href="../skins/#sheet-fonts-app-0225">Skins › Sheet fonts</a>). <code>sheet</code>: the image; <code>top</code>: glyph top = anchor y − <code>top</code> (default half the line height); <code>wrap_offset</code>: extra drop of wrapped text; <code>spacing</code>: extra pixels per character; <code>centre_raise</code> (app 0.22.7): a centred line moves up this much. <code>sheet: builtin:small</code> (app 0.22.7) is the engine's 6-pixel caption font with the original's advances. <code>interceptor</code>: the original's nine SpritesDLL fonts.</td>
+</tr>
+<tr>
+<td><code>text_button</code></td>
+<td><code>{font, colour, line, fill}</code></td>
+<td>none (plain buttons)</td>
+<td>The original's TextButton for labelled buttons, list actions and dialog buttons (app 0.22.7; <a href="../skins/#text-buttons-and-dialogs-app-next">Skins › Text buttons and dialogs</a>). Defaults: the original's 200,200,200 caption, 0,150,0 lines, 0,200,0 fill at 50 %.</td>
+</tr>
+<tr>
+<td><code>dialog</code></td>
+<td><code>{design, width, title_font, body_font, title_y, body_top, button_step}</code></td>
+<td>none (plain prompts)</td>
+<td>Prompts as the original's message boxes (app 0.22.7). Defaults 640 × 480, 320, —, —, 20, 32, 22.</td>
 </tr>
 </tbody>
 </table>
@@ -9316,7 +9328,7 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td><code>font</code></td>
 <td>name</td>
 <td>none</td>
-<td>A sheet font of the campaign's skin (app 0.22.5): the text is placed by the original's rules (<a href="../screens/#text-in-sheet-fonts-app-next">Screen layouts › Text in sheet fonts</a>); <code>size</code> is then unused. An unknown name is a <code>--check</code> error.</td>
+<td>A sheet font of the campaign's skin (app 0.22.5): the text is placed by the original's rules (<a href="../screens/#text-in-sheet-fonts-app-0225">Screen layouts › Text in sheet fonts</a>); <code>size</code> is then unused. An unknown name is a <code>--check</code> error.</td>
 </tr>
 <tr>
 <td><code>at</code></td>
@@ -9329,6 +9341,30 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td>bool</td>
 <td><code>false</code></td>
 <td>With <code>font</code>: every character in a cell as wide as the font's widest glyph (the original's clock).</td>
+</tr>
+<tr>
+<td><code>row_height</code>, <code>row_size</code></td>
+<td>number</td>
+<td>line height + 2; <code>row_height</code></td>
+<td>A <code>list</code> with <code>font</code> (app 0.22.7): row pitch, and a row's own height when smaller (rows on separate art slots).</td>
+</tr>
+<tr>
+<td><code>header</code>, <code>title_font</code></td>
+<td>number, name</td>
+<td>0, <code>font</code></td>
+<td>A <code>list</code> with <code>font</code>: a title strip this tall at the top of <code>rect</code> (0: no title) and its font.</td>
+</tr>
+<tr>
+<td><code>detail</code>, <code>detail_font</code></td>
+<td>4 numbers, name</td>
+<td>none, <code>font</code></td>
+<td>A <code>list</code> with <code>font</code>: where the selected row's full text goes, wrapped from the top; lines that do not fit are left out.</td>
+</tr>
+<tr>
+<td><code>buttons</code></td>
+<td>4 numbers</td>
+<td>none</td>
+<td>A <code>list</code> with <code>font</code>: where the selected row's actions go, as text buttons (a row when each is at least 60 wide, else a column). Without it a double click does the first action.</td>
 </tr>
 <tr>
 <td><code>shape</code></td>

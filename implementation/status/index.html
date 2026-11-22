@@ -7769,11 +7769,16 @@ elements it belongs to</em>. Branch <code>parity/m2</code>.</p>
 <td><strong>Done</strong> (app 0.22.5; MT-6-28 not yet run; DEV-081, DEV-082)</td>
 <td><code>src/formats/sheetfont.rs</code>, <code>src/app/text.rs</code>, <code>src/app/ui.rs</code>, <code>src/content/skin.rs</code>, <code>src/content/screens.rs</code>, <code>src/app/strategy.rs</code>, <code>packs/interceptor/rules/skin.yaml</code>, <code>screens.yaml</code>, <code>resources/default/rules/skin.yaml</code></td>
 </tr>
+<tr>
+<td>#123 RQ-UI-05/06, D-32 – D-40: captions from their control's rect (<code>app::caption</code>: TextButton, capsule, check row, dialog stacking); the engine's 6 px caption font <code>builtin:small</code> with the exe's advances; skin <code>text_button</code> and <code>dialog</code>; lists in sheet fonts with their own title, row, detail and button rectangles (<code>draw_list_art</code> replaces <code>draw_panel</code> on the original screens; Research on its 34 px slots); base names centred; prompts as message boxes in both campaigns; <code>--notice</code></td>
+<td><strong>Done</strong> (app 0.22.7; MT-6-29 not yet run; DEV-083, DEV-084)</td>
+<td><code>src/app/caption.rs</code>, <code>src/content/smallfont.rs</code>, <code>src/app/strategy.rs</code>, <code>src/app/widgets.rs</code>, <code>src/content/skin.rs</code>, <code>src/content/screens.rs</code>, <code>packs/interceptor/rules/{skin,screens}.yaml</code>, <code>resources/default/rules/skin.yaml</code></td>
+</tr>
 </tbody>
 </table>
-<p>Not yet: the exe's built-in 6-pixel caption font (text buttons, #123); lists, button captions and
-map labels still draw in the TrueType font (#123, #124, #128); the default campaign has no screen
-set, so its sheet fonts are loaded and checked but not yet shown.</p>
+<p>Not yet: map labels in the TrueType font (#128); the compact list's columns, pulsing bar and
+arrows (#124); button sprites and caps (#125); dialog frame art (#127). The default campaign has no
+screen set: its sheet fonts show in its dialogs only.</p>
 
 
 
