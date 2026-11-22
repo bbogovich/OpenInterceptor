@@ -83,6 +83,9 @@ pub enum WingOrder {
 pub const EVASIVE_TIME: f32 = 10.0;
 /// How often behaviour transitions are checked.
 pub const CHECKS_PER_SECOND: f32 = 4.0;
+/// With `skill.accuracy`, a frame that fails the accuracy roll turns at this share of
+/// the usual rate (the original's 0.06).
+pub const SLUGGISH: f32 = 0.06;
 /// Largest aim error, at skill `aim = 0`, degrees.
 pub const MAX_AIM_ERROR: f32 = 8.0;
 
@@ -788,17 +791,48 @@ fn aim_point(w: &World, me: &Ship, target: ShipId, st: &mut AiState, skill: &Ski
     if st.reaction_clock <= 0.0 || stale {
         st.reaction_clock = skill.reaction;
         st.seen = Some((target, t.position, t.velocity, w.time));
-        // A new aim error, uniform over a disc of radius (1 − aim) × MAX_AIM_ERROR.
-        let max = (1.0 - skill.aim).clamp(0.0, 1.0) * MAX_AIM_ERROR.to_radians();
-        let (r, a) = (next_random(&mut st.rng).sqrt() * max, next_random(&mut st.rng) * std::f32::consts::TAU);
-        st.aim_error = Vec2::new(a.cos(), a.sin()) * r;
+        if let Some(acc) = skill.accuracy {
+            // The original's model: `aim_error.x` holds the lead-time scale for this look
+            // and `aim_error.y` a sideways miss in metres (see `Skill::accuracy`).
+            let scale = if next_random(&mut st.rng) < 0.5 { acc } else { 2.0 - acc };
+            let miss = acc < 0.5 && next_random(&mut st.rng) >= acc;
+            let off = if miss {
+                let m = 15.0 + 10.0 * next_random(&mut st.rng);
+                if next_random(&mut st.rng) < 0.5 {
+                    -m
+                } else {
+                    m
+                }
+            } else {
+                0.0
+            };
+            st.aim_error = Vec2::new(scale, off);
+        } else {
+            // A new aim error, uniform over a disc of radius (1 − aim) × MAX_AIM_ERROR.
+            let max = (1.0 - skill.aim).clamp(0.0, 1.0) * MAX_AIM_ERROR.to_radians();
+            let (r, a) = (next_random(&mut st.rng).sqrt() * max, next_random(&mut st.rng) * std::f32::consts::TAU);
+            st.aim_error = Vec2::new(a.cos(), a.sin()) * r;
+        }
     }
     let (_, pos, vel, at) = st.seen.expect("set above");
     // Where the pilot believes the target is: its last sighting, moved on in a straight line.
     let believed = pos + vel * (w.time - at) as f32;
-    // Bolts carry the shooter's own velocity, so lead with the target's velocity
-    // *relative* to the shooter.
-    let lead = lead_point(me.position, believed, vel - me.velocity, bolt_speed);
+    // Bolts that carry the shooter's own velocity need a lead with the target's velocity
+    // *relative* to the shooter; bolts that do not (`bolt_inherit: false`), the target's own.
+    let rel = if w.rules.flight.bolt_inherit { vel - me.velocity } else { vel };
+    if skill.accuracy.is_some() {
+        let dist = me.position.distance(believed);
+        if skill.lead_range > 0.0 && dist > skill.lead_range {
+            return believed; // pure pursuit at long range
+        }
+        // Lead time scaled by this look's error, then the sideways miss along the
+        // target's own right-hand axis (none within 200 m).
+        let lead_time = dist / bolt_speed.max(1.0) * st.aim_error.x;
+        // (The original picks the target's x or y axis for the miss; here always x.)
+        let side = if dist > 200.0 { t.right() * st.aim_error.y } else { Vec3::ZERO };
+        return believed + rel * lead_time + side;
+    }
+    let lead = lead_point(me.position, believed, rel, bolt_speed);
     let dir = (lead - me.position).normalize_or(me.forward());
     let side = dir.cross(glam::Vec3::Y).normalize_or(me.right());
     let up = side.cross(dir);
@@ -840,6 +874,13 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
     let aim = aim_point(w, ship, target, st, skill, bolt_speed);
     let (pi, y, r, ahead) = steer_towards(ship, aim);
     (c.pitch, c.yaw, c.roll) = (pi, y, r * 0.5);
+    // The original's aim model: each frame the pilot fails its accuracy roll, it turns at
+    // 6 % of its usual rate (a sluggish frame), so a 50 % pilot tracks half as well.
+    if let Some(acc) = skill.accuracy {
+        if next_random(&mut st.rng) >= acc {
+            (c.pitch, c.yaw, c.roll) = (c.pitch * SLUGGISH, c.yaw * SLUGGISH, c.roll * SLUGGISH);
+        }
+    }
     // Close in fast when far; slow to stay on the target's tail when near.
     c.hold_speed = Some(class.max_speed * p.speed * if dist > 1500.0 { 1.0 } else { 0.7 });
     let firing = in_burst(st, p);
@@ -847,7 +888,7 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
     // Missiles: only once closing in (2.5× the attack range, at least 2 km) — a pilot
     // does not empty its racks from the edge of radar — and each interval varies by
     // ±25 %, so a flight's launches do not arrive together.
-    let missile_reach = (p.range * 2.5).max(2000.0);
+    let missile_reach = if p.missile_range > 0.0 { p.missile_range } else { (p.range * 2.5).max(2000.0) };
     if p.missile_interval > 0.0 && ship.lock.locked && st.missile_timer <= 0.0 && dist <= missile_reach {
         c.fire_missile = true;
         st.missile_timer = p.missile_interval * (0.75 + 0.5 * next_random(&mut st.rng));
@@ -1092,6 +1133,33 @@ mod tests {
         assert!(ahead < 0.0 && (pitch == 1.0 || yaw.abs() == 1.0), "hard turn when behind");
         let (_, yaw, _, _) = steer_towards(s, Vec3::new(50.0, 0.0, 100.0));
         assert_eq!(yaw, 1.0);
+    }
+
+    #[test]
+    fn the_accuracy_model_errs_in_lead_time_and_pursues_at_long_range() {
+        let mut w = world();
+        let f = w.rules.ship_id("fighter").unwrap();
+        let me = w.spawn(f, FactionId(0), "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        let foe = w.spawn(f, FactionId(1), "foe", Vec3::new(0.0, 0.0, -1000.0), Quat::IDENTITY, Pilot::External);
+        w.get_mut(foe).unwrap().velocity = Vec3::X * 100.0;
+        let mut st = AiState::new(Behaviour::Wingman, None, Vec3::ZERO);
+        let perfect = Skill { accuracy: Some(1.0), lead_range: 1750.0, ..Skill::default() };
+        let ship = w.get(me).unwrap().clone();
+        // Perfect accuracy: the full lead, 100 m/s × (1000 m / 2000 m/s) = 50 m.
+        let p = aim_point(&w, &ship, foe, &mut st, &perfect, 2000.0);
+        assert!((p - Vec3::new(50.0, 0.0, -1000.0)).length() < 1e-3, "{p:?}");
+        // At 50 % the lead is half or one and a half times right, never in between.
+        let half = Skill { accuracy: Some(0.5), ..perfect };
+        for _ in 0..20 {
+            st.reaction_clock = 0.0;
+            let p = aim_point(&w, &ship, foe, &mut st, &half, 2000.0);
+            assert!((p.x - 25.0).abs() < 1e-3 || (p.x - 75.0).abs() < 1e-3, "{p:?}");
+        }
+        // Beyond lead_range: straight at the target.
+        w.get_mut(foe).unwrap().position = Vec3::new(0.0, 0.0, -2000.0);
+        st.reaction_clock = 0.0;
+        let p = aim_point(&w, &ship, foe, &mut st, &perfect, 2000.0);
+        assert_eq!(p, Vec3::new(0.0, 0.0, -2000.0));
     }
 
     #[test]

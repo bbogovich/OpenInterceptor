@@ -608,7 +608,9 @@ pub fn draw_targeting(f: &HudFrame) {
             text(&label, p.x - h, p.y + h + 2.0, 11.0 * f.layout.scale.max(1.0), color);
             // Lead indicator: where to aim the beams.
             let speed = rules.ship(me.class).beams.first().map(|b| rules.beam(*b).speed).unwrap_or(2000.0);
-            let lead = ai::lead_point(me.position, target.position, target.velocity - me.velocity, speed);
+            // Relative velocity when shots carry the ship's own (`flight.bolt_inherit`).
+            let rel = if rules.flight.bolt_inherit { target.velocity - me.velocity } else { target.velocity };
+            let lead = ai::lead_point(me.position, target.position, rel, speed);
             if let Some(l) = f.camera.project(lead, screen) {
                 draw_circle_lines(l.x, l.y, 4.0, 1.0, color);
             }

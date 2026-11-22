@@ -106,6 +106,17 @@ fn launch_doppelganger(w: &mut World, m: &Missile, life: f32) {
 /// A warhead going off: `(ship hit, if any; where; damage; how it lands; its effect)`.
 type Blast = (Option<usize>, Vec3, f32, DamageMode, Option<crate::content::looks::EffectId>);
 
+/// Targets slower than this get no lead (m/s; the original's 50).
+pub const LEAD_MIN_SPEED: f32 = 50.0;
+/// Closer than this, a missile flies straight at its target (m; the original's 100).
+pub const LEAD_MIN_DISTANCE: f32 = 100.0;
+
+/// The original's missile lead: the target's position plus its heading times
+/// `lead_speed × distance / missile speed`.
+pub fn lead_aim(target: Vec3, target_velocity: Vec3, distance: f32, lead_speed: f32, missile_speed: f32) -> Vec3 {
+    target + target_velocity.normalize_or_zero() * lead_speed * distance / missile_speed.max(1.0)
+}
+
 /// Moves, steers and detonates every missile for one tick (see the module docs).
 pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
     let mut keep: Vec<Missile> = Vec::with_capacity(w.missiles.len());
@@ -193,6 +204,15 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
         let dir = m.velocity.normalize_or(Vec3::NEG_Z);
         let mut turn = class.turn_rate.to_radians();
         let mut aim = target_pos;
+        // `lead_speed`: the original's lead, which assumes the target flies at a fixed speed
+        // along its heading (not its real speed); none for slow or very close targets.
+        if let (Some(p), true, None) = (aim, class.lead_speed > 0.0, lure) {
+            let tv = m.target.and_then(|t| w.get(t)).map(|t| t.velocity).unwrap_or(Vec3::ZERO);
+            let d = p.distance(m.position);
+            if tv.length() >= LEAD_MIN_SPEED && d >= LEAD_MIN_DISTANCE {
+                aim = Some(lead_aim(p, tv, d, class.lead_speed, class.speed));
+            }
+        }
         if class.guidance == Guidance::Sidestep {
             if let Some(p) = target_pos {
                 let d = p.distance(m.position);
@@ -389,6 +409,13 @@ mod tests {
             w.step();
         }
         assert_eq!(w.live_ids().len(), ships, "gone after its life (5 s)");
+    }
+
+    #[test]
+    fn the_original_lead_assumes_a_fixed_target_speed() {
+        // Target 1 km away heading +X at any speed: lead 200 × 1000 / 800 = 250 m ahead.
+        let p = lead_aim(Vec3::new(0.0, 0.0, -1000.0), Vec3::X * 37.0, 1000.0, 200.0, 800.0);
+        assert!((p - Vec3::new(250.0, 0.0, -1000.0)).length() < 1e-3, "{p:?}");
     }
 
     #[test]

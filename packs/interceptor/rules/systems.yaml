@@ -18,6 +18,12 @@ systems:
   sensors:
     name: Targeting/sensors
     hit_points: 60
+    # SensorTargetingSystem1 (setting A; Interceptor.exe, verified): LockTime 2500 ms,
+    # LockAngle 2500 millidegrees, 3 km against ships. Which sensor a hull carries by
+    # default is DERIVED.
+    lock_time: 2.5s
+    lock_angle: 2.5
+    lock_range: 3km
   shields:
     name: Shield generator
     hit_points: 50

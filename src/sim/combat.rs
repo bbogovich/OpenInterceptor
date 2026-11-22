@@ -112,9 +112,21 @@ fn update_lock(w: &mut World, i: usize, dt: f32) {
         return;
     };
     let m = w.rules.missile(mid);
+    let fl = &w.rules.flight;
+    // A sensor with lock values sets the time, cone and range (the original's
+    // SensorTargetingSystem1–3); otherwise the missile and `flight.lock_angle` do.
+    let sensor = ship.system(SystemKind::Sensors).map(|(_, s)| w.rules.system(s.id));
+    let pick = |v: Option<f32>, fallback: f32| v.filter(|x| *x > 0.0).unwrap_or(fallback);
+    let lock_time = pick(sensor.map(|s| s.lock_time), m.lock_time);
+    let range = pick(sensor.map(|s| s.lock_range), m.speed * m.duration);
+    let mut cone = pick(sensor.map(|s| s.lock_angle), fl.lock_angle);
+    if ship.lock.locked {
+        cone = (cone * fl.lock_hold).min(180.0);
+    }
+    let decay = fl.lock_decay;
     let to = t.position - ship.position;
-    let in_range = to.length() <= m.speed * m.duration;
-    let in_cone = to.normalize_or_zero().dot(ship.forward()) >= w.rules.flight.lock_angle.to_radians().cos();
+    let in_range = to.length() <= range;
+    let in_cone = to.normalize_or_zero().dot(ship.forward()) >= cone.to_radians().cos();
     // Damaged sensors lock more slowly (not at all when knocked out); a target running
     // ECM halves the rate.
     let rate = ship.efficiency(SystemKind::Sensors)
@@ -123,14 +135,19 @@ fn update_lock(w: &mut World, i: usize, dt: f32) {
         * if super::systems::jammed(w, ship) { 0.5 } else { 1.0 }
         * if w.hazards.ion_storm.is_some() { 0.5 } else { 1.0 };
     let id = w.id_of(i);
-    let lock_time = m.lock_time;
     let s = &mut w.ships[i];
     if in_range && in_cone && rate > 0.0 {
-        s.lock.progress += dt * rate;
+        // Built up to the lock time and no further (DERIVED: the original's timer is not
+        // seen to stop, but a lock that outlasted its build-up by minutes is not played).
+        s.lock.progress = (s.lock.progress + dt * rate).min(lock_time);
         if !s.lock.locked && s.lock.progress >= lock_time {
             s.lock.locked = true;
             w.events.push(SimEvent::LockAcquired { ship: id });
         }
+    } else if decay && s.lock.progress > dt {
+        // `flight.lock_decay`: the lock runs down as fast as it built up.
+        s.lock.progress -= dt;
+        s.lock.locked = false;
     } else {
         s.lock = Default::default();
     }
@@ -212,7 +229,9 @@ fn fire_beams(w: &mut World, i: usize, id: ShipId, dt: f32) {
         // centre: a gun on the right wing of a ship yawing left is swinging forwards.
         // The bolt keeps that speed when it leaves the gun (physics: it starts with
         // exactly the muzzle's velocity, plus its own muzzle speed along the barrel).
-        let velocity = vel + spin.cross(offset) + dir * beam.speed;
+        // (`flight.bolt_inherit: false`: the original's bolts take the muzzle speed alone.)
+        let carried = if rules.flight.bolt_inherit { vel + spin.cross(offset) } else { Vec3::ZERO };
+        let velocity = carried + dir * beam.speed;
         w.bolts.push(Bolt {
             owner: id,
             faction,
@@ -829,6 +848,64 @@ mod tests {
         assert!(w.missiles.is_empty());
         assert!(w.get(foe).is_none(), "300 impact damage destroys the raider (40+50+100)");
         assert_eq!(w.get(me).unwrap().target, None, "target cleared on death");
+    }
+
+    #[test]
+    fn a_sensor_sets_the_lock_which_decays_and_widens_once_held() {
+        let (mut w, me, foe) = duel();
+        let mut r = (*w.rules).clone();
+        let sid = w.get(me).unwrap().system(SystemKind::Sensors).unwrap().1.id;
+        let sensor = &mut r.systems[sid.0 as usize];
+        (sensor.lock_time, sensor.lock_angle, sensor.lock_range) = (0.5, 2.5, 3000.0);
+        (r.flight.lock_decay, r.flight.lock_hold) = (true, 2.0);
+        w.rules = Arc::new(r);
+        // 4° off the nose: outside the 2.5° cone, no lock.
+        let off = |deg: f32| Vec3::new((deg.to_radians()).tan() * 400.0, 0.0, -400.0);
+        w.get_mut(foe).unwrap().position = off(4.0);
+        w.get_mut(me).unwrap().target = Some(foe);
+        for _ in 0..40 {
+            step(&mut w, TICK);
+        }
+        assert_eq!(w.get(me).unwrap().lock.progress, 0.0);
+        // Dead ahead: locked after the sensor's 0.5 s (not the missile's 1 s).
+        w.get_mut(foe).unwrap().position = off(0.0);
+        for _ in 0..31 {
+            step(&mut w, TICK);
+        }
+        assert!(w.get(me).unwrap().lock.locked);
+        // Once held, the cone doubles: 4° off still holds the lock.
+        w.get_mut(foe).unwrap().position = off(4.0);
+        step(&mut w, TICK);
+        assert!(w.get(me).unwrap().lock.locked);
+        // Off target, the lock runs down instead of vanishing.
+        w.get_mut(foe).unwrap().position = off(20.0);
+        for _ in 0..6 {
+            step(&mut w, TICK);
+        }
+        let l = w.get(me).unwrap().lock;
+        assert!(!l.locked && (l.progress - 0.4).abs() < 0.02, "{l:?}");
+        // Beyond the sensor's range nothing locks.
+        w.get_mut(foe).unwrap().position = Vec3::new(0.0, 0.0, -3500.0);
+        for _ in 0..60 {
+            step(&mut w, TICK);
+        }
+        assert!(!w.get(me).unwrap().lock.locked);
+    }
+
+    #[test]
+    fn without_bolt_inherit_shots_take_the_muzzle_speed_alone() {
+        let (mut w, me, _) = duel();
+        let mut r = (*w.rules).clone();
+        r.flight.bolt_inherit = false;
+        w.rules = Arc::new(r);
+        let s = w.get_mut(me).unwrap();
+        s.velocity = Vec3::new(100.0, 0.0, -300.0);
+        s.controls.fire_beams = true;
+        step(&mut w, TICK);
+        assert!(!w.bolts.is_empty());
+        for b in &w.bolts {
+            assert!((b.velocity - Vec3::NEG_Z * 2000.0).length() < 1e-2, "{:?}", b.velocity);
+        }
     }
 
     #[test]

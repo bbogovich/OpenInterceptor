@@ -121,6 +121,9 @@ pub struct Params {
     pub speed: f32,
     /// Seconds between missile launches (0 = never fire missiles).
     pub missile_interval: f32,
+    /// Launch missiles only within this distance, metres (0 = 2.5 × `range`, at least
+    /// 2 km).
+    pub missile_range: f32,
     /// Retreat: start the hyperdrive.
     pub jump: bool,
     /// Tow: how far to haul the prize from where it was grabbed before jumping out.
@@ -137,6 +140,7 @@ impl Default for Params {
             duration: 3.0,
             speed: 1.0,
             missile_interval: 10.0,
+            missile_range: 0.0,
             jump: false,
             escape: 2500.0,
         }
@@ -182,11 +186,19 @@ pub struct Skill {
     /// Seconds between updates of the pilot's picture of the target (and of the aim
     /// error); a slow pilot leads where the target *was* going.
     pub reaction: f32,
+    /// The original's aim model instead of `aim` (`accuracy: 50%`): no angle error, but
+    /// at each look the lead time is scaled by `accuracy` or by `2 − accuracy`
+    /// (half the time each), and a pilot below 50 % who fails a roll aims 15–25 m beside
+    /// the target.
+    pub accuracy: Option<f32>,
+    /// Beyond this distance the pilot aims straight at the target, without lead
+    /// (0 = always leads; the original's 1,750 m).
+    pub lead_range: f32,
 }
 
 impl Default for Skill {
     fn default() -> Self {
-        Skill { aim: 0.5, reaction: 0.7 }
+        Skill { aim: 0.5, reaction: 0.7, accuracy: None, lead_range: 0.0 }
     }
 }
 
@@ -337,6 +349,7 @@ impl BehaviourDef {
                 duration: sg.qty("duration", Unit::Time).unwrap_or(d.duration).max(0.0),
                 speed: sg.qty("speed", Unit::Fraction).unwrap_or(d.speed).clamp(0.0, 1.0),
                 missile_interval: sg.qty("missiles", Unit::Time).unwrap_or(d.missile_interval).max(0.0),
+                missile_range: sg.qty("missile_range", Unit::Distance).unwrap_or(d.missile_range).max(0.0),
                 jump: sg.bool("jump").unwrap_or(d.jump),
                 escape: sg.qty("escape", Unit::Distance).unwrap_or(d.escape).max(0.0),
             };
@@ -386,6 +399,8 @@ impl BehaviourDef {
                 Skill {
                     aim: sk.qty("aim", Unit::Fraction).unwrap_or(d.aim).clamp(0.0, 1.0),
                     reaction: sk.qty("reaction", Unit::Time).unwrap_or(d.reaction).max(0.05),
+                    accuracy: sk.qty("accuracy", Unit::Fraction).map(|a| a.clamp(0.0, 1.0)),
+                    lead_range: sk.qty("lead_range", Unit::Distance).unwrap_or(0.0).max(0.0),
                 }
             }
             None => d,
@@ -497,11 +512,11 @@ mod tests {
     #[test]
     fn parses_states_transitions_and_skill() {
         let b = parse(
-            "start: engage\nstates:\n  engage: {do: attack, range: 1.5km, fire_cone: 4, burst: 1s, pause: 2s, missiles: 8s}\n  \
+            "start: engage\nstates:\n  engage: {do: attack, range: 1.5km, fire_cone: 4, burst: 1s, pause: 2s, missiles: 8s, missile_range: 1.2km}\n  \
              evade: {do: evade, duration: 3s}\n  flee: {do: retreat, jump: true}\ntransitions:\n  \
              - {from: engage, to: evade, when: hit_recently(1s) and random(0.4)}\n  \
              - {from: evade, to: engage, when: time_in_state > 3s}\n  \
-             - {from: '*', to: flee, when: hull < 25% and difficulty >= captain}\nskill: {aim: 0.6, reaction: 0.8s}\n",
+             - {from: '*', to: flee, when: hull < 25% and difficulty >= captain}\nskill: {aim: 0.6, reaction: 0.8s, accuracy: 50%, lead_range: 1750m}\n",
         )
         .unwrap();
         assert_eq!(b.states.len(), 3);
@@ -514,7 +529,8 @@ mod tests {
         assert_eq!(b.transitions.len(), 3);
         assert_eq!((b.transitions[0].from, b.transitions[0].to), (Some(0), 1));
         assert_eq!((b.transitions[2].from, b.transitions[2].to), (None, 2));
-        assert_eq!(b.skill, Skill { aim: 0.6, reaction: 0.8 });
+        assert_eq!(b.states[0].params.missile_range, 1200.0);
+        assert_eq!(b.skill, Skill { aim: 0.6, reaction: 0.8, accuracy: Some(0.5), lead_range: 1750.0 });
         assert_eq!(b.state_with(Manoeuvre::Retreat).unwrap().name, "flee");
     }
 

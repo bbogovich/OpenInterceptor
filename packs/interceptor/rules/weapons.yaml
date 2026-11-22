@@ -42,15 +42,17 @@ beams:
     sound: cue:Beam8
 
 missiles:
-  # Missiles: speed, duration, impact and proximity damage from the original. Turn rate
-  # and lock time are engine values; each type's special behaviour (guidance, damage) is
-  # from the guide's descriptions (DERIVED).
+  # Missiles: speed, duration, impact and proximity damage from the original. Homing
+  # (Interceptor.exe, verified): every type turns at most 2.5 rad/s (143 deg/s) and leads
+  # its target as if it flew at 200 m/s. The lock time, cone and range come from the
+  # ship's sensor (systems.yaml). Each type's special behaviour (guidance, damage) is from
+  # the guide's descriptions (DERIVED).
   xwinder:
     inherit: original:GameSettings.ini/XWinderMissile
     mass: 85   # kg per round (Interceptor.exe)
     name: X-Winder
-    turn_rate: 100
-    lock_time: 2.0
+    turn_rate: 143.2
+    lead_speed: 200
     color: [1.0, 0.85, 0.5]
     sound: cue:Missile1
   permeator:
@@ -58,8 +60,8 @@ missiles:
     mass: 370   # kg per round (Interceptor.exe)
     name: Permeator
     damage: bypass_shields   # "bypasses shields"
-    turn_rate: 90
-    lock_time: 2.5
+    turn_rate: 143.2
+    lead_speed: 200
     color: [0.6, 1.0, 0.6]
     sound: cue:Missile3
   sidestep:
@@ -67,24 +69,24 @@ missiles:
     mass: 230   # kg per round (Interceptor.exe)
     name: Sidestep
     guidance: sidestep       # its own thrusters
-    turn_rate: 160
-    lock_time: 2.0
+    turn_rate: 143.2
+    lead_speed: 200
     color: [0.6, 0.8, 1.0]
     sound: cue:Missile1
   fusion:
     inherit: original:GameSettings.ini/FusionMissile
     mass: 940   # kg per round (Interceptor.exe)
     name: Fusion Missile
-    turn_rate: 40
-    lock_time: 3.0
+    turn_rate: 143.2
+    lead_speed: 200
     color: [1.0, 0.4, 0.9]
     sound: cue:Missile2
   elerium_torpedo:
     inherit: original:GameSettings.ini/EleriumTorpedo
     mass: 70   # kg per round (Interceptor.exe)
     name: Elerium Torpedo
-    turn_rate: 80
-    lock_time: 2.0
+    turn_rate: 143.2
+    lead_speed: 200
     color: [0.4, 1.0, 0.4]
     sound: cue:Missile6
   enveloping_torpedo:
@@ -92,8 +94,8 @@ missiles:
     mass: 670   # kg per round (Interceptor.exe)
     name: Enveloping Fusion Torpedo
     damage: enveloping       # damage spread over the whole surface
-    turn_rate: 60
-    lock_time: 2.5
+    turn_rate: 143.2
+    lead_speed: 200
     color: [1.0, 0.6, 0.9]
     sound: cue:Missile2
   parallax_torpedo:
@@ -102,8 +104,8 @@ missiles:
     name: Parallax Torpedo
     guidance: parallax       # two decoys
     decoys: 2
-    turn_rate: 80
-    lock_time: 2.0
+    turn_rate: 143.2
+    lead_speed: 200
     color: [0.9, 0.9, 1.0]
     sound: cue:Missile6
   cloaking_torpedo:

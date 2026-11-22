@@ -299,6 +299,9 @@ pub struct MissileClass {
     pub proximity_radius: f32,
     /// Kilograms each round adds to the carrying ship's mass (`flight.drive` only).
     pub mass: f32,
+    /// Homing leads its target as if it flew at this speed along its heading, m/s (the
+    /// original assumes 200); 0 = pure pursuit of the target's position.
+    pub lead_speed: f32,
     /// Turn rate while homing, degrees per second.
     pub turn_rate: f32,
     /// Seconds the target must stay in the lock cone before launch locks on.
@@ -413,6 +416,15 @@ pub struct FlightRules {
     /// With `bolt_frame: ship`, seconds a bolt stays in the firing ship's frame
     /// (`flight: {bolt_carry: 0.3s}`).
     pub bolt_carry: f32,
+    /// True: a bolt leaves the gun with the firing ship's velocity plus its muzzle speed
+    /// (physics); false: with its muzzle speed alone, as in the original
+    /// (`flight: {bolt_inherit: false}`).
+    pub bolt_inherit: bool,
+    /// Off target, a part-built missile lock runs down as fast as it built up (the
+    /// original) instead of being lost at once (`flight: {lock_decay: true}`).
+    pub lock_decay: bool,
+    /// Once locked, the lock cone is this many times wider (`flight: {lock_hold: 2}`).
+    pub lock_hold: f32,
     /// Scene lighting: `flight: {lighting: {ambient, sun, rim, distant_dot}}`.
     pub lighting: Lighting,
     /// How collisions feel: `flight: {collision: {restitution, spin, tumble}}`.
@@ -1238,6 +1250,7 @@ pub fn build_with(
                 proximity_damage: g.num("proximity_damage").unwrap_or(200.0),
                 proximity_radius: g.qty("proximity_radius", Unit::Distance).unwrap_or(25.0),
                 mass: g.num("mass").unwrap_or(0.0).max(0.0),
+                lead_speed: g.num("lead_speed").unwrap_or(0.0).max(0.0),
                 turn_rate: g.num("turn_rate").unwrap_or(90.0),
                 lock_time: g.qty("lock_time", Unit::Time).unwrap_or(2.0),
                 color: rgb(g, "color", [1.0, 0.8, 0.4]),
@@ -1467,6 +1480,9 @@ pub fn build_with(
             }
         },
         bolt_carry: fl.and_then(|g| g.qty("bolt_carry", Unit::Time)).unwrap_or(0.3).max(0.0),
+        bolt_inherit: fl.and_then(|g| g.bool("bolt_inherit")).unwrap_or(true),
+        lock_decay: fl.and_then(|g| g.bool("lock_decay")).unwrap_or(false),
+        lock_hold: fl.and_then(|g| g.num("lock_hold")).unwrap_or(1.0).max(1.0),
         lighting: {
             let d = Lighting::default();
             match fl.and_then(|g| g.node("lighting")).map(Get) {

@@ -129,6 +129,12 @@ pub struct SystemDef {
     pub repair_rate: f32,
     /// Kilograms it adds to a ship's mass (`flight.drive` only).
     pub mass: f32,
+    /// Sensors only: missile lock time, seconds; 0 = each missile's own `lock_time`.
+    pub lock_time: f32,
+    /// Sensors only: lock cone half-angle, degrees; 0 = `flight.lock_angle`.
+    pub lock_angle: f32,
+    /// Sensors only: lock range, metres; 0 = the missile's own reach.
+    pub lock_range: f32,
 }
 
 impl SystemDef {
@@ -160,6 +166,9 @@ impl SystemDef {
             strength,
             repair_rate,
             mass: 0.0,
+            lock_time: 0.0,
+            lock_angle: 0.0,
+            lock_range: 0.0,
         }
     }
 
@@ -181,6 +190,9 @@ impl SystemDef {
             strength: g.num("strength").unwrap_or(d.strength).max(0.0),
             repair_rate: g.num("repair_rate").unwrap_or(d.repair_rate).max(0.0),
             mass: g.num("mass").unwrap_or(0.0).max(0.0),
+            lock_time: g.qty("lock_time", Unit::Time).unwrap_or(0.0).max(0.0),
+            lock_angle: g.qty("lock_angle", Unit::Angle).unwrap_or(0.0).clamp(0.0, 180.0),
+            lock_range: g.qty("lock_range", Unit::Distance).unwrap_or(0.0).max(0.0),
         })
     }
 }

@@ -76,6 +76,7 @@ fn missile() -> Ty {
         f("proximity_damage", Ty::Num, "damage from the proximity fuse"),
         f("proximity_radius", dist(), "proximity fuse radius"),
         f("mass", Ty::Num, "kg per round carried (flight.drive)"),
+        f("lead_speed", Ty::Num, "homing leads the target as if it flew at this speed, m/s (0 = pure pursuit)"),
         f("turn_rate", Ty::Num, "degrees per second while homing"),
         f("lock_time", time(), "seconds in the lock cone to lock on"),
         f("color", rgb(), "trail colour"),
@@ -346,6 +347,9 @@ fn system() -> Ty {
         f("strength", Ty::Num, "tractor pull m/s², ECM/cloak break chance % per second"),
         f("repair_rate", Ty::Num, "damage control: repair speed multiplier"),
         f("mass", Ty::Num, "kg it adds to the ship (flight.drive)"),
+        f("lock_time", time(), "sensors: missile lock time (0 = each missile's lock_time)"),
+        f("lock_angle", Ty::Qty(Unit::Angle), "sensors: lock cone half-angle (0 = flight.lock_angle)"),
+        f("lock_range", dist(), "sensors: lock range (0 = the missile's reach)"),
     ])
 }
 
@@ -467,6 +471,7 @@ fn behaviour() -> Ty {
         f("duration", time(), "evade: how long"),
         f("speed", Ty::Qty(Unit::Fraction), "fraction of top speed"),
         f("missiles", time(), "seconds between missile launches (0 = none)"),
+        f("missile_range", dist(), "launch missiles only this close (default 2.5 × range, at least 2 km)"),
         f("jump", Ty::Bool, "retreat: start the hyperdrive"),
         f("escape", dist(), "tow: haul the prize this far before jumping out (2.5 km)"),
     ]);
@@ -503,6 +508,12 @@ fn behaviour() -> Ty {
             Ty::Struct(vec![
                 f("aim", Ty::Qty(Unit::Fraction), "0 wild … 1 perfect"),
                 f("reaction", time(), "seconds between looks at the target"),
+                f(
+                    "accuracy",
+                    Ty::Qty(Unit::Fraction),
+                    "the original's aim model instead of aim: errs in the lead time by 1 − accuracy",
+                ),
+                f("lead_range", dist(), "beyond this, aim straight at the target without lead (0 = always lead)"),
             ]),
             "how well the pilot flies and shoots",
         ),
@@ -534,6 +545,13 @@ fn flight() -> Ty {
             "world: shots fly straight once fired (physics); ship: they turn with the nose for bolt_carry",
         ),
         f("bolt_carry", time(), "with bolt_frame: ship, how long a shot stays in the ship's frame"),
+        f(
+            "bolt_inherit",
+            Ty::Bool,
+            "shots leave with the ship's velocity plus muzzle speed (true) or muzzle speed alone",
+        ),
+        f("lock_decay", Ty::Bool, "off target, a part-built lock runs down instead of being lost at once (false)"),
+        f("lock_hold", Ty::Num, "once locked, the lock cone is this many times wider (1)"),
         f(
             "lighting",
             Ty::Struct(vec![

@@ -19,9 +19,12 @@ flight:
   model: newtonian
   # Ships reaching this distance from the arena centre are halted at the edge (metres).
   arena_radius: 60000
-  # Missile lock cone half-angle and radar range: engine values (the original
-  # SensorsSetting LockAngle units are not yet decoded — see Deviations).
-  lock_angle: 10
+  # Missile lock (Interceptor.exe, verified): the sensor sets the time, cone and range
+  # (systems.yaml); once locked the cone doubles, and off target a part-built lock runs
+  # down as fast as it built. lock_angle is only the fallback for a ship without sensors.
+  lock_angle: 2.5
+  lock_decay: true
+  lock_hold: 2
   radar_range: 6000
   # Hyperdrive countdown in seconds (engine value; the original counts down on screen).
   hyperspace_time: 10
@@ -29,6 +32,8 @@ flight:
   # observed side by side). Lighting is an engine choice for visibility: the rim
   # outlines dark alien hulls, distant craft show as radar-coloured dots.
   bolt_frame: world
+  # Bolts leave at their muzzle speed alone, without the ship's velocity (verified).
+  bolt_inherit: false
   lighting: {ambient: 0.30, sun: 0.85, rim: 0.35, distant_dot: 4}
 
 # Event sounds by the original's cue names (ProgramFiles/soundfx.ini on the CD).
