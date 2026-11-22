@@ -1494,6 +1494,7 @@ pub fn build_with(
     let mut strategy_globals: Vec<(&str, Node)> = [
         "start",
         "research_model",
+        "outposts",
         "pilots",
         "scores",
         "evaluations",
@@ -1509,10 +1510,16 @@ pub fn build_with(
     .into_iter()
     .filter_map(|s| global(s).map(|(n, _)| (s, n)))
     .collect();
-    // `start.money_from: original:<file>/<key>`: the starting money from the section of the
-    // original's file named after the difficulty level (Veteran, Genius, …).
+    // `start.money_from` and `outposts.exchange_rate_from: original:<file>/<key>`: a value
+    // from the section of the original's file named after the difficulty level (Veteran,
+    // Genius, …), merged as `money` / `exchange_rate`.
     for (s, node) in strategy_globals.iter_mut() {
-        let Some(from) = (*s == "start").then(|| Get(node).str("money_from").map(str::to_string)).flatten() else {
+        let (from_key, into) = match *s {
+            "start" => ("money_from", "money"),
+            "outposts" => ("exchange_rate_from", "exchange_rate"),
+            _ => continue,
+        };
+        let Some(from) = Get(node).str(from_key).map(str::to_string) else {
             continue;
         };
         let level = level_id.clone().unwrap_or_default();
@@ -1521,8 +1528,11 @@ pub fn build_with(
             original(file, &section)?.entries.iter().find(|(k, _)| k.eq_ignore_ascii_case(key)).map(|(_, v)| v.clone())
         });
         match value {
-            Some(v) => merge_into(node, &crate::formats::yaml::parse(&format!("money: {v}")).expect("a number parses")),
-            None => errors.push(format!("start.money_from: {from} not found for level {section}")),
+            Some(v) => match crate::formats::yaml::parse(&format!("{into}: {v}")) {
+                Ok(n) => merge_into(node, &n),
+                Err(e) => errors.push(format!("{s}.{from_key}: {e}")),
+            },
+            None => errors.push(format!("{s}.{from_key}: {from} not found for level {section}")),
         }
     }
     // The resolved definitions of one section. (A plain function rather than a closure:

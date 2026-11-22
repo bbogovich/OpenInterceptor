@@ -328,6 +328,8 @@ pub struct StrategyScreen {
     view_at: Option<[f32; 2]>,
     /// The map's base pictures and their frame count (`base_portraits`), this frame.
     base_pics: (Vec<String>, u32),
+    /// The map's outpost marker this frame (`outpost_marker`), if it has one.
+    outpost_tex: Option<Texture2D>,
     /// The view knob's shown frame (it turns towards its stop).
     knob_frame: f32,
     /// The panels `hide(<panel>)` has hidden (`show` brings them back).
@@ -515,6 +517,7 @@ impl StrategyScreen {
             view_at: None,
             base_pics: (Vec::new(), 1),
             knob_frame: 0.0,
+            outpost_tex: None,
             minimap: false,
             base: 0,
             system: None,
@@ -2300,6 +2303,10 @@ impl StrategyScreen {
                         map_rect = r;
                         self.levels = (wd.zoom_levels.clone(), layout.scale);
                         self.base_pics = (wd.base_portraits.clone(), wd.base_portrait_frames);
+                        self.outpost_tex = wd
+                            .outpost_marker
+                            .clone()
+                            .and_then(|m| self.image_keyed(ctx, &m, screen.pack, m.starts_with("original:")));
                         if self.level > wd.zoom_levels.len() {
                             self.level = 0;
                         }
@@ -3354,6 +3361,30 @@ impl StrategyScreen {
             let q = star + 4.0;
             draw_rectangle_lines(p.x - q, p.y - q, q * 2.0, q * 2.0, 2.0, col);
         }
+        // Outposts: a marker under the star (the original's 916, 5 x 5; its offset DERIVED).
+        if !self.minimap {
+            for o in &c.outposts {
+                let sys = &c.systems[o.system];
+                if sys.hidden {
+                    continue;
+                }
+                let p = at(sys.pos);
+                match &self.outpost_tex {
+                    Some(t) => {
+                        let (w, h) = (t.width() * k, t.height() * k);
+                        let params = DrawTextureParams { dest_size: Some(vec2(w, h)), ..Default::default() };
+                        draw_texture_ex(t, p.x - w / 2.0, p.y + star + 2.0 * k, WHITE, params);
+                    }
+                    None => draw_rectangle(
+                        p.x - 2.5 * k,
+                        p.y + star + 2.0 * k,
+                        5.0 * k,
+                        5.0 * k,
+                        Color::new(0.6, 0.9, 1.0, 1.0),
+                    ),
+                }
+            }
+        }
         // Labels the original's way: only near the cursor, upper-cased, taking turns.
         if let (Some((cfg, layout)), false) = (&self.map_labels, self.minimap) {
             self.draw_map_labels(ui, cfg, layout, &at, centre, radius);
@@ -3539,21 +3570,35 @@ fn report_rows(c: &mut Campaign, def: &StrategyDef, k: u8) -> Vec<Row> {
                 rows.push(line(format!("{}: {} kills, {} missions", p.name, p.kills, p.missions)));
             }
         }
-        // Outposts: per base, its system, modules, condition and state (the original's
-        // lines, S_GREP_238 - 243, with the engine's figures; DERIVED).
+        // Outposts: each outpost (RQ-S-04), its system, OPPs, funding, the month's income
+        // and state (the original's lines, S_GREP_238 - 243; the columns DERIVED); without
+        // outposts, the bases.
         4 => {
-            for b in &c.bases {
-                let intact = b.modules.iter().filter(|m| !m.wrecked).count();
-                let hull = if b.modules.is_empty() { 100 } else { intact * 100 / b.modules.len() };
-                let state = if b.ready_at > c.hours { "under construction" } else { "operating" };
-                rows.push(line(format!("{} in the {} system", b.name, c.systems[b.system].name)).cells(vec![
-                    b.name.clone(),
-                    c.systems[b.system].name.clone(),
-                    b.modules.len().to_string(),
-                    intact.to_string(),
-                    format!("{hull}%"),
+            for (k, o) in c.outposts.iter().enumerate() {
+                let sys = &c.systems[o.system].name;
+                let pays = def.outposts.as_ref().map_or(0.0, |r| o.income(r, c.hours));
+                let state = if pays > 0.0 { "paying" } else { "new" };
+                rows.push(line(format!("Outpost {} in the {sys} system", k + 1)).cells(vec![
+                    format!("Outpost {}", k + 1),
+                    sys.clone(),
+                    o.opps.len().to_string(),
+                    format!("{:.0}%", o.funding * 100.0),
+                    money(shown(pays)),
                     state.to_string(),
                 ]));
+            }
+            if c.outposts.is_empty() {
+                for b in &c.bases {
+                    let state = if b.ready_at > c.hours { "under construction" } else { "operating" };
+                    rows.push(line(format!("{} in the {} system", b.name, c.systems[b.system].name)).cells(vec![
+                        b.name.clone(),
+                        c.systems[b.system].name.clone(),
+                        b.modules.len().to_string(),
+                        String::new(),
+                        String::new(),
+                        state.to_string(),
+                    ]));
+                }
             }
         }
         // Player status: the pilots with their skill rank, then the losses (§13.1).

@@ -23,6 +23,7 @@
 //! it ([`save`]) a matter of writing numbers.
 
 pub mod logistics;
+pub mod outposts;
 pub mod save;
 pub mod story;
 
@@ -282,6 +283,12 @@ pub struct Campaign {
     /// incursions (sightings the player was alerted to) or X-COM incursions (missions
     /// launched) happened there. Only non-zero cells are kept.
     pub activity: Vec<ActivityCell>,
+    /// The corporate outposts (`outposts:`, RQ-S-04/05).
+    pub outposts: Vec<outposts::Outpost>,
+    /// This month's scores per system, `[player, aliens]` (RQ-S-06), and the pools for
+    /// those outside any outpost system.
+    pub system_scores: Vec<[f64; 2]>,
+    pub pool_scores: [f64; 2],
 }
 
 /// The activity grid's size: 16 × 16 cells over the galaxy (the original's, 3,750 map units
@@ -528,6 +535,9 @@ impl Campaign {
             history: Vec::new(),
             this_month: MonthRecord::default(),
             activity: Vec::new(),
+            outposts: Vec::new(),
+            system_scores: Vec::new(),
+            pool_scores: [0.0, 0.0],
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -585,6 +595,7 @@ impl Campaign {
         }
         c.refresh_recruits(def);
         c.reveal(def);
+        c.start_outposts(def);
         if let Some(l) = &def.logistics {
             c.logistics = logistics::Logistics::new(l, c.systems.len());
         }
@@ -1569,6 +1580,8 @@ impl Campaign {
             let salaries = living * def.pilots.as_ref().map_or(0.0, |p| p.salary);
             let total = (maintenance + upkeep + salaries) as f64;
             self.money -= total;
+            // The outposts: their income, the funding drift, withdrawals and growth.
+            let (_, outposts) = self.outpost_month(def);
             // The month's record for the reports.
             self.this_month.spent += total;
             self.this_month.maintenance = total;
@@ -1585,7 +1598,7 @@ impl Campaign {
             let (maintenance, upkeep, salaries) =
                 (shown(maintenance as f64), shown(upkeep as f64), shown(salaries as f64));
             let t = format!(
-                "Monthly report: score {:+.0} this month ({:.0} in all); costs {:.0} (modules {maintenance:.0}, craft {upkeep:.0}, salaries {salaries:.0}); funds {:.0}{rating}",
+                "Monthly report: score {:+.0} this month ({:.0} in all); costs {:.0} (modules {maintenance:.0}, craft {upkeep:.0}, salaries {salaries:.0}){outposts}; funds {:.0}{rating}",
                 shown(self.month_score),
                 shown(self.score),
                 shown(total),
@@ -1901,16 +1914,17 @@ impl Campaign {
                 self.wreck_module(def, b, m, events);
             }
         }
-        self.add_score(def, "undefended");
+        let at = self.nearest_system(c.pos);
+        self.add_score(def, "undefended", Some(at));
     }
 
     /// The score for finishing topic `t`: `research_model.score_by_level` at its Level
     /// (RQ-S-02; the original's 250 / 250 / 500 / 750, §2.4).
     pub(crate) fn research_score(&mut self, def: &StrategyDef, t: usize) {
         let levels = &def.research_model.score_by_level;
-        if let Some(v) = levels.get(def.research[t].level as usize).or(levels.last()) {
-            self.score += *v as f64;
-            self.month_score += *v as f64;
+        if let Some(v) = levels.get(def.research[t].level as usize).or(levels.last()).copied() {
+            // To the player's pool (README §2.4).
+            self.credit_score(v as f64, None);
         }
     }
 
@@ -1944,10 +1958,9 @@ impl Campaign {
         self.log(format!("Recovered: {}", def.items[item].name));
     }
 
-    fn add_score(&mut self, def: &StrategyDef, key: &str) {
-        let v = def.score(key) as f64;
-        self.score += v;
-        self.month_score += v;
+    /// Adds score `key` where it happened: system `sys` (its outpost's tally) or the pool.
+    fn add_score(&mut self, def: &StrategyDef, key: &str, sys: Option<usize>) {
+        self.credit_score(def.score(key) as f64, sys);
     }
 
     /// Puts bought or made products into a base.
@@ -1989,6 +2002,8 @@ impl Campaign {
         // `capture`: the prizes the player brought home (`captured(<class>)`, added by the
         // battle) become salvage — research that needs them can start.
         let keep_prizes = actions.iter().any(|a| a.trim() == "capture");
+        // The battle's system, for its scores (RQ-S-06): the one nearest the contact.
+        let battle_system = self.contacts.iter().find(|c| c.id == contact).map(|c| self.nearest_system(c.pos));
         // Artefacts (RQ-S-03, the salvage counters of §11.2): on a won battle, each of the
         // raid's salvage items is rolled with its goodies chance at this difficulty and
         // goes to the party's home base.
@@ -2010,7 +2025,7 @@ impl Campaign {
                 None => (a.trim(), ""),
             };
             match name {
-                "score" => self.add_score(def, arg),
+                "score" => self.add_score(def, arg, battle_system),
                 "money" => self.money += arg.trim_start_matches('+').parse::<f64>().unwrap_or(0.0),
                 "set_flag" => {
                     if !self.flags.iter().any(|f| f == arg) {
