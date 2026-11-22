@@ -4964,6 +4964,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#outposts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        outposts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pilots-and-scores" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7089,6 +7100,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#outposts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        outposts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pilots-and-scores" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8488,6 +8510,104 @@ flies straight for its target; on a lane map it enters at a system and follows t
 amount (an expression) added or taken every period (<code>every</code>, default 30 days). Each payment is a line in the message log.
 Module <code>maintenance</code>, hull <code>upkeep</code> and pilot <code>salary</code> are charged monthly on their own; use
 <code>expenses</code> for anything else.</p>
+<h3 id="outposts"><code>outposts</code><a class="headerlink" href="#outposts" title="Permanent link">&para;</a></h3>
+<p><code>outposts:</code> (app 0.22.26, RQ-S-04/05) — corporate outposts as campaign objects: they pay the
+player, and how well funded they are follows how the player does against the aliens where they
+are. Without the section there are none, and <code>incomes</code> pay as written. <code>interceptor</code> has them in
+place of its old flat corporate income; <code>default</code> has a small set beside the Senate's stipend.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>exchange_rate</code></td>
+<td>number</td>
+<td>250</td>
+<td>Money per yield point. <code>exchange_rate_from: original:&lt;file&gt;/&lt;key&gt;</code> reads it from the difficulty level's section, as <code>start.money_from</code> does (<code>interceptor</code>: <code>GameSettings.ini/ExchangeRate</code>, 250 / 250 / 225 / 225 / 200).</td>
+</tr>
+<tr>
+<td><code>yield_table</code></td>
+<td>rows of numbers</td>
+<td>none</td>
+<td>An OPP's yield by its body class (row 1 – 3) and richness (column 0 – 4). <code>interceptor</code>: the exe's table at 0x65f860 (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>start_funding</code>, <code>max_funding</code></td>
+<td>fraction</td>
+<td>0.75, 0.95</td>
+<td>A new outpost's funding, and its ceiling.</td>
+</tr>
+<tr>
+<td><code>min_age</code></td>
+<td>time</td>
+<td>638.4 h</td>
+<td>An outpost pays only once this old (0.95 × 28 days).</td>
+</tr>
+<tr>
+<td><code>withdraw_below</code>, <code>withdraw_cost</code>, <code>withdraw_score</code></td>
+<td>number</td>
+<td>0.03, 1500, 1000</td>
+<td>Funding under <code>withdraw_below</code> makes the outpost withdraw: <code>withdraw_cost</code> is lost and <code>withdraw_score</code> taken from the player's score.</td>
+</tr>
+<tr>
+<td><code>evaluation.pool_weights</code></td>
+<td><code>[w0, w1]</code></td>
+<td><code>[0.1, 0.2]</code></td>
+<td>Weights of the player's and the aliens' month totals in each system's evaluation.</td>
+</tr>
+<tr>
+<td><code>evaluation.steps</code></td>
+<td>list of <code>[threshold, step]</code></td>
+<td>the original's</td>
+<td>The first threshold ≥ the evaluation gives the step; funding moves by 1 … |step| percentage points at random, with the step's sign.</td>
+</tr>
+<tr>
+<td><code>growth</code></td>
+<td><code>{per_level, max_per_month, max}</code></td>
+<td>none</td>
+<td>After a month the player out-scored the aliens: <code>[min, max]</code> new outposts by difficulty level, at most <code>max_per_month</code> a month and <code>max</code> in all.</td>
+</tr>
+<tr>
+<td><code>start</code></td>
+<td><code>[min, max]</code></td>
+<td><code>[0, 0]</code></td>
+<td>Outposts at the start.</td>
+</tr>
+<tr>
+<td><code>min_opps</code></td>
+<td>number</td>
+<td>1</td>
+<td>OPPs per outpost at least; otherwise one per planet of its system (at most 20).</td>
+</tr>
+</tbody>
+</table>
+<p>Each month, before the report (strategy README §2.2 – §2.3, <strong>verified</strong>):</p>
+<ol>
+<li><strong>Income.</strong> Every outpost old enough pays round(<code>exchange_rate</code> × Σ its OPPs' yields ×
+   funding). Three class-2, richness-2 OPPs at Veteran: 225 × 2,700 × 0.75 = 455,625.</li>
+<li><strong>Evaluation.</strong> With X and A the player's and the aliens' month totals (systems and pools), each
+   system with outposts gets e = X[i] + X × w0 − (A[i] + A × w1), and its outposts' funding moves
+   by the step, clamped to [0, <code>max_funding</code>].</li>
+<li><strong>Withdrawal</strong> of outposts under <code>withdraw_below</code>.</li>
+<li><strong>Growth</strong> when X &gt; A: new outposts in the best-scoring systems (each picked once a month).</li>
+<li>The month's system scores start again.</li>
+</ol>
+<p><strong>Scores belong to systems</strong> (RQ-S-06): a battle's score goes to the system nearest the contact
+when an outpost is there, else to a pool; research and story scores go to the pool. A positive
+score counts for the player, a negative one for the aliens (<em>derived</em>: the engine's score names
+carry their side in their sign). The map marks a system with an outpost (<code>outpost_marker</code>, see
+<a href="../screens/#widget-keys">Screens</a>); the Outposts report lists them.</p>
+<p><strong>Derived</strong> (DEV-098): the starting outposts (<code>interceptor</code>: 3, in the systems nearest the base),
+the OPPs' body classes and richness (random), where new outposts go among the candidates (best
+score, then nearest a base), and the score sign convention. Mission scores by the original's
+<code>MissionScores</code> are not read yet: which counter is which event needs the flight layer to report
+kills by type.</p>
 <h3 id="pilots-and-scores"><code>pilots</code> and <code>scores</code><a class="headerlink" href="#pilots-and-scores" title="Permanent link">&para;</a></h3>
 <p><code>pilots:</code> — pilot rules.</p>
 <table>
