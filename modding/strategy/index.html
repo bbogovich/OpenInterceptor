@@ -7927,8 +7927,13 @@ dwarf, blue, white, yellow, orange, red dwarf, black hole) weighted by its class
 §13.5; black holes weigh 0 and are placed by <code>black_holes</code>), each with its CSD icon and a
 portrait: five 20-frame star pictures (<strong>verified</strong> since app 0.22.22, §14.4): 454 yellow, 474
 orange, 494 red giant and red dwarf, 514 blue giant and blue, 534 white dwarf and white; black
-holes have none. Planets per system (2 – 5 by a per-class
-table) are not generated.</p>
+holes have none.</p>
+<p><code>planets</code> (list of numbers, app 0.22.24): the planet counts a generated system of the class draws one
+from at random (empty: none; drawn after the positions and classes, so a map is otherwise the
+same). <code>interceptor</code> gives each class the original's results (<strong>verified</strong>, <code>0x5dab1e</code>): 1 plus the
+class's entry in a 10 × 9 table (row <code>rand % 10</code>), held to 2 – 5 — a yellow star <code>[3, 3, 3, 4, 4, 5,
+5, 5, 5, 5]</code>, a red dwarf always 2. The count is kept with the system and saved; no screen shows it
+yet.</p>
 <h3 id="research-and-research_model"><code>research</code> and <code>research_model</code><a class="headerlink" href="#research-and-research_model" title="Permanent link">&para;</a></h3>
 <p><code>research: {&lt;id&gt;: …}</code> — the research tree.</p>
 <table>
@@ -8298,7 +8303,7 @@ never refused. A whole base can be dismantled too (<a href="#dismantling-a-whole
 <td><code>sensor_range</code></td>
 <td>number</td>
 <td>0</td>
-<td>The hub's own sensor range, map units (modules add to it).</td>
+<td>The hub's own sensor range, map units (modules add to it). <code>interceptor</code>: 0 since app 0.22.24 — the original's base sees only through its sensor module: SensorType1 – 3 scan 2,000 / 4,000 / 6,000 map units (⅓, ⅔, 1 ly; <strong>verified</strong>, strategy README §3.2).</td>
 </tr>
 <tr>
 <td><code>hangar</code>, <code>quarters</code></td>
@@ -8404,6 +8409,12 @@ its <code>cargo</code> modules limit nothing: the original hub's own cargo room 
 <td>number</td>
 <td>600</td>
 <td>Map units per hour.</td>
+</tr>
+<tr>
+<td><code>react_on_detect</code></td>
+<td>fraction (<code>per_level</code>)</td>
+<td>0</td>
+<td>App NEXT: once a base's sensors see the contact, with this chance it turns on that base — it heads for it (along the lanes on a lane map) and strikes it if not stopped. A plan's shipment keeps its course. <code>interceptor</code>: alien raids <code>{per_level: [25%, 35%, 45%, 55%, 65%]}</code> (the original's 25 + 10 × level %, <strong>verified</strong>; that it re-tasks against the detector is <em>derived</em>).</td>
 </tr>
 </tbody>
 </table>

@@ -7003,6 +7003,12 @@ one looks like a bug.</p>
 <td>Data; the 3 m and the hull fits are tunable.</td>
 <td></td>
 </tr>
+<tr>
+<td>DEV-096</td>
+<td><strong>Sensor ranges, detection and planets as built</strong> (app 0.22.24, #130). The bases' scan ranges (2,000 / 4,000 / 6,000 map units, none without a sensor), the 25 + 10 × level % reaction and the planet counts per class are <strong>verified</strong>. Different or unknown: the engine sums a base's sensor effects (the original's base takes its sensor's range; with one sensor allowed per base they agree); what a reacting flight plan does is <em>derived</em> (the contact turns on the base that saw it); the per-range-band detection roll (<code>Sensor*DetectionProb</code>) is not traced, so detection inside the range is certain; no screen shows a system's planets yet, and Base Stats does not show the range in light years.</td>
+<td>Data.</td>
+<td></td>
+</tr>
 </tbody>
 </table>
 
