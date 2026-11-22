@@ -27,6 +27,7 @@
 //! battle hands the screen to the app, which flies the mission and comes back here with
 //! the debrief (see `AppContext::campaign`).
 
+use super::text;
 use super::ui::Ui;
 use super::widgets::{self, Input, ListView};
 use super::{AppContext, Next};
@@ -245,6 +246,8 @@ pub struct StrategyScreen {
     testbed: bool,
     /// Images loaded for the screens, by reference.
     images: std::collections::HashMap<String, Option<Texture2D>>,
+    /// Glyph positions of the text being drawn (one buffer reused every frame).
+    glyphs: Vec<text::Placed>,
     /// Drawing over art: panels are not framed (the art frames them).
     art: bool,
     /// The map is clipped to a circle.
@@ -397,6 +400,7 @@ impl StrategyScreen {
             stack: Vec::new(),
             testbed: false,
             images: Default::default(),
+            glyphs: Vec::new(),
             art: false,
             map_round: false,
             minimap: false,
@@ -1835,10 +1839,18 @@ impl StrategyScreen {
                             action = wd.action.clone();
                         }
                     }
-                    WidgetKind::Value => place_text(&ctx.ui, &self.value(def, wd.source.as_deref().unwrap_or(""))),
+                    WidgetKind::Value => {
+                        let v = self.value(def, wd.source.as_deref().unwrap_or(""));
+                        if !sheet_text(&ctx.ui, wd, &v, &layout, &mut self.glyphs) {
+                            place_text(&ctx.ui, &v);
+                        }
+                    }
                     WidgetKind::Text => {
                         let text = wd.source.clone().unwrap_or_default();
                         let text = ctx.content.text.resolve(&text).unwrap_or(text);
+                        if sheet_text(&ctx.ui, wd, &text, &layout, &mut self.glyphs) {
+                            continue;
+                        }
                         let ui = &ctx.ui;
                         for (i, l) in widgets::wrap(&text, r[2], &|s| ui.measure(s, size)).iter().enumerate() {
                             ui.text_in(l, r[0], r[1] + size * (1.0 + i as f32 * 1.3), size, colour);
@@ -2267,6 +2279,33 @@ impl StrategyScreen {
             );
         }
     }
+}
+
+/// Draws a widget's text in its sheet font by the original's anchor rules (RQ-UI-04):
+/// at its `at` anchor (DrawText) or in its rect (DrawTextRect). `false` when the widget
+/// names no sheet font, or the skin has none by that name (the caller then falls back
+/// to the TrueType path). `buf` is reused every frame to avoid allocating.
+fn sheet_text(
+    ui: &Ui,
+    wd: &crate::content::screens::WidgetDef,
+    s: &str,
+    layout: &crate::hud::Layout,
+    buf: &mut Vec<text::Placed>,
+) -> bool {
+    let Some(sheet) = wd.font.as_deref().and_then(|f| ui.sheet(f)) else { return false };
+    let face = sheet.face();
+    let align = text::Align::parse(&wd.align);
+    buf.clear();
+    match wd.at {
+        Some([x, y]) => text::draw_text(&face, s, x as i32, y as i32, align, wd.monospace, buf),
+        None => {
+            let r = wd.rect.map(|v| v as i32);
+            text::draw_text_rect(&face, s, r, align, wd.monospace, buf)
+        }
+    }
+    let tint = wd.colour.map_or(WHITE, |c| Color::new(c[0], c[1], c[2], c[3]));
+    ui.draw_glyphs(sheet, buf, layout, tint);
+    true
 }
 
 #[cfg(test)]

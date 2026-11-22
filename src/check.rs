@@ -206,6 +206,28 @@ pub fn run(content: &Content) -> Report {
             }
         }
     }
+    // Skins' sheet fonts must read as grid sheets, and every screen widget's `font:`
+    // must name one of the campaign skin's fonts.
+    for skin in &rules.skins {
+        for f in &skin.fonts {
+            match crate::content::skin::load_sheet(content, f, skin.pack) {
+                Ok(_) => r.images += 1,
+                Err(e) => r.errors.push(format!("skins.{}.fonts.{}: {e}", skin.id, f.name)),
+            }
+        }
+    }
+    let skin_fonts: Vec<&str> =
+        rules.skins.first().map(|s| s.fonts.iter().map(|f| f.name.as_str()).collect()).unwrap_or_default();
+    for screen in &rules.screens {
+        for w in &screen.items {
+            if let Some(f) = w.font.as_deref().filter(|f| !skin_fonts.contains(f)) {
+                r.errors.push(format!(
+                    "screens.{}.widgets.{}: font '{f}' is not a font of the campaign's skin",
+                    screen.id, w.name
+                ));
+            }
+        }
+    }
     let mut sounds: Vec<(String, usize)> = rules.sounds.values().cloned().collect();
     sounds.extend(rules.beams.iter().filter_map(|b| b.sound.clone().map(|s| (s, b.pack))));
     sounds.extend(rules.missiles.iter().filter_map(|m| m.sound.clone().map(|s| (s, m.pack))));
@@ -327,7 +349,9 @@ mod tests {
              y: {faction: a}\n  z: {model: m, faction: a, speeed: 3}\ncockpits: {c: {image: img/none.png}}\nbeams: {b: {sound: s/none.wav}}\n\
              sounds: {boom: s/boom.wav}\n\
              terrains:\n  t: {generate: {kind: hills}, detail: textures/none.png, scatter: [{model: models/nope.obj, count: 3}]}\n  \
-             u: {generate: {kind: hills}, scatter: [{model: models/rock.obj, max_slope: 95}]}\n",
+             u: {generate: {kind: hills}, scatter: [{model: models/rock.obj, max_slope: 95}]}\n\
+             skins: {k: {fonts: {f: fonts/none.png}}}\n\
+             screens: {s: {widgets: {w: {kind: value, value: time, rect: [0, 0, 1, 1], font: nope}}}}\n",
         )
         .unwrap();
         std::fs::write(dir.join("scenarios/s.yaml"), "id: s\nobjects:\n  o: {class: ghost}\n").unwrap();
@@ -349,6 +373,8 @@ mod tests {
             "terrains.t: detail textures/none.png",
             "terrains.t: scatter models/nope.obj",
             "terrains.u: scatter[0]: max_slope 95",
+            "skins.k.fonts.f",
+            "screens.s.widgets.w: font 'nope'",
         ] {
             assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
         }

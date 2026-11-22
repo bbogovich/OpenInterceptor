@@ -10,7 +10,8 @@ It writes into resources/default/:
 
 * `models/`   - ships, stations, rubble, debris pieces and the Guard 3D cockpit (OBJ +
                 MTL), plus `guard_cockpit.instruments.yaml` (models.py);
-* `textures/` - hull paint and its damage variants (PNG, textures.py);
+* `textures/` - hull paint and its damage variants (PNG, textures.py) and the skin's
+                grid sheet fonts `font_*.png` (fonts.py);
 * terrain dressing - ground detail textures and scatter models (rocks, a tree) for the
                 default terrains (terrain.py);
 * `sounds/`   - synthesised effects (WAV, sounds.py).
@@ -28,7 +29,8 @@ import sys
 sys.dont_write_bytecode = True  # keep __pycache__ out of the source tree
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import models  # noqa: E402  (after the path tweak, so `common` is importable)
+import fonts  # noqa: E402  (after the path tweak, so `common` is importable)
+import models  # noqa: E402
 import music  # noqa: E402
 import sounds  # noqa: E402
 import terrain  # noqa: E402
@@ -47,6 +49,7 @@ def build():
         os.makedirs(os.path.join(PACK, sub), exist_ok=True)
     rows, rects = models.build_all()
     tex = textures.build_all()
+    tex += fonts.build_all()
     ground_tex, scatter = terrain.build_all()
     tex += ground_tex
     rows += [(m, 0) for m in scatter]

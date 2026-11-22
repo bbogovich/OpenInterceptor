@@ -14,3 +14,9 @@ skins:
       accent: [0.85, 0.20, 0.15]
       highlight: [0.32, 0.22, 0.10]
     panel: {image: textures/deco_panel.png, slice: 24}
+    # Grid sheet bitmap fonts (RQ-UI-03) for screen widgets' `font:` - our own 5x9
+    # dot-matrix design, drawn by tools/default_assets/fonts.py in the same grid layout
+    # as the original's SpritesDLL fonts. `top` puts an anchor y on the cap's middle.
+    fonts:
+      body: {sheet: textures/font_body.png, top: 4, wrap_offset: 0}
+      title: {sheet: textures/font_title.png, top: 7, wrap_offset: 0}

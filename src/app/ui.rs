@@ -9,16 +9,45 @@
 //! pieces: the four corners are drawn at their own size, the four edges stretch along
 //! one axis, and the centre stretches both ways — so a frame with ornate corners fits
 //! any rectangle ([`nine_slice`] computes the pieces; it is pure and tested).
+//!
+//! **Sheet fonts** (RQ-UI-03). The skin's `fonts:` are bitmap fonts in a grid sheet
+//! (the original's SpritesDLL fonts, or a pack's PNG). Each is uploaded once as a
+//! texture with nearest-neighbour filtering — a pixel font must not be smoothed — and
+//! [`Ui::draw_glyphs`] copies glyphs out of it to the positions `app::text` computed.
 
-use crate::content::skin::Skin;
+use super::text::{Face, Placed};
+use crate::content::skin::{SheetFontDef, Skin};
 use crate::content::Content;
+use crate::formats::sheetfont::SheetFont;
+use crate::hud::Layout;
 use macroquad::prelude::*;
+
+/// A loaded sheet font: its rules, metrics and texture.
+pub struct SheetFace {
+    pub def: SheetFontDef,
+    pub font: SheetFont,
+    tex: Texture2D,
+}
+
+impl SheetFace {
+    /// The font with its placement rules, for `app::text`.
+    pub fn face(&self) -> Face<'_> {
+        Face {
+            font: &self.font,
+            // Default anchor: the line's middle (the original's 14 px fonts use 7).
+            top: self.def.top.unwrap_or(self.font.line_height as i32 / 2),
+            wrap_offset: self.def.wrap_offset,
+            spacing: self.def.spacing,
+        }
+    }
+}
 
 /// The resolved skin.
 pub struct Ui {
     pub skin: Skin,
     font: Option<Font>,
     panel: Option<Texture2D>,
+    sheets: Vec<SheetFace>,
 }
 
 /// One piece of a nine-slice draw: source rectangle in the image, destination on screen.
@@ -79,7 +108,51 @@ impl Ui {
                 }
             }
         });
-        Ui { skin, font, panel }
+        let sheets = skin
+            .fonts
+            .iter()
+            .filter_map(|def| match crate::content::skin::load_sheet(content, def, skin.pack) {
+                Ok((font, img)) => {
+                    let tex = Texture2D::from_rgba8(img.width as u16, img.height as u16, &img.rgba);
+                    tex.set_filter(FilterMode::Nearest);
+                    Some(SheetFace { def: def.clone(), font, tex })
+                }
+                Err(e) => {
+                    eprintln!("skin {}: font {}: {e}", skin.id, def.name);
+                    None
+                }
+            })
+            .collect();
+        Ui { skin, font, panel, sheets }
+    }
+
+    /// A sheet font of the skin by name.
+    pub fn sheet(&self, name: &str) -> Option<&SheetFace> {
+        self.sheets.iter().find(|s| s.def.name == name)
+    }
+
+    /// Draws glyphs placed in a design space (`app::text`) through its layout, tinted
+    /// (white keeps the sheet's own colours, as the original draws them).
+    pub fn draw_glyphs(&self, sheet: &SheetFace, glyphs: &[Placed], layout: &Layout, tint: Color) {
+        let size = sheet.font.size as f32;
+        for p in glyphs {
+            let Some(g) = sheet.font.glyph(p.glyph) else { continue };
+            if g.width == 0 {
+                continue;
+            }
+            let r = layout.rect([p.x as f32, p.y as f32, g.width as f32, size]);
+            draw_texture_ex(
+                &sheet.tex,
+                r[0],
+                r[1],
+                tint,
+                DrawTextureParams {
+                    dest_size: Some(vec2(r[2], r[3])),
+                    source: Some(Rect::new(g.x as f32, g.y as f32, g.width as f32, size)),
+                    ..Default::default()
+                },
+            );
+        }
     }
 
     /// A colour of the skin by role (`background`, `panel`, `border`, `text`, `dim`,
