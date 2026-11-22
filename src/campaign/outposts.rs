@@ -70,6 +70,12 @@ impl Campaign {
         }
     }
 
+    /// The technicians the outposts give (RQ-S-09, README §2.5): `per_outpost` + `per_opp`
+    /// × its OPPs each (every OPP works: the engine has no OPP damage yet).
+    pub fn technicians(&self, rules: &crate::content::strategy::ManufactureRules) -> f32 {
+        self.outposts.iter().map(|o| rules.per_outpost + rules.per_opp * o.opps.len() as f32).sum()
+    }
+
     /// Founds an outpost in system `sys`: funding `start_funding`, one OPP per planet of the
     /// system (at least `min_opps`, at most 20), each of a random body class and richness
     /// (DERIVED: the original's per-body classes are not read).

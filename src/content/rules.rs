@@ -1510,6 +1510,7 @@ pub fn build_with(
         "research_model",
         "outposts",
         "salvage_fits",
+        "manufacture",
         "pilots",
         "scores",
         "evaluations",

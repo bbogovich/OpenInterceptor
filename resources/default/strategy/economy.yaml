@@ -78,6 +78,11 @@ base_types:
     # A module, or a module group: the best of that group researched so far (the deep
     # radar once it is known).
     template: [hangar, sensor, laboratory]
+    # The hub's hull: an unopposed strike takes 800 points, which mend at 1 a minute (at
+    # least 5 an hour slice), twice as fast with a ray battery standing guard.
+    hull: 4000
+    repair: {per_minute: 1, min_step: 5, boost: {ray_battery: 2}}
+    strike_damage: 800
 
 # The Senate's monthly evaluation: the first rating whose condition holds (R-STR-009).
 evaluations:
