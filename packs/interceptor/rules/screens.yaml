@@ -52,7 +52,7 @@ screens:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
       # The info pane [347,39,639,266] (VERIFIED): the rows below its header, the selected
       # row and its actions at the pane's foot (placement in the pane DERIVED).
-      modules: {kind: list, source: build, rect: [356, 104, 274, 112], font: body, detail: [356, 216, 274, 26], buttons: [356, 244, 274, 18]}
+      modules: {kind: list, source: build, rect: [356, 104, 274, 108], font: body, style: compact, detail: [356, 216, 274, 26], buttons: [356, 244, 274, 18]}
       purchase: {kind: button, rect: [492, 349, 24, 24], action: open(purchase)}
       equip_ships: {kind: button, rect: [492, 386, 24, 24], action: open(equip_ships)}
       stats: {kind: button, rect: [492, 423, 24, 24], action: open(base_stats)}
@@ -66,7 +66,15 @@ screens:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
       # The docked-ships ListBox [17,397,517,457] (VERIFIED); the selected ship's text and
       # actions in the stat panel [432,89,639,347] under its header (DERIVED).
-      ships: {kind: list, source: hangar, rect: [17, 397, 500, 60], font: body, detail: [436, 186, 198, 118], buttons: [436, 310, 198, 20]}
+      # A compact list box (3 rows); columns from the CSD's ship-list template
+      # S_CSD_CHOOSESHIPTAB (SHIP, PILOT, STATUS: DERIVED here - this screen's own template
+      # is not recovered). Cells: ship, pilot, base and state. Arrows 204/205 top-left
+      # (518,413)/(518,434), sprites 60/63: 27500/27501, 27503/27504, disabled 27502/27505
+      # (VERIFIED).
+      ships: {kind: list, source: hangar, rect: [17, 397, 500, 60], font: body, style: compact, columns: "@orig.S_CSD_CHOOSESHIPTAB",
+              detail: [436, 186, 198, 118], buttons: [436, 310, 198, 20],
+              up: {rect: [518, 413, 24, 24], images: ["original:SpritesDLL.dll#27500", "original:SpritesDLL.dll#27501", "original:SpritesDLL.dll#27502"]},
+              down: {rect: [518, 434, 24, 24], images: ["original:SpritesDLL.dll#27503", "original:SpritesDLL.dll#27504", "original:SpritesDLL.dll#27505"]}}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 18: Equipment & Personnel - purchase, sell, transfer, manufacture.
@@ -79,7 +87,17 @@ screens:
       # The ListBox [18,272,556,460] (VERIFIED) with its green header strip (DERIVED, the
       # art); the selected item in info box 3 [301,42,441,165] and its actions in info box 2
       # [135,42,275,165] (boxes VERIFIED, their use here DERIVED).
-      items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, header: 18, title_font: readout, detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115]}
+      # The original's list box (RQ-UI-13, VERIFIED, ListBox.cpp): rows in 23011 a line
+      # + 2 apart, round((h - 7)/16) of them, a pulsing green bar; the header template
+      # S_S6B_PURCHASE_HDR (its columns are its tokens' widths in 23010, VERIFIED 0x51c46b)
+      # in the green strip (strip height DERIVED). Cells, in order: item, size, cost,
+      # stores (the editable QUANTITY column has no spinners yet). Scroll arrows 700/701:
+      # top-left (562,290)/(562,314), 24x24, images 6911/6912, 6914/6915, disabled 6913
+      # (VERIFIED; the resources are in WrappersDLL).
+      items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style: compact, header: 18, title_font: readout,
+              columns: "@orig.S_S6B_PURCHASE_HDR", detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115],
+              up: {rect: [562, 290, 24, 24], images: ["original:WrappersDLL.dll#6911", "original:WrappersDLL.dll#6912", "original:WrappersDLL.dll#6913"]},
+              down: {rect: [562, 314, 24, 24], images: ["original:WrappersDLL.dll#6914", "original:WrappersDLL.dll#6915", "original:WrappersDLL.dll#6913"]}}
       manufacture: {kind: button, rect: [575, 314, 24, 24], action: open(manufacture)}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
@@ -89,7 +107,10 @@ screens:
     background: original:WrappersDLL.dll#6110
     widgets:
       funds: {kind: value, value: money, rect: [299, 229, 145, 22], font: value, align: centre}   # the readout slot (rect VERIFIED, wrappers/screens.yaml); font: E&P values (23013, DERIVED)
-      jobs: {kind: list, source: factory, rect: [18, 272, 538, 188], font: body, header: 18, title_font: readout, detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115]}
+      jobs: {kind: list, source: factory, rect: [18, 272, 538, 188], font: body, style: compact, header: 18, title_font: readout,
+             columns: "@orig.S_S6B_MANUFACTURE_HDR", detail: [305, 46, 132, 115], buttons: [139, 46, 132, 115],
+             up: {rect: [562, 290, 24, 24], images: ["original:WrappersDLL.dll#6911", "original:WrappersDLL.dll#6912", "original:WrappersDLL.dll#6913"]},
+             down: {rect: [562, 314, 24, 24], images: ["original:WrappersDLL.dll#6914", "original:WrappersDLL.dll#6915", "original:WrappersDLL.dll#6913"]}}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 9: Research.
@@ -109,7 +130,7 @@ screens:
     background: original:WrappersDLL.dll#6330
     widgets:
       # The stats view [26,60,371,390] (VERIFIED): rows, then the selected row and its actions.
-      stats: {kind: list, source: bases, rect: [32, 64, 334, 256], font: body, detail: [32, 324, 334, 42], buttons: [32, 368, 334, 20]}
+      stats: {kind: list, source: bases, rect: [32, 64, 334, 256], font: body, style: compact, detail: [32, 324, 334, 42], buttons: [32, 368, 334, 20]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 23: the UFOpedia (databank).
@@ -118,7 +139,7 @@ screens:
     background: original:WrappersDLL.dll#5107
     widgets:
       # Topics ListBox [346,105,596,275] and the article ListBox [95,325,592,446] (VERIFIED).
-      topics: {kind: list, source: archive, rect: [346, 105, 250, 170], font: body, detail: [95, 325, 497, 121]}
+      topics: {kind: list, source: archive, rect: [346, 105, 250, 170], font: body, style: compact, detail: [95, 325, 497, 121]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
   # 32-37: the status reports.
@@ -127,5 +148,5 @@ screens:
     background: original:WrappersDLL.dll#7700
     widgets:
       # The report area [24,58,568,447] (VERIFIED).
-      report: {kind: list, source: reports, rect: [28, 62, 534, 326], font: body, detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
+      report: {kind: list, source: reports, rect: [28, 62, 534, 326], font: body, style: compact, detail: [28, 392, 534, 32], buttons: [28, 424, 534, 20]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED

@@ -220,6 +220,12 @@ pub fn run(content: &Content) -> Report {
         rules.skins.first().map(|s| s.fonts.iter().map(|f| f.name.as_str()).collect()).unwrap_or_default();
     for screen in &rules.screens {
         for w in &screen.items {
+            // A list's scroll-arrow images must load.
+            for img in [&w.list.up, &w.list.down].into_iter().flatten().flat_map(|a| a.images.iter()) {
+                if let Err(e) = content.load_image(img, screen.pack, false) {
+                    r.errors.push(format!("screens.{}.widgets.{}: arrow image {img}: {e}", screen.id, w.name));
+                }
+            }
             let named = [w.font.as_deref(), w.list.title_font.as_deref(), w.list.detail_font.as_deref()];
             for f in named.into_iter().flatten().filter(|f| !skin_fonts.contains(f)) {
                 r.errors.push(format!(
@@ -352,7 +358,8 @@ mod tests {
              terrains:\n  t: {generate: {kind: hills}, detail: textures/none.png, scatter: [{model: models/nope.obj, count: 3}]}\n  \
              u: {generate: {kind: hills}, scatter: [{model: models/rock.obj, max_slope: 95}]}\n\
              skins: {k: {fonts: {f: fonts/none.png}}}\n\
-             screens: {s: {widgets: {w: {kind: value, value: time, rect: [0, 0, 1, 1], font: nope}}}}\n",
+             screens: {s: {widgets: {w: {kind: value, value: time, rect: [0, 0, 1, 1], font: nope}, \
+             l: {kind: list, rect: [0, 0, 1, 1], up: {rect: [0, 0, 1, 1], images: [img/gone.png]}}}}}\n",
         )
         .unwrap();
         std::fs::write(dir.join("scenarios/s.yaml"), "id: s\nobjects:\n  o: {class: ghost}\n").unwrap();
@@ -376,6 +383,7 @@ mod tests {
             "terrains.u: scatter[0]: max_slope 95",
             "skins.k.fonts.f",
             "screens.s.widgets.w: font 'nope'",
+            "screens.s.widgets.l: arrow image img/gone.png",
         ] {
             assert!(all.contains(needle), "missing '{needle}' in:\n{all}");
         }
