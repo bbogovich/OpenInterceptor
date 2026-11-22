@@ -264,6 +264,50 @@ walked. `value()` maps a value name to text; `weekday` uses `Date::weekday` (Zel
 0 = Monday; tested by `weekdays_follow_the_calendar`). `--screen <id>` calls
 `StrategyScreen::open_screen`, which puts that screen over the first.
 
+### Sheet fonts and text anchors (`formats::sheetfont`, `app::text`)
+
+*App NEXT, branch `parity/m2` (plan M2, issue #122; RQ-UI-03/04).* The original strategy
+screens draw text with bitmap **sheet fonts** placed by two routines; the engine had guessed
+TrueType baselines (`r[1] + r[3]/2 + 0.35·size`), which is why text looked mis-sized and off its
+controls. Three layers now reproduce the original:
+
+```mermaid
+flowchart LR
+    Y["skins.&lt;id&gt;.fonts.&lt;name&gt;<br/>content::skin::SheetFontDef"] --> L["skin::load_sheet<br/>Content::load_image → RGBA"]
+    L --> P["formats::sheetfont::SheetFont::parse<br/>pitch, glyph rects, widths, char map"]
+    P --> U["app::ui::SheetFace<br/>texture (grid + key → alpha 0, Nearest)"]
+    W["screens.&lt;id&gt;.widgets.&lt;w&gt;<br/>font, at, align, monospace"] --> T["app::text::draw_text / draw_text_rect<br/>→ Vec&lt;Placed&gt; (design pixels)"]
+    U --> T
+    T --> D["Ui::draw_glyphs<br/>Layout::rect per glyph"]
+```
+
+- **`formats::sheetfont`** turns a sheet's RGBA pixels into metrics only: the grid colour
+  (pixel 0,0), the key colour (bottom-right), the pitch (first grid line in column 1), each
+  glyph's box and trimmed width, the line height, the widest *mapped* glyph (the monospace cell)
+  and the fixed char → glyph table `CHAR_MAP` (the exe's table at 0x6af488).
+- **`app::text`** is pure layout in `i32`, so its divisions truncate toward zero exactly like the
+  exe's `cdq; sub; sar` idiom: `draw_text` (DrawText 0x5fe4ad: x by flag, glyph top = y − `top`,
+  accented glyphs +1), `draw_text_rect` (DrawTextRect 0x5fed2b: one fitting line at the rect's
+  vertical centre, else `wrap` and a block whose first y is centred or `top + lh/2 + lh`, plus
+  `wrap_offset`, step `lh + lh/3`), `width` and `wrap` (words split at spaces and `~`; a `~`
+  just before a word forces the break, as the exe tests the byte before each `strtok` token).
+- **`app::ui`** loads each skin font once (`Ui::load`), uploads it with `FilterMode::Nearest` (a
+  pixel font must not be smoothed) and draws `Placed` glyphs through the screen's `Layout`.
+- **`StrategyScreen::draw_set`** calls `sheet_text` for `value` and `text` widgets; it returns
+  `false` when the widget has no (loaded) sheet font, and the old TrueType path runs. The glyph
+  list is a `Vec` owned by the screen and cleared each time, so drawing text allocates nothing
+  per frame once it has grown.
+- `--check` loads every skin's fonts through the same reader and reports a widget naming a font
+  the campaign's skin lacks.
+
+Tests: `formats::sheetfont::tests` (a synthetic sheet built in the test: pitch, trim, char map,
+space rule, a short sheet, the key cleared), `app::text::tests` (the CSD time centred on x 561 at
+y 370 → tops at 363; right alignment; accented drop; monospace cells; a fitting line centred in
+the status bar; wrapping, forced breaks and both block placements),
+`content::skin::tests::sheet_fonts_parse_with_their_anchor_rules` and
+`the_default_campaigns_generated_fonts_are_grid_sheets`, and `check::tests` (bad sheet, unknown
+widget font).
+
 ### The main menu and credits (`app::menu`, `app::credits`)
 
 Since app 0.14.0 `app::run` opens `Screen::Menu(MainMenu)` instead of the launcher when the
@@ -335,6 +379,10 @@ play without it.
 | `Event::Card`, `Event::Video`, `Event::Cutscene` | `campaign` | Story events for the screen to present. |
 | `Next::Video`, `Next::Cutscene`, `Screen::Video`, `Screen::Cutscene` | `app` | The routing above. |
 | `AppContext::ui`, `AppContext::music` | `app` | The skin and the music player, shared by every screen. |
+| `SheetFont`, `Glyph`, `CHAR_MAP`, `char_table`, `ACCENTED_FIRST` | `formats::sheetfont` | A grid sheet font's metrics and the fixed char → glyph table (app NEXT). |
+| `SheetFontDef`, `skin::load_sheet`, `Skin::fonts` | `content::skin` | `skins.<id>.fonts.<name>`; reading a sheet with its background made transparent. |
+| `text::{Face, Placed, Align, draw_text, draw_text_rect, wrap, width}` | `app::text` | The original's DrawText and DrawTextRect as pure layout (app NEXT). |
+| `SheetFace`, `Ui::sheet`, `Ui::draw_glyphs`; `strategy::sheet_text`; `WidgetDef::{font, at, monospace}` | `app::ui`, `app::strategy`, `content::screens` | Loaded sheet fonts and their drawing; a widget's text in its sheet font. |
 | `widgets::{Input, button, button_row, grid, ListView, wrap, modal, contains, Rect4}` | `app::widgets` | Immediate-mode widgets for the strategy screen (app 0.16.0); the arithmetic pure and tested. |
 | `ScreenLayout`, `default_starmap`, `STARMAP_WIDGETS`, `screens::schema` | `content::screens` | `screens.<id>`: design space, background, widget rectangles; the engine's strategy-screen layout. |
 | `WidgetDef`, `WidgetKind`, `WIDGET_KINDS`, `UiAction`, `ScreenLayout::items`, `ScreenLayout::dialog` | `content::screens` | A screen set's widgets and actions (app 0.17.0). |

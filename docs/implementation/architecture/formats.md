@@ -19,7 +19,8 @@ flowchart LR
     TXT["&str"] --> INI["ini::Ini::parse<br/>(original INI; legacy settings)"]
     TXT --> YML["yaml::parse → Node<br/>(mod files, settings, bindings)"]
     TXT --> OBJ["obj::parse → ObjMesh<br/>obj::parse_mtl"]
-    RGBA["RGBA pixels"] --> PNG["png::downscale, png::encode_rgba → PNG bytes<br/>(encoding by the image crate since 2ed1149)"]
+    RGBA["RGBA pixels"] --> SF["sheetfont::SheetFont::parse<br/>(grid sheet bitmap fonts)"]
+    RGBA --> PNG["png::downscale, png::encode_rgba → PNG bytes<br/>(encoding by the image crate since 2ed1149)"]
 ```
 
 Logic flow of a typical reader: check the signature (`BadMagic` if wrong) → read the header
@@ -39,6 +40,7 @@ indices) → return owned data.
 | `formats::png` | *(writes)* RGBA → PNG | App 0.6.7, for the console's textured target model. Since main `2ed1149` `encode_rgba(w, h, rgba)` calls the `image` crate's `PngEncoder` — `image` is already a direct dependency for decoding (its `png` feature encodes too), so the in-crate writer of app 0.6.7 (stored deflate blocks, its own CRC-32 and Adler-32) was removed as a duplicate; a length mismatch gives an empty result rather than a panic. The module keeps what the console needs first: shrinking a texture by averaging blocks. Test: the encoded PNG decodes back to the same pixels ([Dependency policy](../../learning/best-practices/dependencies.md#png-encoding-the-image-crate-already-in-the-tree)). |
 | `formats::smacker` | Smacker video `SMK2` / `SMK4` | App 0.12.0. A complete in-crate decoder ([below](#smacker-formatssmacker)): Huffman trees with the escape cache, the four block types, delta palettes, DPCM audio. |
 | `formats::mpsrc` | MPSRC packs (`.mps`) | Main `319a31b`. The bundle `mfdanim.mps` (113 talking-head Smacker clips): [below](#mpsrc-formatsmpsrc). |
+| `formats::sheetfont` | Grid sheet bitmap fonts (from decoded RGBA) | App NEXT. The original's SpritesDLL fonts and mods' PNG fonts: grid colour at (0,0), key colour bottom-right, pitch from the first grid line in column 1, glyphs trimmed on the right, the exe's char → glyph table. Metrics only; drawing is `app::ui` ([Presentation › Sheet fonts](presentation.md#sheet-fonts-and-text-anchors-formatssheetfont-apptext)). |
 | `formats::obj` | Wavefront OBJ + MTL | The mod model format. Negative indices, `v/vt/vn` forms. Faces in a `g`/`o` named `slot_<name>` are not kept as geometry: each such group becomes an attachment point `(name, centre of its faces, first face's normal)` in `ObjMesh::slots`. |
 
 ### Smacker (`formats::smacker`)
@@ -106,6 +108,7 @@ test: the table, a case-insensitive lookup, a missing member, a foreign file).
 | `smacker::Smacker<'a>`, `AudioTrack`, `FrameAudio`, `SmkError` | A Smacker file being decoded (borrowing its bytes): `width`, `height`, `frames`, `frame_time`, `tracks`, the current `pixels` and `palette`; one audio track's rate and format; a frame's audio per track; a decoding error. |
 | `mpsrc::Entry`, `mpsrc::entries`, `mpsrc::member` | One file in an MPSRC pack (name, offset, size); the table; one member's bytes. |
 | `smacker::Bits<'a>`, `smacker::Big` | The LSB-first bit reader; a big Huffman tree with its escape cache. |
+| `sheetfont::SheetFont`, `sheetfont::Glyph`, `CHAR_MAP` | A sheet font's pitch, box size, columns, glyph boxes and widths, line height, widest mapped glyph, grid and key colours, char table; `glyph_of`, `glyph`, `advance`, `clear_background`. |
 | `obj::ObjMesh`, `obj::ObjMaterial` | Positions, uvs, normals, faces (as corner ranges), material names, `slots` (attachment points). |
 
 ## API Reference
@@ -121,12 +124,13 @@ test: the table, a case-insensitive lookup, a missing member, a foreign file).
   `ini.section(name)`, `ini.get(section, key)`, `ini.merge_from(&other)`.
 - `smacker::Smacker::new(&[u8]) -> Result<Smacker, SmkError>`, `.next_frame() -> Result<Option<FrameAudio>, SmkError>`,
   `.rgba()`, `.out_height()`, `.skip_to(n)`; `smacker::decode_palette(&[u8], &old)`, `smacker::decode_audio(&[u8], AudioTrack)`.
+- `sheetfont::SheetFont::parse(width, height, &[u8] rgba) -> FResult<SheetFont>`; `sheetfont::char_table() -> [u8; 256]`.
 - `obj::parse(&str) -> FResult<ObjMesh>`, `obj::parse_mtl(&str) -> Vec<ObjMaterial>`.
 - `yaml::parse(&str) -> Result<Node, YamlError>`; `Node::null(line)`, `Node::text(s, line)`,
   `node.get(key)`, `as_str`, `as_map`, `as_seq`, `is_null`, `to_yaml()`.
 
 Test-only builders (`#[cfg(test)]`, crate-visible): `pe::build_test_pe`,
-`xmsh::build_test_xmsh`, `xtxr::build_test_xtxr`, `tga::build_test_tga` — so other modules'
+`xmsh::build_test_xmsh`, `xtxr::build_test_xtxr`, `tga::build_test_tga`, `sheetfont::tests::synthetic_sheet` — so other modules'
 tests can make fake DLLs and meshes.
 
 ## Debugging

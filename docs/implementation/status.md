@@ -439,3 +439,17 @@ of the cutscene format, including `harmless` per action;
 the main menu, the launcher and the prompts (only the strategy screens are laid out as data), and custom cockpit instruments bound to queries;
 skipping from the tablet console (the default music has `good` and `bad` stingers since 0.16.15). Since
 0.16.14 the Controls screen returns to the main menu also when opened from the launcher. No Stage 6 manual test has been run.
+
+## Parity M2 progress: text and widgets on the original screens
+
+From the X-COM parity plan (`notes/re/parity-plan.md`, issues #122 – #128) and the playtest's
+finding that text on the strategy screens was *sized differently and not aligned with the UI
+elements it belongs to*. Branch `parity/m2`.
+
+| Item | Status | Where |
+|---|---|---|
+| #122 RQ-UI-03/04: grid sheet fonts (`skins.<id>.fonts`, `formats::sheetfont`), the original's DrawText / DrawTextRect anchor rules (`app::text`), widget `font`, `at`, `monospace`; `interceptor`'s nine SpritesDLL fonts; the CSD readouts (D-41) and status bar in 23010 at the exe's anchors, base names in 23011, the E&P funds in its slot (D-34); the default campaign's generated `font_body` / `font_title` sheets (`tools/default_assets/fonts.py`) checked by `--check` | **Done** (app NEXT; MT-6-28 not yet run; DEV-081, DEV-082) | `src/formats/sheetfont.rs`, `src/app/text.rs`, `src/app/ui.rs`, `src/content/skin.rs`, `src/content/screens.rs`, `src/app/strategy.rs`, `packs/interceptor/rules/skin.yaml`, `screens.yaml`, `resources/default/rules/skin.yaml` |
+
+Not yet: the exe's built-in 6-pixel caption font (text buttons, #123); lists, button captions and
+map labels still draw in the TrueType font (#123, #124, #128); the default campaign has no screen
+set, so its sheet fonts are loaded and checked but not yet shown.
