@@ -204,6 +204,7 @@ Built-in values per kind: [Rulesets](rulesets.md#ship-systems-and-equipment).
 | `instruments` | mapping name: `[x, y, w, h]` | — | Instrument rectangles in the design space. Names: `message`, `radar_front`, `radar_rear`, `mfd`, `gauge1`–`gauge4`, `power`, `systems`, `status`, and since app 0.15.1 `ship_status` (the craft from above with its shield bands, [Cockpits › The ship status display](cockpits.md#the-ship-status-display)). |
 | `anchors` | mapping name: `{at, normal, size}` | none | 3D cockpits: instruments drawn in perspective on the model's surface (below). |
 | `wide` | `{blackout, color, from, left, right}` | none | Wide screens: the bands left and right of narrower 2D cockpit art. `blackout: true` fills them with `color` (default black), hiding the 3D view there; `from` (design-space y, default 0) starts them lower, e.g. at the dashboard's top so space still shows beside the canopy; `left`/`right` are your own images stretched over each band ([R-HUD-013](../specification/requirements/cockpit-hud.md#r-hud-013-wide-screen-side-bands)). |
+| `ship_status` | `{rings, width, tilt, arc, craft}` | engine look | Where the `ship_status` instrument's shield bands lie on the art: band radii (fractions of the half-size, in lighting order), thickness, a counter-clockwise tilt in degrees, each half's arc in degrees, and the craft's size (app 0.22.2, [Cockpits › Matching painted rings](cockpits.md#matching-painted-rings-app-0222)). |
 
 An anchor:
 

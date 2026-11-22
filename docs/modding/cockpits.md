@@ -65,6 +65,30 @@ Give it a square rectangle: the display is drawn in the largest circle that fits
 HUD it gets a thin ring of its own; over cockpit art it draws only the bands and the craft, so
 put it over a round display in the art.
 
+### Matching painted rings (app 0.22.2)
+
+When the art paints its own rings, the cockpit's `ship_status` key (beside `instruments`, not
+inside it) lays the bands exactly on them. Centre the instrument rectangle on the rings, then:
+
+```yaml
+cockpits:
+  a:
+    instruments:
+      ship_status: [110.25, 408.5, 58, 58]
+    ship_status: {rings: [0.833, 0.586, 0.327], width: 0.09, tilt: 6.8, arc: 166, craft: 0.25}
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `rings` | `[0.989, 0.8405, 0.692]` | Radius of each band's centre line, as a fraction of the rectangle's half-size, in the order the bands light (the first stays lit at the lowest shield level). |
+| `width` | `0.11` | Band thickness, a fraction of the half-size. |
+| `tilt` | `0` | Rotates the whole display counter-clockwise by this many degrees (the craft too), for art drawn at an angle: the fore/aft split then follows the painted divider. |
+| `arc` | `140` | Degrees each half spans; `180` leaves no gap at the sides. |
+| `craft` | `0.42` | Size of the craft silhouette, a fraction of the half-size. |
+
+The X-COM cockpits' values were measured from the art (DERIVED): three concentric rings per
+display, with cockpit A's divider tilted 6.8° (right end up) and B's and C's level.
+
 | Cockpit | Where it is |
 |---|---|
 | Glass HUD (no cockpit) | Where gauge 3 was, beside the other gauges. |
