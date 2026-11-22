@@ -266,6 +266,57 @@ pub struct ResearchModel {
     pub score_by_level: Vec<f32>,
 }
 
+/// `outposts:` — corporate outposts as campaign objects (RQ-S-04/05; strategy README
+/// §2.2 – §2.3, verified): each pays the player monthly from its OPPs' yields, its funding
+/// drifts with the month's scores in its system, it withdraws when funding falls too low,
+/// and a good month brings new ones. Absent: no outposts (incomes as written).
+#[derive(Debug, Clone, PartialEq)]
+pub struct OutpostRules {
+    /// Credits per yield point at this difficulty (the original's `ExchangeRate`, by level;
+    /// `exchange_rate_from` reads it).
+    pub exchange_rate: f32,
+    /// OPP yield by body class (rows 1 – 3) and richness (columns 0 – 4).
+    pub yield_table: Vec<Vec<f32>>,
+    /// A new outpost's funding (0.75).
+    pub start_funding: f32,
+    /// Funding never passes this (0.95).
+    pub max_funding: f32,
+    /// Hours an outpost must exist before it pays (0.95 × 28 days).
+    pub min_age: f32,
+    /// Below this funding the outpost withdraws (0.03), costing `withdraw_cost` and moving
+    /// `withdraw_score` from the player to the aliens in its system.
+    pub withdraw_below: f32,
+    pub withdraw_cost: f32,
+    pub withdraw_score: f32,
+    /// The month's evaluation: `e = X[i] + X × w0 − (A[i] + A × w1)`.
+    pub pool_weights: [f32; 2],
+    /// `(threshold, step)`: the first threshold ≥ e gives the step (percentage points;
+    /// the change is 1 … |step| at random, with its sign).
+    pub steps: Vec<(f32, f32)>,
+    /// New outposts after a month the player out-scored the aliens: `[min, max]` by
+    /// difficulty level, at most `growth_per_month` a month and `growth_max` in all.
+    pub growth: Vec<[u32; 2]>,
+    pub growth_per_month: u32,
+    pub growth_max: u32,
+    /// Outposts at the start, in the systems nearest the first base (`[min, max]`).
+    pub start_count: [u32; 2],
+    /// OPPs per outpost: one per planet of its system, at least `min_opps`, at most 20.
+    pub min_opps: u32,
+}
+
+impl OutpostRules {
+    /// The yield of one OPP of body `class` (1 – 3) and `richness` (0 – 4).
+    pub fn opp_yield(&self, class: u8, richness: u8) -> f32 {
+        let row = self.yield_table.get((class.max(1) - 1) as usize).or(self.yield_table.last());
+        row.and_then(|r| r.get(richness as usize).or(r.last())).copied().unwrap_or(0.0)
+    }
+
+    /// The funding step for an evaluation `e` (0 past the table).
+    pub fn step(&self, e: f32) -> f32 {
+        self.steps.iter().find(|(t, _)| *t >= e).or(self.steps.last()).map_or(0.0, |(_, s)| *s)
+    }
+}
+
 /// `goodies.<id>`: a salvage chance per difficulty level (the original's `*Goodies`
 /// tables, per cent from Beginner to Superhuman; `unknowns-2026-11.md` §11.2).
 #[derive(Debug, Clone, PartialEq)]
@@ -671,6 +722,8 @@ pub struct StrategyDef {
     pub star_classes: Vec<StarClass>,
     pub research: Vec<Topic>,
     pub research_model: ResearchModel,
+    /// Outposts as campaign objects (`outposts:`), if the campaign has them.
+    pub outposts: Option<OutpostRules>,
     pub items: Vec<Item>,
     pub hulls: Vec<Hull>,
     pub modules: Vec<ModuleDef>,
@@ -1003,6 +1056,97 @@ impl StrategyDef {
                 score_by_level: g.and_then(|g| g.nums("score_by_level")).unwrap_or_default(),
             }
         };
+        // Outposts (RQ-S-04/05): the original's values are the defaults where it has them.
+        let outposts = global("outposts").map(|n| {
+            let g = Get(&n);
+            let pair = |k: &str, d: [f32; 2]| match g.nums(k).as_deref() {
+                Some([a, b]) => [*a, *b],
+                _ => d,
+            };
+            let ev = g.node("evaluation").map(Get);
+            let gr = g.node("growth").map(Get);
+            OutpostRules {
+                exchange_rate: g.num("exchange_rate").unwrap_or(250.0),
+                yield_table: g
+                    .node("yield_table")
+                    .and_then(|t| t.as_seq())
+                    .map(|rows| {
+                        rows.iter()
+                            .map(|r| {
+                                r.as_seq()
+                                    .unwrap_or(&[])
+                                    .iter()
+                                    .filter_map(|v| v.as_str()?.trim().parse().ok())
+                                    .collect()
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+                start_funding: g.num("start_funding").unwrap_or(0.75).clamp(0.0, 1.0),
+                max_funding: g.num("max_funding").unwrap_or(0.95).clamp(0.0, 1.0),
+                min_age: hours(g, "min_age").unwrap_or(0.95 * 28.0 * 24.0),
+                withdraw_below: g.num("withdraw_below").unwrap_or(0.03),
+                withdraw_cost: g.num("withdraw_cost").unwrap_or(1500.0),
+                withdraw_score: g.num("withdraw_score").unwrap_or(1000.0),
+                pool_weights: ev.map_or([0.1, 0.2], |e| match e.nums("pool_weights").as_deref() {
+                    Some([a, b]) => [*a, *b],
+                    _ => [0.1, 0.2],
+                }),
+                steps: ev
+                    .and_then(|e| e.node("steps").and_then(|n| n.as_seq()))
+                    .map(|rows| {
+                        rows.iter()
+                            .filter_map(|r| {
+                                match r
+                                    .as_seq()?
+                                    .iter()
+                                    .filter_map(|v| v.as_str()?.trim().parse().ok())
+                                    .collect::<Vec<f32>>()
+                                    .as_slice()
+                                {
+                                    [t, s] => Some((*t, *s)),
+                                    _ => None,
+                                }
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_else(|| {
+                        vec![
+                            (-1000.0, -21.0),
+                            (-501.0, -11.0),
+                            (-251.0, -6.0),
+                            (-1.0, -2.0),
+                            (0.0, 0.0),
+                            (250.0, 2.0),
+                            (500.0, 6.0),
+                            (f32::MAX, 11.0),
+                        ]
+                    }),
+                growth: gr
+                    .and_then(|e| e.node("per_level").and_then(|n| n.as_seq()))
+                    .map(|rows| {
+                        rows.iter()
+                            .filter_map(|r| {
+                                match r
+                                    .as_seq()?
+                                    .iter()
+                                    .filter_map(|v| v.as_str()?.trim().parse().ok())
+                                    .collect::<Vec<u32>>()
+                                    .as_slice()
+                                {
+                                    [a, b] => Some([*a.min(b), *a.max(b)]),
+                                    _ => None,
+                                }
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+                growth_per_month: gr.and_then(|e| e.num("max_per_month")).map_or(3, |v| v as u32),
+                growth_max: gr.and_then(|e| e.num("max")).map_or(16, |v| v as u32),
+                start_count: pair("start", [0.0, 0.0]).map(|v| v.max(0.0) as u32),
+                min_opps: g.num("min_opps").map_or(1, |v| v.max(0.0) as u32),
+            }
+        });
         // Salvage chances: `chances: [..]` in per cent, or the original's keys Beginner …
         // Superhuman (read by inheritance from a `*Goodies` section).
         const LEVELS: [&str; 5] = ["beginner", "experienced", "veteran", "genius", "superhuman"];
@@ -1288,6 +1432,7 @@ impl StrategyDef {
             star_classes,
             research,
             research_model,
+            outposts,
             items,
             hulls,
             modules,
@@ -1552,6 +1697,40 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("start_cost", nums(), "logistics: materials delivered once to begin"),
             ])),
             "research topics",
+        ),
+        f(
+            "outposts",
+            Ty::Struct(vec![
+                f("exchange_rate", Ty::Num, "credits per yield point"),
+                f("exchange_rate_from", Ty::Text, "original:<file>/<key>: the exchange rate from the difficulty level's section"),
+                f("yield_table", Ty::List(Box::new(Ty::List(Box::new(Ty::Num)))), "OPP yield by body class (rows) and richness (columns)"),
+                f("start_funding", Ty::Num, "a new outpost's funding (0.75)"),
+                f("max_funding", Ty::Num, "funding's ceiling (0.95)"),
+                f("min_age", Ty::Qty(Unit::Time), "age before an outpost pays"),
+                f("withdraw_below", Ty::Num, "funding below which an outpost withdraws (0.03)"),
+                f("withdraw_cost", Ty::Num, "money lost when one withdraws"),
+                f("withdraw_score", Ty::Num, "score moved to the aliens when one withdraws"),
+                f(
+                    "evaluation",
+                    Ty::Struct(vec![
+                        f("pool_weights", Ty::Numbers(2), "weights of the player's and the aliens' totals"),
+                        f("steps", Ty::List(Box::new(Ty::Numbers(2))), "[threshold, step] pairs, thresholds rising"),
+                    ]),
+                    "the monthly funding drift",
+                ),
+                f(
+                    "growth",
+                    Ty::Struct(vec![
+                        f("per_level", Ty::List(Box::new(Ty::Numbers(2))), "[min, max] new outposts by difficulty level"),
+                        f("max_per_month", Ty::Num, "new outposts a month at most"),
+                        f("max", Ty::Num, "outposts in all at most"),
+                    ]),
+                    "new outposts after a month the player out-scored the aliens",
+                ),
+                f("start", Ty::Numbers(2), "[min, max] outposts at the start"),
+                f("min_opps", Ty::Num, "OPPs per outpost at least (one per planet otherwise)"),
+            ]),
+            "corporate outposts as campaign objects",
         ),
         f(
             "research_model",

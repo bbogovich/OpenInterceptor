@@ -742,6 +742,7 @@
                   "shape": {"description": "a map's viewport", "enum": ["rect", "round"]},
                   "months": {"description": "a graph's month names, January first", "type": "array", "items": {"type": "string"}},
                   "panel": {"description": "the panel the widget belongs to (hide(panel) / show(panel))", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "outpost_marker": {"description": "a map's marker under a star with an outpost", "type": "string"},
                   "y_range": {"description": "a graph's fixed y range (default: fitted to the values)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
                   "y_steps": {"description": "a graph's y grid steps (fixed: default 18; fitted: about 6)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "base_portraits": {"description": "a map's level-2 picture of a system with a base: x-com, enemy", "type": "array", "items": {"type": "string"}},
@@ -1122,6 +1123,28 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "outposts": {"description": "corporate outposts as campaign objects", "type": "object", "additionalProperties": false, "properties": {
+        "exchange_rate": {"description": "credits per yield point", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "exchange_rate_from": {"description": "original:<file>/<key>: the exchange rate from the difficulty level's section", "type": "string"},
+        "yield_table": {"description": "OPP yield by body class (rows) and richness (columns)", "type": "array", "items": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}}},
+        "start_funding": {"description": "a new outpost's funding (0.75)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "max_funding": {"description": "funding's ceiling (0.95)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "min_age": {"description": "age before an outpost pays", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "withdraw_below": {"description": "funding below which an outpost withdraws (0.03)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "withdraw_cost": {"description": "money lost when one withdraws", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "withdraw_score": {"description": "score moved to the aliens when one withdraws", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "evaluation": {"description": "the monthly funding drift", "type": "object", "additionalProperties": false, "properties": {
+            "pool_weights": {"description": "weights of the player's and the aliens' totals", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+            "steps": {"description": "[threshold, step] pairs, thresholds rising", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}}
+          }},
+        "growth": {"description": "new outposts after a month the player out-scored the aliens", "type": "object", "additionalProperties": false, "properties": {
+            "per_level": {"description": "[min, max] new outposts by difficulty level", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
+            "max_per_month": {"description": "new outposts a month at most", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "max": {"description": "outposts in all at most", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+          }},
+        "start": {"description": "[min, max] outposts at the start", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+        "min_opps": {"description": "OPPs per outpost at least (one per planet otherwise)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+      }},
     "research_model": {"description": "how research progresses", "type": "object", "additionalProperties": false, "properties": {
         "mode": {"description": "how research is described", "enum": ["download", "labs"]},
         "rate": {"description": "work units per hour at one base", "type": "string"},

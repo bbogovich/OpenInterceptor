@@ -166,11 +166,7 @@ impl Campaign {
                 }
                 "clear_flag" => self.flags.retain(|f| f != arg(0)),
                 "money" => self.money += num(0) as f64,
-                "score" => {
-                    let v = def.score(arg(0)) as f64;
-                    self.score += v;
-                    self.month_score += v;
-                }
+                "score" => self.credit_score(def.score(arg(0)) as f64, None),
                 "relation" => self.change_standing(def, arg(0), num(1), events),
                 "research" => {
                     if let Some(t) = def.topic(arg(0)) {

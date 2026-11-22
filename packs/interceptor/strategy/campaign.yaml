@@ -205,8 +205,28 @@ base_types:
 
 # The corporations' funding (DERIVED: the original's monthly evaluation per outpost
 # system arrives with relations in Stage 5).
-incomes:
-  corporate_funding: {name: Corporate funding, every: 30d, amount: 600000 + month_score * 100}
+# The corporate outposts pay the player (RQ-S-04/05/06; strategy README §2.2 - §2.3, VERIFIED):
+# round(ExchangeRate x sum of OPP yields x funding) a month once 0.95 x 28 days old; funding
+# starts at 0.75, drifts with the month's scores in its system (the step table), is capped at
+# 0.95 and below 0.03 the outpost withdraws (-1,500, 1000 score to the aliens); a month the
+# player out-scored the aliens adds 1-4 / 1-4 / 0-2 / 1 / 1 outposts by level, 3 a month, 16
+# in all. DERIVED: 3 outposts at the start in the systems nearest the base, one OPP per planet
+# with a random body class and richness.
+outposts:
+  exchange_rate_from: original:GameSettings.ini/ExchangeRate
+  yield_table: [[200, 400, 600, 800, 800], [300, 600, 900, 1200, 1200], [400, 700, 1000, 1300, 1600]]
+  start_funding: 0.75
+  max_funding: 0.95
+  min_age: 638.4h
+  withdraw_below: 0.03
+  withdraw_cost: 1500
+  withdraw_score: 1000
+  evaluation:
+    pool_weights: [0.1, 0.2]
+    steps: [[-1000, -21], [-501, -11], [-251, -6], [-1, -2], [0, 0], [250, 2], [500, 6], [1000000000, 11]]
+  growth: {per_level: [[1, 4], [1, 4], [0, 2], [1, 1], [1, 1]], max_per_month: 3, max: 16}
+  start: [3, 3]
+  min_opps: 1
 
 # Alien and pirate activity (DERIVED: the alien strategist replaces these rolls in Stage 5).
 raids:

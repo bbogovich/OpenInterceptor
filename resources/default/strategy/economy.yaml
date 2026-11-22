@@ -11,6 +11,18 @@ incomes:
   senate_stipend: {name: Senate stipend, every: 30d, amount: 400000 + 60000 * bases + month_score * 200 + relation(senate) * 3000}
   cosmium_sales: {name: Cosmium sales, every: 7d, amount: 12000 * module_count(cosmium_refinery)}
 
+# Frontier colonies the Guard protects: each pays monthly from its platforms (exchange rate x
+# yields x funding), its funding drifts with the month's scores in its system, it pulls out
+# when funding falls under 3 %, and a good month brings a new one. (See Modding > Strategy >
+# outposts.) The Senate's stipend above still pays the most.
+outposts:
+  exchange_rate: 20
+  yield_table: [[100, 200, 300, 400, 500], [150, 300, 450, 600, 750], [200, 400, 600, 800, 1000]]
+  min_age: 20d
+  growth: {per_level: [[1, 2], [1, 1], [0, 1]], max_per_month: 1, max: 4}
+  start: [1, 1]
+  min_opps: 3
+
 expenses:
   fuel: {name: Fuel and stores, every: 7d, amount: 4000 * craft}
 

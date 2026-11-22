@@ -28,7 +28,8 @@ screens:
       # (rows 566-585; the enemy bases' 586-605 are listed for when the map has them); centred,
       # DERIVED. A black hole cannot be opened.
       map: {kind: map, shape: round, rect: [66, 61, 333, 333], labels: {font: caption}, zoom_levels: [45, 30],
-            base_portraits: ["original:sprite#566", "original:sprite#586"], base_portrait_frames: 20}
+            base_portraits: ["original:sprite#566", "original:sprite#586"], base_portrait_frames: 20,
+            outpost_marker: "original:sprite#916"}   # under a star with an X-COM outpost (VERIFIED, §1.2)
       # The view knob, control 101 (VERIFIED, §14.5): 13 turning frames (rows 978-990) at (13, 25);
       # clicked within 14 px of (9, 99), (29, 45) or (90, 22) it picks level 0, 1 or 2, with the
       # RotarySwitch sound. Lamps 992/994/996 off, 993/995/997 on, 991 where level 2 is
@@ -332,7 +333,7 @@ screens:
     widgets:
       title: {kind: text, text: "@orig.S_OUTPOSTREPORT_TITLE", rect: [28, 64, 534, 20], font: readout, at: [296, 74], align: centre}
       report: {kind: list, source: report_outpost, rect: [40, 96, 400, 330], font: body, style: compact, header: 18, title_font: readout,
-               columns: "OUTPOST            ~SYSTEM        ~MODULES ~WORKING ~HULL  ~STATE"}
+               columns: "OUTPOST      ~SYSTEM          ~OPPS ~FUNDING ~INCOME     ~STATE"}
       map: {kind: map, source: minimap, rect: [448, 110, 110, 110]}
       next: {kind: button, centre: [620, 282], images: {sprite: "original:sprite#69", states: 2}, action: replace(report_player)}
       previous: {kind: button, centre: [617, 365], images: {sprite: "original:sprite#66", states: 2}, action: replace(report_xcom)}

@@ -543,6 +543,23 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
         ("history", seq(c.history.iter().map(|m| nums(&m.to_nums())).collect())),
         ("this_month", nums(&c.this_month.to_nums())),
         (
+            "outposts",
+            seq(c
+                .outposts
+                .iter()
+                .map(|o| {
+                    map(vec![
+                        ("system", n(o.system as f64)),
+                        ("funding", n(o.funding as f64)),
+                        ("founded", n(o.founded)),
+                        ("opps", seq(o.opps.iter().map(|(k, r)| nums(&[*k as f64, *r as f64])).collect())),
+                    ])
+                })
+                .collect()),
+        ),
+        ("system_scores", seq(c.system_scores.iter().map(|s| nums(&[s[0], s[1]])).collect())),
+        ("pool_scores", nums(&[c.pool_scores[0], c.pool_scores[1]])),
+        (
             "activity_grid",
             seq(c
                 .activity
@@ -657,6 +674,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             }
         })
         .collect();
+    let systems_len = systems.len();
     let mut bases = Vec::new();
     for b in list("bases") {
         let b = Get(b);
@@ -805,6 +823,39 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         // The reports' history (since app NEXT; older saves have none).
         history: list("history").iter().map(|m| MonthRecord::from_nums(&numbers(m))).collect(),
         this_month: g.node("this_month").map(|m| MonthRecord::from_nums(&numbers(m))).unwrap_or_default(),
+        // The outposts and the month's system scores (app NEXT; older saves have none).
+        outposts: list("outposts")
+            .iter()
+            .map(|o| {
+                let g = Get(o);
+                super::outposts::Outpost {
+                    system: (f(g, "system") as usize).min(systems_len.saturating_sub(1)),
+                    funding: f(g, "funding") as f32,
+                    founded: f(g, "founded"),
+                    opps: g
+                        .node("opps")
+                        .and_then(|n| n.as_seq())
+                        .unwrap_or(&[])
+                        .iter()
+                        .filter_map(|p| match numbers(p).as_slice() {
+                            [k, r] => Some((*k as u8, *r as u8)),
+                            _ => None,
+                        })
+                        .collect(),
+                }
+            })
+            .collect(),
+        system_scores: list("system_scores")
+            .iter()
+            .map(|s| match numbers(s).as_slice() {
+                [a, b] => [*a, *b],
+                _ => [0.0, 0.0],
+            })
+            .collect(),
+        pool_scores: g.node("pool_scores").map_or([0.0, 0.0], |p| match numbers(p).as_slice() {
+            [a, b] => [*a, *b],
+            _ => [0.0, 0.0],
+        }),
         // The activity grid (app NEXT; 0.22.21's per-system `activity` is not read).
         activity: list("activity_grid")
             .iter()
