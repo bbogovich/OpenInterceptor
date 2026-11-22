@@ -2329,3 +2329,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --screen purchase`. 2. Watch the selected row for a few seconds. 3. Hold the mouse on a row. 4. Click the down arrow once; then hold it. 5. Scroll to the end; then to the top. 6. `--screen equip_ships`; `--screen manufacture`. |
 | Expected | 1: eleven rows in the white body font under the green strip, the strip showing PURCHASE, SIZE, COST, STORES and QUANTITY (no `#`), each cell under its header. 2: the bar's green brightens and dims smoothly about every 2.5 s. 3: the row flashes amber while held. 4: one row per click; held, a pause of about a third of a second, then about 12 rows a second. 5: at the end the down arrow shows its disabled image and does nothing; at the top the up arrow does. 6: Equip Ships shows three rows with SHIP, PILOT and STATUS columns and its own arrows; Manufacture its own header. |
 
+### MT-6-31 — Sprite buttons, release semantics and radio groups
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy` (the CSD). Press and hold the Bases button; move the cursor off it and back; release outside it. 2. Press Research and release on it. 3. On Bases, press each side button. 4. On Purchase, click the manufacture radio; then on Manufacture the purchase radio. 5. On Equip Ships, click each tab. |
+| Expected | 1: while held inside, the button shows its pressed sprite; outside, the art's up look; releasing outside still opens Bases. 2: Research opens on release, not on press. 3: each shows its pressed image while held and opens its screen on release. 4: the radios switch screens; the current screen's radio shows pressed. 5: the clicked tab stays pressed and the others are released. No coloured box around any sprite. |
+
