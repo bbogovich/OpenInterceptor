@@ -724,6 +724,8 @@ keeps its shape (one scale factor, centred) instead of stretching.
 | `interval` | number | 6 | An `anim`'s step, ticks (1/60 s; at least 1). |
 | `with_clock` | bool | `false` | An `anim` that moves only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport; `round` clips it to the circle inside the rectangle. |
+| `labels` | map | none | A map's hover labels, the original's way (app NEXT; [Screens › Map labels](screens.md#map-labels)). |
+| `slots`, `slot_size`, `slot_font` | list, `[w, h]`, name | none | A compact list's sockets on the art (app NEXT; [Widget keys](screens.md#widget-keys)). |
 
 ### `console`
 

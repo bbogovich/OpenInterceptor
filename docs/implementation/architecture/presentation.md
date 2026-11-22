@@ -338,7 +338,7 @@ stacking and layout, rows that fit, button blocks, "..."), `content::smallfont::
 advances, every design narrower than its advance, the sheet reads),
 `formats::sheetfont::tests` (given advances win), `app::text::tests` (centre raise, top-aligned
 detail text), `content::skin::tests::text_button_and_dialog_styles_parse_over_the_originals_look`,
-`content::screens::tests` (list keys), `cli::tests` (`--notice`).
+`content::screens::tests` (list keys), `cli::tests` (`--notice`, `--hover`).
 
 ### The compact list box (`app::listbox`)
 
@@ -635,3 +635,23 @@ play without it.
   <file>: …` once (it is loaded on the screen's first frame and not retried).
 - A cutscene caption that shows a key: the key is missing for the language (`--check` reports
   `text: missing key … (cutscenes/<id>)`).
+
+### Map labels (`app::maplabel`)
+
+The CSD labels only what is under the cursor (D-39, `notes/re/unknowns-2026-11.md` §1.3). The
+pure part is three functions in design pixels, unit-tested without a window:
+
+| Function | Does |
+|---|---|
+| `in_box(obj, cursor, size)` | Whether an object lies in the `size` square centred on the cursor. |
+| `chord_x(x, y, w, centre, radius, margin)` | The label's centre x, pushed so a `w`-wide label at row `y` stays `margin` px inside the circle. |
+| `turn(n, ticks, cycle)` | Which of `n` queued labels shows now, each for `cycle` ticks. |
+
+`StrategyScreen::draw_map_labels` gathers the systems and bases in the box (bases get
+" BUILDING" while built), picks one with `turn`, places it with `chord_x` on a round map and draws
+it with `text::draw_text` / `Ui::draw_glyphs` in the widget's sheet font. The labels config
+(`content::screens::MapLabels`) and the layout it is placed in are set per frame in
+`StrategyScreen::map_labels` by the `map` widget (or the testbed layout's `map` item, in screen
+pixels scaled by the text scale). Star-class icons are textures loaded once per frame through the
+keyed image cache (`star_icons`). Tests: `app::maplabel::tests`, `content::content tests`
+(`list_section`), `campaign::tests::readouts_never_show_negative_zero`.
