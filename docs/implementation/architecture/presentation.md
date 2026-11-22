@@ -358,7 +358,7 @@ ListBox's rules (0x51b7c6) as pure functions:
 - It fills `Row::cells` (market, factory, hangar) under the template's columns.
 - It keeps one `Repeat` per arrow in `StrategyScreen::arrows`.
 - It loads arrow images through `image_keyed`, which keys them by their corner colour
-  (`tga::key_corner`, since app NEXT; 0.22.9 keyed pure cyan `0x03FF` only) and samples them
+  (`tga::key_corner`, since app 0.22.10; 0.22.9 keyed pure cyan `0x03FF` only) and samples them
   without smoothing.
 
 Tests:
@@ -477,7 +477,7 @@ play without it.
 | `SheetFont`, `Glyph`, `CHAR_MAP`, `char_table`, `ACCENTED_FIRST` | `formats::sheetfont` | A grid sheet font's metrics and the fixed char → glyph table (app 0.22.5). |
 | `SheetFontDef`, `skin::load_sheet`, `Skin::fonts` | `content::skin` | `skins.<id>.fonts.<name>`; reading a sheet with its background made transparent. |
 | `caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}`; `StrategyScreen::draw_list_art`, `notice` | `app::caption`, `app::strategy` | Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7). |
-| `spritetable::{SpriteRow, parse, hot_offset, parse_index}`; `Content::sprite`; `tga::key_corner`; `button::{look, Look, Press, sprite_rect, latch}`; `Place`, `WidgetKind::Check`, `WidgetDef::{sprite, states, place, fire_on_press, repeat, group, selected}`; `StrategyScreen::{presses, radios, checks}`, `widget_rect`, `draw_widget_image` | `formats`, `content`, `app::button`, `content::screens`, `app::strategy` | Sprite references, button states, press semantics, toggles and radio groups (app NEXT). |
+| `spritetable::{SpriteRow, parse, hot_offset, parse_index}`; `Content::sprite`; `tga::key_corner`; `button::{look, Look, Press, sprite_rect, latch}`; `Place`, `WidgetKind::Check`, `WidgetDef::{sprite, states, place, fire_on_press, repeat, group, selected}`; `StrategyScreen::{presses, radios, checks}`, `widget_rect`, `draw_widget_image` | `formats`, `content`, `app::button`, `content::screens`, `app::strategy` | Sprite references, button states, press semantics, toggles and radio groups (app 0.22.10). |
 | `listbox::{visible_rows, columns, Column, column_width, pulse_step, pulse_level, PRESSED, Repeat}`; `Row::cells`; `StrategyScreen::arrows`, `image_keyed`; `Content::load_image_keyed`; `ListStyle::{compact, columns, bar, up, down}`, `Arrow` | `app::listbox`, `app::strategy`, `content`, `formats::tga`, `content::screens` | The original's compact list box (app 0.22.9). |
 | `smallfont::{REFERENCE, advances, sheet}`; `SheetFont::with_advances`; `TextButtonStyle`, `DialogStyle`, `ListStyle` | `content::smallfont`, `formats::sheetfont`, `content::skin`, `content::screens` | The built-in 6 px caption font; the skin's `text_button` and `dialog`; a list's part rectangles. |
 | `text::{Face, Placed, Align, draw_text, draw_text_rect, draw_text_top, wrap, width}` | `app::text` | The original's DrawText and DrawTextRect as pure layout (app 0.22.5). |

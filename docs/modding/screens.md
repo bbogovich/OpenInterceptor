@@ -172,7 +172,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `monospace` | bool | `false` | With `font`: every character in a cell of the widest glyph. |
 | `row_height`, `row_size`, `header`, `title_font`, `detail`, `detail_font`, `buttons` | | | A `list` in a sheet font: where its parts go ([Lists in sheet fonts](#lists-in-sheet-fonts-app-0227), app 0.22.7). |
 | `style`, `columns`, `bar`, `up`, `down` | | | A `list` in a sheet font as the original's list box: rows, columns, the pulsing bar, scroll arrows ([Compact list boxes](#compact-list-boxes), app 0.22.9). |
-| `centre`, `pos` | `[x, y]` | none | A sprite widget placed by its image's size: centred on the point, or its top-left at it (then `rect` may be left out). [Sprite buttons](#sprite-buttons-toggles-and-radio-groups), app NEXT. |
+| `centre`, `pos` | `[x, y]` | none | A sprite widget placed by its image's size: centred on the point, or its top-left at it (then `rect` may be left out). [Sprite buttons](#sprite-buttons-toggles-and-radio-groups), app 0.22.10. |
 | `images.sprite`, `images.states` | asset, 1 – 8 | none, 2 | A button's states as consecutive sprites: `original:sprite#N` is state 0, `#N+k` state k. With 1 state nothing is drawn when up. |
 | `fire_on_press`, `repeat` | bool, `[delay, interval]` | `false`, none | A button fires when pressed instead of released; held, it fires again after `delay` ticks every `interval` (1/60 s). |
 | `group`, `selected` | name, bool | none, `false` | A radio group: the chosen member stays latched (pressed image); `selected` (else the first) starts latched. On a `check`: starts on. |
@@ -187,7 +187,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `list` | One of the strategy screen's lists with its rows and buttons, as in the testbed layout: `bases`, `research`, `build`, `market`, `factory`, `hangar`, `contacts`, `supply`, `archive`, `reports`, `messages`. |
 | `map` | The star map: pick, hover, zoom and pan as in the testbed layout. With `source: minimap` it is a small overview of the whole map instead — no names, no legend, not zoomed or panned. |
 | `info` | The selected object's details and its action buttons. |
-| `check` | A check row (app NEXT): a lamp at its left that a click toggles — `images: {sprite, states: 2}` (off, on) or `{up, down}` — and its `label` 20 px to the right in the skin's text-button font. |
+| `check` | A check row (app 0.22.10): a lamp at its left that a click toggles — `images: {sprite, states: 2}` (off, on) or `{up, down}` — and its `label` 20 px to the right in the skin's text-button font. |
 
 ### Actions
 
@@ -277,7 +277,7 @@ original's list box (ListBox.cpp, **verified** unless marked):
 | Rows | One row-font line + 2 px apart (the body font 23011: 16 px). A box `h` tall below its header strip shows `round((h − 7) / (line height + 2))` rows; the first sits 3 px below the strip (**derived**). |
 | Columns | `columns: <template>` — text or a `@key`, such as `@orig.S_S6B_PURCHASE_HDR`. It splits at `~` and each column starts where the previous header text ends, trailing spaces included, measured in the `title_font`. So the template's padding sets the layout. A `#` before a header marks the editable column and is not shown. The headers are drawn in the `header` strip. A cell wider than its column is cut with "...". |
 | Selection bar | The full row in `bar` (default green) at a pulsing level: 150 · (1 − n/74) falling to 75, then back up to 150, as `n` counts 0 – 74 every 2 ticks (2.5 s). A pressed row flashes amber, RGB(200, 150, 0), on alternate frames. |
-| Scroll arrows | `up` and `down`: `[x, y, w, h]` or `{rect, images: [normal, pressed, disabled]}`. An arrow moves the list one row when pressed, then again after 20 ticks and every 5 ticks while held. At the ends it is disabled and shows its third image. Images are drawn with their corner colour transparent, the original sprites' key (since app NEXT; before, pure cyan only). Without images an arrow is a hot spot over the art. The mouse wheel also scrolls one row. |
+| Scroll arrows | `up` and `down`: `[x, y, w, h]` or `{rect, images: [normal, pressed, disabled]}`. An arrow moves the list one row when pressed, then again after 20 ticks and every 5 ticks while held. At the ends it is disabled and shows its third image. Images are drawn with their corner colour transparent, the original sprites' key (since app 0.22.10; before, pure cyan only). Without images an arrow is a hot spot over the art. The mouse wheel also scrolls one row. |
 
 Without `columns`, or for a row the engine gives no cells, the row's text spans the row. The
 lists that fill columns, in this order:
@@ -310,7 +310,7 @@ A `button` with a `label` and no images is drawn as a **text button** when the s
 
 ### Sprite buttons, toggles and radio groups
 
-Since app NEXT (plan M2 #125, RQ-UI-01/02/07/08) a screen set's buttons behave as the original's
+Since app 0.22.10 (plan M2 #125, RQ-UI-01/02/07/08) a screen set's buttons behave as the original's
 (Interceptor.exe button base 0x65f420, **verified**):
 
 - **States are consecutive sprites.** `images: {sprite: "original:sprite#1345", states: 2}` uses
@@ -345,7 +345,7 @@ bases: {kind: button, centre: [516, 194], images: {sprite: "original:sprite#372"
 cat_purchase: {kind: button, pos: [81, 226], images: {sprite: "original:sprite#1053", states: 2}, group: category, selected: true, action: open(purchase)}
 ```
 
-`interceptor` since app NEXT:
+`interceptor` since app 0.22.10:
 
 - The CSD's six screen buttons are sprite buttons on their **verified** centres (rows 372–382).
 - Bases' three side buttons are sprite buttons (rows 1345/1347/1349).

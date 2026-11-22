@@ -188,7 +188,7 @@ Rules refer to assets with a reference string:
 | `models/scout.obj` | A file in the pack that wrote the reference. `\` is accepted; `.` and `..` are normalised **inside the pack** (`models/../textures/a.png` = `textures/a.png`); a path that would leave the pack, starts with `/` or contains `:` is refused. |
 | `original:INTTYPEA` | A named resource in the original DLLs; the kind comes from the key (`model` → an `XMSH` mesh). |
 | `original:CockpitA.dll#12000` | Resource 12000 of a specific original DLL (cockpit `image`). |
-| `original:sprite#372`, `original:sprite#372+1` | Row 372 (or 373) of the original interface's sprite table: an image in whichever original DLL holds it, drawn with its corner colour transparent (app NEXT; [Sprite buttons](screens.md#sprite-buttons-toggles-and-radio-groups)). |
+| `original:sprite#372`, `original:sprite#372+1` | Row 372 (or 373) of the original interface's sprite table: an image in whichever original DLL holds it, drawn with its corner colour transparent (app 0.22.10; [Sprite buttons](screens.md#sprite-buttons-toggles-and-radio-groups)). |
 | `original:GameSettings.ini`, `original:target lock.wav` | An original file, found by name anywhere in the data folder (any case). |
 
 Textures named inside a model are looked up as `textures/<name>.png` then `.tga` in every pack,
