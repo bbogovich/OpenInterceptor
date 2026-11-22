@@ -605,3 +605,11 @@ elements it belongs to*. Branch `parity/m2`.
 Not yet: map labels in the TrueType font (#128); the list box's spinners, row icons, blinking
 rows and sounds (DEV-086); the TextButton end caps and `enabled_when` (DEV-087); the message box's opening animation and progress row (DEV-089). The default campaign has no
 screen set: its sheet fonts show in its dialogs only.
+
+## Parity M3 progress: strategy logic
+
+**#130** (app NEXT; RQ-S-07; strategy README §3.2, §6.3; unknowns §13.5): `interceptor`'s sensors scan
+2,000 / 4,000 / 6,000 map units and the hub nothing; `raids.<id>.react_on_detect` (alien raids 25 +
+10 × level %) turns a seen contact on the base that saw it; `star_classes.<id>.planets` gives
+generated systems their planets (the original's per-class table, read from the exe). A 90-day
+`interceptor` strategy soak: 4 battles, 3/71 topics, 0 craft left (D-24 is #134's). DEV-096.
