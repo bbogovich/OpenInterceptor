@@ -401,12 +401,15 @@ and 1 hour, 6 hours, 1 day and 5 days per second.
 | `labels` | list of text | made from the rates | What the `speed` readout shows for each speed (`5 secs/s`, `1 hour/s`, `paused`); speeds without one get one made from their rate. |
 | `on_event` | number | 0 | The speed (0 = the first) an event, notice, prompt or return from a battle drops the clock to. |
 | `run` | number | 3 | The speed Space toggles to from `on_event`. |
+| `notices` | `drop`, `keep`, `ask` | `drop` | What a notice (a Report prompt) does to the speed (app NEXT): drop to `on_event`, keep it, or ask with two buttons — the first keeps it, the second drops to `on_event`. Battles, offers and choices still drop it. |
+| `notice_buttons` | two captions | `[OK, "OK (slow)"]` | With `ask`: the Report's buttons (text or `@key`). `interceptor`: `[@orig.S_OK, @orig.S_OK5SECS]`, the original's "OK" and "OK (5 secs)" (RQ-S-18, **verified**: 0x46bdc4 → `SetSpeed(0)`). |
 
 The screen-set action `speed(n)` picks speed `n` ([Screen layouts](screens.md#actions)); the
 testbed layout shows one button per speed (`||`, `5s`, `30m`, `1d` …); the number keys pick the
 speeds after `on_event` (with a pause first, 1 is the first running speed). Errors:
 `clock.speeds: 'fast' is not a time per second (e.g. 5s, 1h, 1d)`; `clock.run: 7 is not one of
-the 3 speeds (0–2)` (the index is then clamped to the last speed).
+the 3 speeds (0–2)` (the index is then clamped to the last speed); `clock.notices: 'x' is not drop,
+keep or ask`; `clock.notice_buttons: expected two captions [keep, slow]`.
 
 ```yaml
 # packs/interceptor/strategy/campaign.yaml — the original's dial (verified)
@@ -414,6 +417,8 @@ clock:
   speeds: [5s, 1min, 5min, 30min, 1h, 1d]   # six speeds and no pause
   on_event: 0                               # events drop to 5 s per second
   run: 3                                    # Space: 30 min per second
+  notices: ask                              # a Report offers OK and OK (5 secs)
+  notice_buttons: ["@orig.S_OK", "@orig.S_OK5SECS"]
 ```
 
 The original's dial has six holes and no pause: its slowest speed is five times real time, and
