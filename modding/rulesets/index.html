@@ -2627,6 +2627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2945,6 +2947,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -4499,6 +4529,56 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Power and damage rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-a-hit-lands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How a hit lands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-originals-flight-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's flight model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missile-lock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missile lock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-fire-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI fire control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -6603,6 +6683,56 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Power and damage rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-a-hit-lands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How a hit lands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-originals-flight-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The original's flight model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missile-lock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missile lock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-fire-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI fire control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -6782,11 +6912,11 @@ The gate fails if the committed schemas differ from the engine's.</p>
 </tr>
 <tr>
 <td><code>power</code></td>
-<td>Global power-sharing rules: beam and shield charge levels, budget.</td>
+<td>Global power rules: beam and shield charge levels, budget, the energy pool, what shield balance does.</td>
 </tr>
 <tr>
 <td><code>damage</code></td>
-<td>Global rules for damage to systems and repair.</td>
+<td>Global rules for how a hit lands (spread, armour banks, systems, difficulty factors) and repair.</td>
 </tr>
 <tr>
 <td><code>sounds</code></td>
@@ -6885,7 +7015,7 @@ choice it is <code>default_difficulty</code>, else the middle level. Two things 
 <tr>
 <td><code>interceptor</code></td>
 <td>beginner, experienced, <strong>veteran</strong>, genius, superhuman</td>
-<td>the original's five levels (<code>GameSettings.ini</code> has a section per level; verified). What each level changes in the original beyond those sections is unknown.</td>
+<td>the original's five levels (<code>GameSettings.ini</code> has a section per level; verified). In battle the original also scales shield and armour maxima, the player's hits and the hits on the player, and some alien classes' speed by level (verified; <code>damage.difficulty</code> and <code>ai_speed.level_step</code>, app 0.21.0).</td>
 </tr>
 <tr>
 <td><code>default</code></td>
@@ -6925,7 +7055,7 @@ systems of one kind (<code>ecm</code>, <code>advanced_ecm</code>) with different
 </tr>
 <tr>
 <td><code>sensors</code></td>
-<td>Target lock builds at its efficiency's speed.</td>
+<td>Target lock builds at its efficiency's speed; its <code>lock_time</code>, <code>lock_angle</code> and <code>lock_range</code> set the lock (<a href="#missile-lock">Missile lock</a>, app 0.22.0).</td>
 <td>60 / 0 / 0 / 0</td>
 </tr>
 <tr>
@@ -7017,8 +7147,9 @@ edit; <code>vct: true</code> (the Stage 1 key) still fits vector-control thruste
 </tbody>
 </table>
 <ul>
-<li>Damage that gets past the shields and armour also strikes <strong>one working system at random</strong>
-  (times <code>damage.system_share</code>). A knocked-out switchable system switches off; a knocked-out
+<li>Damage that reaches the hull also strikes <strong>one working system at random</strong> (times
+  <code>damage.system_share</code>; only below <code>damage.system_below</code> of the hull, and taken off the hull's
+  share with <code>system_divert</code> — <a href="#how-a-hit-lands">How a hit lands</a>). A knocked-out switchable system switches off; a knocked-out
   hyperdrive aborts a countdown.</li>
 <li>The crew repairs <strong>one system at a time, worst first</strong>, at the class's <code>repair_rate</code>; a
   working damage control computer multiplies it (by less when it is itself damaged).</li>
@@ -7029,8 +7160,12 @@ edit; <code>vct: true</code> (the Stage 1 key) still fits vector-control thruste
 <p>Each ship has a <strong>beam charge</strong> and a <strong>shield charge</strong> setting, both chosen from the same list
 of levels (the original's A–E). The two settings plus every switched-on system may not use more
 than <code>budget</code> steps together: raising one setting can force the other down, and switching on a
-cloak needs free steps. Damage to systems and repair follow the <code>damage</code> section. Keys:
-<a href="../reference/#power">reference</a>.</p>
+cloak needs free steps. With <a href="../reference/#flightdrive"><code>flight.drive</code></a> every step in use also
+costs engine power (<code>power_cost</code>). Beams and the afterburner draw on one <strong>energy pool</strong> per ship
+(<code>energy</code>, refilled at <code>energy_recharge × beam_recharge[level]</code> per second, not while the
+afterburner burns). Shield balance (<code>S</code>) either moves capacity between the facings
+(<code>balance: shift</code>) or routes the one recharge stream (<code>balance: share</code>, the original). Damage to
+systems and repair follow the <code>damage</code> section. Keys: <a href="../reference/#power">reference</a>.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">power</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">beam_recharge</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.32</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.45</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.68</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">]</span><span class="w">    </span><span class="c1"># fraction of the ship's energy_recharge per level</span>
 <span class="w">  </span><span class="nt">shield_recharge</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">]</span>
@@ -7043,10 +7178,86 @@ cloak needs free steps. Damage to systems and repair follow the <code>damage</co
 <span class="w">  </span><span class="nt">destroy_below</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50%</span>
 <span class="w">  </span><span class="nt">repair_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 </code></pre></div>
-<p>The <code>interceptor</code> campaign restates the original <code>BeamRechargeRate</code> (0, 7, 10, 15, 22) and
-<code>ShieldRechargeRate</code> (0, 1, 2, 3, 5) tables as fractions of their top level (verified from
-<code>GameSettings.ini</code>); its budget, start levels and system power steps are engine values
-(derived — the original data does not say how many levels may be high at once, see DEV-024).</p>
+<p>That is the default campaign's set (it sets none of the app 0.21.0 keys and plays as before).
+The <code>interceptor</code> campaign follows the original program (app 0.21.0, verified): a 1000-point pool
+refilled once a second by <code>BeamRechargeRate</code> (0, 7, 10, 15, 22) and shields by
+<code>ShieldRechargeRate</code> (0, 1, 2, 3, 5), restated as fractions of their top level; ships start at
+C / C; <code>balance: share</code>. The original has no step budget — the settings cost engine power instead
+— so its budget is set out of reach (20), and the cloak costs 6 steps, half the engine's power
+(DEV-024). Its full <code>power</code> and <code>damage</code> sections are on the
+<a href="../reference/#power">reference</a>.</p>
+<h3 id="how-a-hit-lands">How a hit lands<a class="headerlink" href="#how-a-hit-lands" title="Permanent link">&para;</a></h3>
+<p>Every beam or missile hit goes through the same pipeline (<code>sim::combat::apply_hit</code>):</p>
+<ol>
+<li><strong>Spread and difficulty.</strong> The hit does between <code>damage.spread</code> and all of its damage; a
+   beam hit from or on the player's craft is scaled by <code>damage.difficulty.player_hits</code> /
+   <code>hits_on_player</code>.</li>
+<li><strong>Shield bank</strong> on the side that was hit (fore or aft). Each point of damage costs the bank
+   the beam's <code>shield_factor</code> points (1; the original's Phase Cannon 1.5): a bank that holds
+   <code>damage × shield_factor</code> stops the hit, one that holds less stops <code>bank / shield_factor</code>
+   and falls. <code>bypass_shields</code> missiles skip this step; <code>enveloping</code> ones put half on each
+   facing.</li>
+<li><strong>Armour</strong>: the one pool, or with <code>damage.armor: per_side</code> the bank on that side.</li>
+<li><strong>Systems</strong>: while the hull is below <code>system_below</code> of its maximum, <code>system_share</code> of what
+   is left strikes one random working system — instead of the hull with <code>system_divert: true</code>,
+   or as well.</li>
+<li><strong>Hull.</strong> At zero the ship is destroyed.</li>
+</ol>
+<p>Bank maxima come from the class's protection (its <code>fitted</code> equipment), times its
+<code>protection_scale</code> and, with <code>damage.difficulty</code>, the factor for the level and the ship's side;
+every bank starts full.</p>
+<h3 id="the-originals-flight-model">The original's flight model<a class="headerlink" href="#the-originals-flight-model" title="Permanent link">&para;</a></h3>
+<p>Two optional <code>flight</code> maps reproduce how the original moves and turns ships (app 0.21.0, verified;
+the <code>interceptor</code> pack sets both, the default campaign neither):</p>
+<ul>
+<li><strong><code>flight.drive</code></strong>: drag <code>dv/dt = a − 2v</code> on every ship, so ships settle at a speed set by
+  thrust and coast to rest. The player's push is the fitted engine's thrust × throttle × engine
+  power / mass, held to <code>max_speed</code>; mass counts the hull, the shield, the missiles still carried
+  and the systems. AI ships push with their class's drive factor <code>ai_speed</code> instead.</li>
+<li><strong><code>flight.turning</code></strong>: the hull's turn rates in the original's own units, reached with a time
+  constant set by <code>angular_damp</code>; AI pilots turn at their class's fixed <code>ai_turn</code> rates.</li>
+</ul>
+<p>Keys and worked examples: <a href="../reference/#flightdrive">reference › <code>flight.drive</code></a> and
+<a href="../reference/#flightturning"><code>flight.turning</code></a>.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># mods/heavier-lightning/rules/ships.yaml — an addon to interceptor</span>
+<span class="nt">ships</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lightning</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9000</span><span class="w">            </span><span class="c1"># heavier hull: a lower speed at every throttle step</span>
+<span class="w">    </span><span class="nt">thrust</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span><span class="w">            </span><span class="c1"># kN, instead of its fitted engine's</span>
+</code></pre></div>
+<h3 id="missile-lock">Missile lock<a class="headerlink" href="#missile-lock" title="Permanent link">&para;</a></h3>
+<p>A ship locks a missile on its target by holding the target in a cone ahead of its nose, within
+range, for the lock time (<code>sim::combat::update_lock</code>). Since app 0.22.0 the ship's <strong>sensor</strong> may
+set all three: its <code>lock_time</code>, <code>lock_angle</code> and <code>lock_range</code> (<a href="../reference/#systems"><code>systems</code></a>);
+a value left at 0 falls back to the missile's <code>lock_time</code>, <code>flight.lock_angle</code> and the missile's
+reach. Damaged sensors build the lock more slowly, a jamming target or an ion storm halves the
+rate, and knocked-out sensors cannot lock. Two <code>flight</code> switches shape how a lock is kept:</p>
+<ul>
+<li><code>lock_hold</code>: once locked, the cone is this many times wider, so a lock survives a small wobble.</li>
+<li><code>lock_decay</code>: off target, a part-built lock runs down as fast as it built up instead of
+  vanishing; a held lock drops at once to "not locked" but keeps its progress to run down.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/ — the original's first targeting system (verified)</span>
+<span class="nt">systems</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">sensors</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lock_time</span><span class="p">:</span><span class="w"> </span><span class="nv">2.5s</span><span class="p p-Indicator">,</span><span class="nt"> lock_angle</span><span class="p">:</span><span class="w"> </span><span class="nv">2.5</span><span class="p p-Indicator">,</span><span class="nt"> lock_range</span><span class="p">:</span><span class="w"> </span><span class="nv">3km</span><span class="p p-Indicator">}</span>
+<span class="nt">flight</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lock_angle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.5</span><span class="w">        </span><span class="c1"># only for a ship without sensors</span>
+<span class="w">  </span><span class="nt">lock_decay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">lock_hold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">           </span><span class="c1"># 5° once locked</span>
+</code></pre></div>
+<p>The default campaign sets none of these and locks as before (a 10° cone, each missile's own lock
+time, lost at once off target). Homing missiles in <code>interceptor</code> turn at most 143.2° per second
+and lead their target as if it flew at 200 m/s (<code>lead_speed</code>, <a href="../reference/#missiles"><code>missiles</code></a>).</p>
+<h3 id="ai-fire-control">AI fire control<a class="headerlink" href="#ai-fire-control" title="Permanent link">&para;</a></h3>
+<p>How an AI pilot aims and when it fires are behaviour data. The <code>aim</code> skill gives a random angle
+error; the <code>accuracy</code> skill (app 0.22.0) instead reproduces the original's routine, which errs in
+<strong>how far ahead</strong> to aim, sometimes aims beside the target and turns sluggishly on a failed roll
+(<a href="../reference/#the-accuracy-aim-model">reference › The accuracy aim model</a>). The state's
+<code>fire_cone</code>, <code>range</code>, <code>burst</code>, <code>pause</code>, <code>missiles</code> and <code>missile_range</code> set when it pulls the
+trigger. <code>interceptor</code> sets the original's values once, in <code>original_attack</code> (cone 1.5° – 2.5° and
+range 2 – 2.5 km by level, missiles within half that range and at least 5 s apart, lead only
+within 1,750 m), and its fighter behaviours inherit it. Bolts in <code>interceptor</code> leave at their
+muzzle speed alone (<code>flight.bolt_inherit: false</code>), so pilots lead with the target's own velocity.</p>
 <h2 id="example-a-small-balance-addon">Example: a small balance addon<a class="headerlink" href="#example-a-small-balance-addon" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="c1"># mods/faster-lightning/pack.yaml</span>
 <span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">faster-lightning</span>

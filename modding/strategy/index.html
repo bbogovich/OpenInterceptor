@@ -2627,6 +2627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2945,6 +2947,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -4960,6 +4990,17 @@
     <span class="md-ellipsis">
       
         flags and economy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        clock
       
     </span>
   </a>
@@ -7081,6 +7122,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#clock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        clock
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#tech_ids" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8513,6 +8565,59 @@ sets them (<code>set_flag(x)</code> names in mission outcomes are added automati
 </tr>
 </tbody>
 </table>
+<h3 id="clock"><code>clock</code><a class="headerlink" href="#clock" title="Permanent link">&para;</a></h3>
+<p>The time controls (app 0.21.0): how much campaign time passes per real second at each speed,
+and what an event does to the clock. Without <code>clock:</code> a campaign keeps the engine's own: a pause
+and 1 hour, 6 hours, 1 day and 5 days per second.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>speeds</code></td>
+<td>list of times</td>
+<td><code>[0, 1h, 6h, 1d, 5d]</code></td>
+<td>Campaign time per real second at each speed, slowest first; <code>0</code> is a pause.</td>
+</tr>
+<tr>
+<td><code>labels</code></td>
+<td>list of text</td>
+<td>made from the rates</td>
+<td>What the <code>speed</code> readout shows for each speed (<code>5 secs/s</code>, <code>1 hour/s</code>, <code>paused</code>); speeds without one get one made from their rate.</td>
+</tr>
+<tr>
+<td><code>on_event</code></td>
+<td>number</td>
+<td>0</td>
+<td>The speed (0 = the first) an event, notice, prompt or return from a battle drops the clock to.</td>
+</tr>
+<tr>
+<td><code>run</code></td>
+<td>number</td>
+<td>3</td>
+<td>The speed Space toggles to from <code>on_event</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The screen-set action <code>speed(n)</code> picks speed <code>n</code> (<a href="../screens/#actions">Screen layouts</a>); the
+testbed layout shows one button per speed (<code>||</code>, <code>5s</code>, <code>30m</code>, <code>1d</code> …); the number keys pick the
+speeds after <code>on_event</code> (with a pause first, 1 is the first running speed). Errors:
+<code>clock.speeds: 'fast' is not a time per second (e.g. 5s, 1h, 1d)</code>; <code>clock.run: 7 is not one of
+the 3 speeds (0–2)</code> (the index is then clamped to the last speed).</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/strategy/campaign.yaml — the original's dial (verified)</span>
+<span class="nt">clock</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">speeds</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">30min</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1h</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1d</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># six speeds and no pause</span>
+<span class="w">  </span><span class="nt">on_event</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                               </span><span class="c1"># events drop to 5 s per second</span>
+<span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">                                    </span><span class="c1"># Space: 30 min per second</span>
+</code></pre></div>
+<p>The original's dial has six holes and no pause: its slowest speed is five times real time, and
+its "(5 secs)" buttons select it.</p>
 <h3 id="tech_ids"><code>tech_ids</code><a class="headerlink" href="#tech_ids" title="Permanent link">&para;</a></h3>
 <p><code>tech_ids: {&lt;number&gt;: &lt;research id&gt;}</code> (app 0.8.0) — for data inherited from a game that names
 prerequisites by <strong>number</strong>. A topic's <code>prereq1</code> – <code>prereq3</code>, and an item's, hull's or module's

@@ -2627,6 +2627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2945,6 +2947,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6781,7 +6811,7 @@ reads it: <a href="../../implementation/architecture/presentation/#widgets-and-s
 <tbody>
 <tr>
 <td><code>top</code></td>
-<td>The top bar: date, funds and score; the base switcher; pause and the four speeds; <em>Save</em>; <em>Menu</em>.</td>
+<td>The top bar: date, funds and score; the base switcher; one button per clock speed (by default pause and four speeds; <a href="../strategy/#clock"><code>clock</code></a>); <em>Save</em>; <em>Menu</em>.</td>
 </tr>
 <tr>
 <td><code>map</code></td>
@@ -7076,7 +7106,7 @@ and kept; one that cannot be loaded is reported on standard error once
 </tr>
 <tr>
 <td><code>speed(&lt;n&gt;)</code></td>
-<td>Sets the clock: 0 paused, 1 – 4 the four speeds (a higher number is the fastest).</td>
+<td>Sets the clock to speed <code>n</code> of the campaign's <a href="../strategy/#clock"><code>clock.speeds</code></a>, 0 = the first (by default 0 paused, 1 – 4 the four speeds; <code>interceptor</code>: 0 – 5, the dial's six). A number past the last picks the last.</td>
 </tr>
 <tr>
 <td><code>save</code></td>
@@ -7131,7 +7161,7 @@ and kept; one that cannot be loaded is reported on standard error once
 </tr>
 <tr>
 <td><code>speed</code></td>
-<td>The clock speed in words (<code>paused</code>, <code>1 hour/s</code> …).</td>
+<td>The clock speed in words: the speed's <code>clock.labels</code> entry (<code>paused</code>, <code>1 hour/s</code>, <code>5 secs/s</code> …).</td>
 </tr>
 <tr>
 <td><code>selection</code></td>
@@ -7158,8 +7188,9 @@ original has one, its links and a back button.</p>
 <li><strong>Verified</strong>: the positions read from <code>Interceptor.exe</code>'s screen setup code (each screen's
   widgets, the button and dial centres).</li>
 <li><strong>Derived</strong>: the readouts' rectangles and the buttons' sizes (measured from the art), the
-  readouts' order (from the original running), the back buttons' positions, and how the original's
-  six speeds map onto the engine's five.</li>
+  readouts' order (from the original running) and the back buttons' positions. Since app 0.21.0
+  the dial's six holes select the original's six speeds (<code>speed(0)</code> – <code>speed(5)</code>, verified from the
+  program's clock table; see <a href="../strategy/#clock"><code>clock</code></a>).</li>
 <li><strong>Unknown</strong>: the buttons' own state images, which live in the original's sprite table
   (<code>SpritesDLL</code>), not yet read; until then the buttons are hot spots over the art.</li>
 </ul>
@@ -7219,7 +7250,7 @@ and there are no toggles, labels, frames, lamps, clocks or model views yet
 <td>An unknown action.</td>
 </tr>
 <tr>
-<td><code>screens.x: widgets.y: speed(z): expected 0-4</code></td>
+<td><code>screens.x: widgets.y: speed(z): expected a speed number (0 = the first)</code></td>
 <td>A speed that is not a number.</td>
 </tr>
 <tr>

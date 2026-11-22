@@ -2629,6 +2629,8 @@
       
         
       
+        
+      
     
     
     
@@ -2947,6 +2949,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -7775,6 +7805,11 @@ menu's <em>Load game</em> page (<a href="../presentation/#the-main-menu-and-cred
 <td>A Gregorian calendar date (<code>parse</code>, <code>plus_days</code>).</td>
 </tr>
 <tr>
+<td><code>ClockDef</code>, <code>StrategyDef::clock</code></td>
+<td><code>content/strategy.rs</code></td>
+<td>App 0.21.0: the time controls (<code>clock:</code>) — <code>speeds</code> (campaign hours per real second), <code>labels</code>, <code>on_event</code>, <code>run</code>; <code>parse</code>, <code>short(hours)</code> (a button caption: the pause sign, <code>5s</code>, <code>30m</code>), <code>describe(hours)</code> (<code>5 secs/s</code>). <code>StrategyScreen</code> advances the campaign by <code>speeds[speed] × frame time</code> and drops to <code>on_event</code> on every event; it replaces the old <code>app::strategy::SPEEDS</code> constant.</td>
+</tr>
+<tr>
 <td><code>MapKind</code>, <code>Travel</code>, <code>RaidTarget</code>, <code>ResearchMode</code></td>
 <td><code>content/strategy.rs</code></td>
 <td>Fixed / generated maps; free / lane travel; base / system raids; download / labs.</td>
@@ -7965,7 +8000,7 @@ menu's <em>Load game</em> page (<a href="../presentation/#the-main-menu-and-cred
 <td>The campaign context.</td>
 </tr>
 <tr>
-<td><code>StrategyScreen</code>, <code>Tab</code> (eleven with <code>Reports</code> since 0.16.8, and the testbed's <code>Debug</code>), <code>SPEEDS</code>, <code>BattleReport</code> (with <code>cargo</code>), <code>save_path</code>, <code>slot_path</code>, <code>map_transform</code></td>
+<td><code>StrategyScreen</code>, <code>Tab</code> (eleven with <code>Reports</code> since 0.16.8, and the testbed's <code>Debug</code>), <code>BattleReport</code> (with <code>cargo</code>), <code>save_path</code>, <code>slot_path</code>, <code>map_transform</code></td>
 <td><code>app/strategy.rs</code></td>
 <td>The screen.</td>
 </tr>

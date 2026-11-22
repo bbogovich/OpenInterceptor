@@ -2627,6 +2627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2945,6 +2947,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6817,7 +6847,9 @@ opens one screen of the set directly (<code>--strategy --screen research</code>)
 <ul>
 <li><strong>Top bar.</strong> The date, your funds and the campaign score. In the middle the <strong>current base</strong>
   between <code>&lt;</code> and <code>&gt;</code> buttons: orders apply to it. On the right the clock — <code>||</code> pause, then
-  <code>1h</code>, <code>6h</code>, <code>1d</code> and <code>5d</code> (campaign time per real second; the running speed is outlined) —
+  <code>1h</code>, <code>6h</code>, <code>1d</code> and <code>5d</code> (campaign time per real second; the running speed is outlined; a
+  campaign may set its own speeds: the <code>interceptor</code> campaign has the original's six, <code>5s</code> to <code>1d</code>,
+  and no pause) —
   then <strong>Save</strong> and <strong>Menu</strong> (save and go to the main menu).</li>
 <li><strong>Map</strong> (left). Star systems (hidden ones appear when your sensors reach them), lanes, your
   bases (squares) with their sensor ranges, enemy contacts once detected (red, with their way
@@ -6918,11 +6950,11 @@ the screen with buttons; nothing else can be clicked until you answer.</p>
 <tbody>
 <tr>
 <td>Space</td>
-<td>Pause, or resume at 1 day a second</td>
+<td>Pause, or resume at 1 day a second (<code>interceptor</code>: 5 seconds or 30 minutes a second)</td>
 </tr>
 <tr>
 <td>1 – 4</td>
-<td>Clock speed: 1 hour, 6 hours, 1 day or 5 days a second</td>
+<td>Clock speed: 1 hour, 6 hours, 1 day or 5 days a second (<code>interceptor</code>: 1 – 5, from 1 minute to 1 day a second)</td>
 </tr>
 <tr>
 <td>Tab / Shift+Tab</td>

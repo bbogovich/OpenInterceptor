@@ -2629,6 +2629,8 @@
       
         
       
+        
+      
     
     
     
@@ -2947,6 +2949,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6615,6 +6645,11 @@
 <td>See <a href="#stage-4-progress">Stage 4 progress</a> below</td>
 </tr>
 <tr>
+<td><a href="../plan/track-a-fidelity/">Track A: combat-stat fidelity</a></td>
+<td><strong>In progress</strong> — app <strong>0.21.0</strong> (main <code>cb79f45</code>, 2026-11-21): the original's damage pipeline, energy pool and shields, flight model (drive and turning) and strategy clock; app <strong>0.22.0</strong> (main <code>2bc263b</code>): the original's AI fire control, missile lock and guidance — all as data the <code>interceptor</code> pack sets (A1, A2, A3, A5, A6, A7 largely done; B3 settled)</td>
+<td>See <a href="#track-a-progress">Track A progress</a> below</td>
+</tr>
+<tr>
 <td><a href="../plan/stage-5-campaign/">5 Campaigns</a></td>
 <td><strong>In progress</strong> — the story core in <strong>0.10.0</strong>; the default campaign's serial in <strong>0.10.1</strong>; the X-COM Doomsday arc in <strong>0.10.2</strong>; relations in battle and the year soak in <strong>0.10.3</strong>; stance changes from missions announced in <strong>0.16.2</strong>; the event debugger and start-at-chapter in <strong>0.16.13</strong>. 5.1, 5.2, 5.6 (engine), 5.7 done; 5.3 – 5.5, 5.8, 5.9 partial; 5.10 and 5.11 not started; the testbed tools done (0.16.13); no play-through yet</td>
 <td>See <a href="#stage-5-progress">Stage 5 progress</a> below</td>
@@ -7409,6 +7444,45 @@ both; at <code>9064f59</code> <code>default</code> 12 of 16 topics and 39 battle
 and <code>interceptor</code>, which has no logistics, within its capacity too), and the default campaign's run is a unit test with a save round trip
 (<code>the_default_campaign_runs_six_months</code>). Outstanding: the manual long run, the <code>interceptor</code>
 play-test and balance, and the open items above.</p>
+<h2 id="track-a-progress">Track A progress<a class="headerlink" href="#track-a-progress" title="Permanent link">&para;</a></h2>
+<p>App <strong>0.21.0</strong> (main <code>cb79f45</code>, 2026-11-21; #45), from the analysis of the player's own
+<code>Interceptor.exe</code> and <code>xcgen.dll</code> (<code>notes/re/flight</code>, facts only), all as data — the default
+campaign sets none of the new keys and plays as before:</p>
+<ul>
+<li><strong>Strategy clock</strong> (B3): <code>clock:</code> with <code>speeds</code>, <code>labels</code>, <code>on_event</code> and <code>run</code>; <code>speed(n)</code>
+  indexes it. <code>interceptor</code>: the dial's six speeds, 5 s to 1 day per second, no pause; the sixth
+  hole now selects the sixth speed.</li>
+<li><strong>Energy and shields</strong> (A3): <code>power.energy</code>, <code>energy_recharge</code>, <code>balance: share</code>.
+  <code>interceptor</code>: a 1000-point pool at 0 / 7 / 10 / 15 / 22 per second, start C / C, afterburner
+  100 per second.</li>
+<li><strong>Damage</strong> (A1, A2): <code>damage.spread</code>, <code>armor: per_side</code>, <code>system_below</code>, <code>system_divert</code>,
+  <code>difficulty</code>; the beam <code>shield_factor</code>; the class <code>protection_scale</code>; ships keep per-ship bank
+  maxima (<code>shield_max</code>, <code>armor_max</code>). The HUD shows both armour banks (<code>ARMOR f/a</code>).</li>
+<li><strong>Flight</strong> (A6): <code>flight.turning</code> (the original's damped turn model; per-class AI rates
+  <code>ai_turn</code>) and <code>flight.drive</code> (drag; thrust × engine power × throttle / mass for the player,
+  held to <code>MaxSpeed</code>; the per-class drive factor <code>ai_speed</code> for AI ships); ship, missile and
+  system <code>mass</code>; <code>fitted: {engine: …}</code> and <code>thrust</code>.</li>
+</ul>
+<p>Deviations revised: DEV-008 (confirmed), DEV-011, DEV-012, DEV-024, DEV-029, DEV-043, DEV-056;
+new DEV-064 – DEV-073 for what is still approximated. Manual cases MT-4-57 – MT-4-62. At
+<code>cb79f45</code>, <strong>462</strong> <code>#[test]</code> functions by a count of the sources (452 at <code>9064f59</code>).</p>
+<p>App <strong>0.22.0</strong> (main <code>2bc263b</code>, 2026-11-21; #45), from <code>notes/re/flight</code> §5.1 – 5.2, all as
+data — the default campaign again sets none of the new keys:</p>
+<ul>
+<li><strong>Bolts</strong> (A2): <code>flight.bolt_inherit</code> (<code>interceptor</code>: <code>false</code>, the muzzle speed alone); the
+  AI's lead and the HUD's lead indicator follow it.</li>
+<li><strong>Missile lock</strong> (A5): the sensor's <code>lock_time</code>, <code>lock_angle</code> and <code>lock_range</code>
+  (<code>interceptor</code>: 2.5 s, 2.5°, 3 km); <code>flight.lock_decay</code> and <code>flight.lock_hold</code> (2).</li>
+<li><strong>Guidance</strong> (A5): the missile <code>lead_speed</code> (<code>interceptor</code>: 200 m/s); every <code>interceptor</code>
+  homing type turns at 143.2°/s (2.5 rad/s).</li>
+<li><strong>AI</strong> (A7): <code>skill.accuracy</code> and <code>skill.lead_range</code>, the state's <code>missile_range</code>;
+  <code>interceptor</code>'s fighters inherit <code>original_attack</code> (cone 1.5° – 2.5° and range 2 – 2.5 km by
+  level, missiles within half that and 5 s apart; Wraith, Spectre and drone trigger intervals).</li>
+</ul>
+<p>Deviations revised: DEV-009, DEV-013 (resolved in <code>interceptor</code>), DEV-032, DEV-038, DEV-043
+(resolved in <code>interceptor</code>), DEV-073; new DEV-074 – DEV-080. Manual cases MT-4-63 – MT-4-65. At
+<code>2bc263b</code>, <strong>466</strong> <code>#[test]</code> functions by a count of the sources. What remains:
+<a href="../plan/track-a-fidelity/">Track A</a>.</p>
 <h2 id="stage-5-progress">Stage 5 progress<a class="headerlink" href="#stage-5-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.10.0</strong> (<code>485d01e</code>, the story core), <strong>0.10.1</strong> (<code>66d0b5a</code>, the default campaign's serial),
 <strong>0.10.2</strong> (<code>8926d11</code>, the X-COM Doomsday arc) and <strong>0.10.3</strong> (<code>76bda5c</code>, relations in battle and

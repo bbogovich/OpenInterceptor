@@ -2629,6 +2629,8 @@
       
         
       
+        
+      
     
     
     
@@ -2947,6 +2949,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6634,7 +6664,9 @@ whatever the craft's pitch and roll.</p>
 craft is actually going. With no drift it sits on the crosshair; sideways drift slides it off to
 the side.</p>
 <p><strong>Targeting</strong> (forward views): a reticle; corner brackets sized by the target's angular size;
-name and range; a lead circle (where to aim beams); a lock-progress ring, then a red lock
+name and range; a lead circle (where to aim beams: <code>ai::lead_point</code> with the first beam's
+speed and the target's velocity relative to the player's — or the target's own velocity with
+<code>flight.bolt_inherit: false</code>, app 0.22.0); a lock-progress ring, then a red lock
 diamond and <code>LOCK</code>; an arrow on a ring when the target is off-screen. Nav points draw a blue
 diamond.</p>
 <h2 id="key-symbols">Key Symbols<a class="headerlink" href="#key-symbols" title="Permanent link">&para;</a></h2>
@@ -6668,7 +6700,11 @@ diamond.</p>
 </tr>
 <tr>
 <td><code>PowerReadout</code>, <code>power_readout(&amp;Ruleset, &amp;Ship)</code></td>
-<td>What the <code>power</code> instrument shows: levels, steps used and budget, balance, fore/aft fractions.</td>
+<td>What the <code>power</code> instrument shows: levels, steps used and budget, balance, fore/aft fractions (of <code>Ship::shield_max</code>; with <code>power.balance: share</code> both facings have the same capacity, app 0.21.0).</td>
+</tr>
+<tr>
+<td><code>armor_text(&amp;Ruleset, &amp;Ship)</code>, <code>armor_short(&amp;Ruleset, &amp;Ship)</code></td>
+<td>App 0.21.0: the MFD Status page's <code>ARMOR 40  HULL 100</code> and the Target page's <code>ARM 40</code>; with <code>damage.armor: per_side</code> both banks, fore/aft (<code>ARMOR 40/25</code>, <code>ARM 40/25</code>).</td>
 </tr>
 <tr>
 <td><code>Lamp</code>, <code>system_lamps(&amp;Ship)</code>, <code>system_abbrev(SystemKind)</code></td>

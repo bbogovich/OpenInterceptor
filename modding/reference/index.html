@@ -2627,6 +2627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2945,6 +2947,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -4965,6 +4995,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="behaviours">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-accuracy-aim-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The accuracy aim model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -5008,6 +5055,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="flight">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flightdrive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flight.drive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flightturning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flight.turning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -6873,6 +6948,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="behaviours">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-accuracy-aim-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The accuracy aim model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -6916,6 +7008,34 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="flight">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flightdrive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flight.drive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flightturning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flight.turning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -7306,7 +7426,8 @@ in app 0.20.0 <code>logistics.cargo_capacity</code>, <code>logistics.constructio
 <code>logistics.survey_mission</code>, <code>logistics.survey_class</code> and <code>logistics.survey_loss</code>, with
 <code>facility_types.&lt;id&gt;.hub</code> now used (the struck site and the survey ship stand in for a
 mission's first protected role; <a href="../strategy/#construction-stages-and-the-stand-in">Strategy layer › Construction stages and the
-stand-in</a>). The <strong>story
+stand-in</a>); in app 0.21.0 the global <code>clock</code>
+(the time controls' speeds; <a href="../strategy/#clock">Strategy layer › <code>clock</code></a>). The <strong>story
 layer</strong> (app 0.10.0) adds the definitions <code>events</code>, <code>arcs</code>, <code>plans</code>, <code>endings</code>,
 <code>encyclopaedia</code> and the globals <code>relations</code>, <code>strategist</code>, <code>campaign_end</code>, by convention in
 <code>strategy/story.yaml</code> — every key is on <a href="../story/">Story layer</a>. All of them are in the editor
@@ -7388,7 +7509,13 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>range</code></td>
 <td>distance</td>
 <td>3000 m</td>
-<td>Reach (<code>2.4km</code>, <code>2400m</code>; a plain number is metres). An original <code>Range</code> inherited from <code>GameSettings.ini</code> is read as kilometres (DEV-008).</td>
+<td>Reach (<code>2.4km</code>, <code>2400m</code>; a plain number is metres). An original <code>Range</code> inherited from <code>GameSettings.ini</code> is read as kilometres (DEV-008; confirmed from the original program in app 0.21.0).</td>
+</tr>
+<tr>
+<td><code>shield_factor</code></td>
+<td>number</td>
+<td>1</td>
+<td>Shield points lost per point of damage the shields stop (app 0.21.0). A bank that holds <code>damage × shield_factor</code> stops the hit; one that holds less stops <code>bank / shield_factor</code> of it and falls (<a href="../rulesets/#how-a-hit-lands">Rulesets › How a hit lands</a>). <code>interceptor</code>: the Phase Cannon 1.5 (verified).</td>
 </tr>
 <tr>
 <td><code>color</code></td>
@@ -7455,13 +7582,25 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>turn_rate</code></td>
 <td>number</td>
 <td>90</td>
-<td>Degrees per second while homing.</td>
+<td>Degrees per second while homing. <code>interceptor</code>: 143.2 for every type — the original's limit of 2.5 rad/s (verified, app 0.22.0).</td>
+</tr>
+<tr>
+<td><code>lead_speed</code></td>
+<td>number</td>
+<td>0</td>
+<td>Homing leads the target as if it flew at this speed along its heading, m/s (app 0.22.0): the aim point is the target's position plus its heading × <code>lead_speed × distance / speed</code>. No lead for targets slower than 50 m/s or nearer than 100 m. 0 = pure pursuit of the target's position. <code>interceptor</code>: 200 for every type, the original's fixed figure (verified).</td>
 </tr>
 <tr>
 <td><code>lock_time</code></td>
 <td>time</td>
 <td>2 s</td>
-<td>Seconds in the lock cone to lock on.</td>
+<td>Seconds in the lock cone to lock on, when the ship's sensor sets no <a href="#systems"><code>lock_time</code></a>.</td>
+</tr>
+<tr>
+<td><code>mass</code></td>
+<td>number</td>
+<td>0</td>
+<td>Kilograms per round carried (app 0.21.0): each round still in a rack adds this to the ship's mass under <a href="#flightdrive"><code>flight.drive</code></a>. <code>interceptor</code>: the original's per-missile table (verified).</td>
 </tr>
 <tr>
 <td><code>color</code></td>
@@ -7605,15 +7744,45 @@ schema <code>schemas/rules.schema.json</code>.</p>
 </tr>
 <tr>
 <td><code>fitted</code></td>
-<td><code>{shield, armor}</code></td>
+<td><code>{shield, armor, engine}</code></td>
 <td>none</td>
-<td>The equipment the class carries by default (app 0.15.0): each a reference to a definition with a protection value — an <code>original:</code> section such as <code>original:GameSettings.ini/ShieldType1</code>, read by its <code>Special</code> key (shields) or <code>HitPoints</code> key (armour). Its protection fills <code>shields</code> / <code>armor</code> <strong>unless the class has them already</strong> — set by itself or by what it inherits. A key other than <code>shield</code> or <code>armor</code>, or a reference with no protection value, is a load error. A campaign craft's own fit replaces both in battle (<a href="../strategy/#items-and-hulls">Strategy layer › items</a>).</td>
+<td>The equipment the class carries by default (app 0.15.0; <code>engine</code> since app 0.21.0): each a reference to a definition with a protection value — an <code>original:</code> section such as <code>original:GameSettings.ini/ShieldType1</code>, read by its <code>Special</code> key (shields) or <code>HitPoints</code> key (armour); an engine's <code>Special</code> is its thrust in kN and fills <code>thrust</code>. Its protection fills <code>shields</code> / <code>armor</code> <strong>unless the class has them already</strong> — set by itself or by what it inherits. A key other than <code>shield</code>, <code>armor</code> or <code>engine</code>, or a reference with no such value, is a load error (<code>fitted.engine: … gives no thrust (special)</code>). A campaign craft's own fit replaces both in battle (<a href="../strategy/#items-and-hulls">Strategy layer › items</a>).</td>
 </tr>
 <tr>
 <td><code>shield_recharge</code></td>
 <td>number</td>
 <td>5</td>
-<td>Shield points per second per facing at full charge.</td>
+<td>Shield points per second at full charge: per facing, or one stream shared by both facings with <a href="#power"><code>power.balance: share</code></a>.</td>
+</tr>
+<tr>
+<td><code>protection_scale</code></td>
+<td><code>{shields, armor}</code></td>
+<td>1, 1</td>
+<td>Multiplies every shield and every armour bank of the class (app 0.21.0): for a class that holds more than its fitted equipment gives. The original's Patton class holds three times its shield's protection and four times its armour's (verified); the <code>interceptor</code> pack does not set it yet.</td>
+</tr>
+<tr>
+<td><code>mass</code></td>
+<td>number</td>
+<td>0</td>
+<td>Hull mass in kg before shields, missiles and systems (app 0.21.0, <a href="#flightdrive"><code>flight.drive</code></a>). <code>interceptor</code>: each hull's base mass from the original program (verified).</td>
+</tr>
+<tr>
+<td><code>thrust</code></td>
+<td>number</td>
+<td>0, or the fitted engine's</td>
+<td>Engine thrust in kN (app 0.21.0, <a href="#flightdrive"><code>flight.drive</code></a>); usually from <code>fitted: {engine: …}</code>. A class with none pushes with its <code>acceleration</code> instead.</td>
+</tr>
+<tr>
+<td><code>ai_speed</code></td>
+<td>number or <code>{min, max, level_step}</code></td>
+<td>none</td>
+<td>The AI drive factor S (app 0.21.0, <a href="#flightdrive"><code>flight.drive</code></a>): an AI-flown ship accelerates at <code>S × throttle</code> and so tops out at <code>S / drag</code>, with no mass and no speed cap. A range: each ship rolls a factor between <code>min</code> and <code>max</code> and adds <code>level_step</code> per difficulty level (0 = easiest); the result is held to <code>flight.drive.ai_speed_range</code>. Without it an AI ship flies by <code>thrust</code> and mass like the player, but without the <code>max_speed</code> cap. <code>interceptor</code>: the original's per-class factors (verified; a Wraith <code>{min: 350, max: 400, level_step: 40}</code>).</td>
+</tr>
+<tr>
+<td><code>ai_turn</code></td>
+<td><code>{pitch, yaw, roll}</code></td>
+<td><code>flight.turning.ai_rates</code></td>
+<td>With <a href="#flightturning"><code>flight.turning</code></a>: AI pilots of this class turn at these fixed rates, radians per second, with no damping (app 0.21.0). <code>interceptor</code>: the original's per-class table (verified; which axis is which is derived).</td>
 </tr>
 <tr>
 <td><code>max_speed</code></td>
@@ -7625,13 +7794,13 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>acceleration</code></td>
 <td>number</td>
 <td>150</td>
-<td>m/s².</td>
+<td>m/s². Under <code>flight.drive</code>, only for a class with no <code>thrust</code> (its full push).</td>
 </tr>
 <tr>
 <td><code>roll_rate</code>, <code>pitch_rate</code>, <code>yaw_rate</code></td>
 <td>number</td>
 <td>120, 70, 70</td>
-<td>Degrees per second (pitch and yaw at rest).</td>
+<td>Degrees per second (pitch and yaw at rest). With <a href="#flightturning"><code>flight.turning</code></a> they are the original's own units instead (a Lightning's roll 200 gives 5 rad/s).</td>
 </tr>
 <tr>
 <td><code>angular_damp</code></td>
@@ -7678,14 +7847,14 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <tr>
 <td><code>energy</code></td>
 <td>number</td>
-<td>500</td>
-<td>Beam capacitor.</td>
+<td><code>power.energy</code> (500)</td>
+<td>The energy pool that beams and the afterburner draw on.</td>
 </tr>
 <tr>
 <td><code>energy_recharge</code></td>
 <td>number</td>
-<td>40</td>
-<td>Capacitor recharge per second at full beam charge.</td>
+<td><code>power.energy_recharge</code> (40)</td>
+<td>Pool recharge per second at the top beam level.</td>
 </tr>
 <tr>
 <td><code>beams</code></td>
@@ -7832,8 +8001,36 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>per kind (4 for damage control)</td>
 <td>Damage control: repair speed multiplier.</td>
 </tr>
+<tr>
+<td><code>mass</code></td>
+<td>number</td>
+<td>0</td>
+<td>Kilograms it adds to the ship under <a href="#flightdrive"><code>flight.drive</code></a> (app 0.21.0). <code>interceptor</code>: the original's table — damage control 100, VCT 450, cloak 550, each ECM pod 200, tractor 300 (verified).</td>
+</tr>
+<tr>
+<td><code>lock_time</code></td>
+<td>time</td>
+<td>0</td>
+<td>Sensors only (app 0.22.0): missile lock time for a ship carrying this sensor; 0 = each missile's own <code>lock_time</code>.</td>
+</tr>
+<tr>
+<td><code>lock_angle</code></td>
+<td>angle</td>
+<td>0</td>
+<td>Sensors only (app 0.22.0): lock cone half-angle; 0 = <a href="#flight"><code>flight.lock_angle</code></a>.</td>
+</tr>
+<tr>
+<td><code>lock_range</code></td>
+<td>distance</td>
+<td>0</td>
+<td>Sensors only (app 0.22.0): how far a target may be and still lock; 0 = the missile's reach (<code>speed × duration</code>).</td>
+</tr>
 </tbody>
 </table>
+<p>The sensor's lock values let equipment decide how fast and how wide a ship locks on, as in the
+original, where the targeting system sets them. <code>interceptor</code> gives its <code>sensors</code> the values of the
+original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
+<a href="../rulesets/#missile-lock">Rulesets › Missile lock</a>.</p>
 <p>Built-in values per kind: <a href="../rulesets/#ship-systems-and-equipment">Rulesets</a>.</p>
 <h3 id="cockpits"><code>cockpits</code><a class="headerlink" href="#cockpits" title="Permanent link">&para;</a></h3>
 <table>
@@ -7967,9 +8164,9 @@ schema <code>schemas/rules.schema.json</code>.</p>
 </tr>
 <tr>
 <td><code>skill</code></td>
-<td><code>{aim, reaction}</code></td>
+<td><code>{aim, reaction, accuracy, lead_range}</code></td>
 <td>aim 0.5, reaction 0.7 s</td>
-<td><code>aim</code>: fraction, 0 wild … 1 perfect; <code>reaction</code>: time between looks at the target.</td>
+<td><code>aim</code>: fraction, 0 wild … 1 perfect; <code>reaction</code>: time between looks at the target. <code>accuracy</code> (fraction, app 0.22.0): use the original's aim model instead of <code>aim</code> (<a href="#the-accuracy-aim-model">below</a>). <code>lead_range</code> (distance, app 0.22.0, with <code>accuracy</code>): beyond it the pilot aims straight at the target, without lead; 0 = always leads.</td>
 </tr>
 <tr>
 <td><code>vars</code></td>
@@ -8057,6 +8254,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>Seconds between missile launches (0 = none).</td>
 </tr>
 <tr>
+<td><code>missile_range</code></td>
+<td>distance</td>
+<td>2.5 × <code>range</code>, at least 2 km</td>
+<td>Attack: launch missiles only this close to the target (app 0.22.0).</td>
+</tr>
+<tr>
 <td><code>jump</code></td>
 <td>bool</td>
 <td><code>false</code></td>
@@ -8070,6 +8273,49 @@ schema <code>schemas/rules.schema.json</code>.</p>
 </tr>
 </tbody>
 </table>
+<h4 id="the-accuracy-aim-model">The accuracy aim model<a class="headerlink" href="#the-accuracy-aim-model" title="Permanent link">&para;</a></h4>
+<p>With <code>skill.accuracy</code> set (app 0.22.0) the pilot aims as the original's fighters do (verified),
+instead of with an angle error from <code>aim</code>:</p>
+<ul>
+<li>At each look at the target (every <code>reaction</code>), the lead time — distance ÷ bolt speed — is
+  scaled by <code>accuracy</code> or by <code>2 − accuracy</code>, half the time each. A 50 % pilot leads half or one
+  and a half times the right amount, never in between; a 100 % pilot leads exactly.</li>
+<li>Below 50 %, a pilot who fails a roll against <code>accuracy</code> also aims 15 – 25 m to one side of the
+  target, along the target's own sideways axis (none within 200 m).</li>
+<li>Beyond <code>lead_range</code> the pilot aims straight at the target.</li>
+<li>Each tick the pilot fails a roll against <code>accuracy</code>, it turns at 6 % of its usual rate (a
+  <em>sluggish</em> frame), so a 50 % pilot tracks half as well.</li>
+</ul>
+<p>The lead uses the target's own velocity when <a href="#flight"><code>flight.bolt_inherit</code></a> is <code>false</code>, and its
+velocity relative to the shooter otherwise.</p>
+<p><code>interceptor</code> sets this model once, in a behaviour <code>original_attack</code>, and every fighter behaviour
+(Wraith, Spectre, Phantasm, Shade, drone, human and X-COM pilots) takes it with
+<code>inherit: original_attack</code>, then changes only what differs:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/behaviours.yaml (the original's attack routine, verified)</span>
+<span class="nt">behaviours</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">original_attack</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">engage</span>
+<span class="w">    </span><span class="nt">states</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">engage</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">do</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attack</span>
+<span class="w">        </span><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.125km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.25km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.375km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.5km</span><span class="p p-Indicator">]}</span>
+<span class="w">        </span><span class="nt">fire_cone</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.75</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2.5</span><span class="p p-Indicator">]}</span>
+<span class="w">        </span><span class="nt">burst</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1s</span>
+<span class="w">        </span><span class="nt">pause</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
+<span class="w">        </span><span class="nt">missiles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+<span class="w">        </span><span class="nt">missile_range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.0625km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.125km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.1875km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.25km</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="nt">skill</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">accuracy</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> lead_range</span><span class="p">:</span><span class="w"> </span><span class="nv">1750m</span><span class="p p-Indicator">,</span><span class="nt"> reaction</span><span class="p">:</span><span class="w"> </span><span class="nv">0.1s</span><span class="p p-Indicator">}</span>
+
+<span class="w">  </span><span class="nt">drone</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">inherit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original_attack</span>
+<span class="w">    </span><span class="nt">states</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># one trigger pull every 1.5 s + 50 ms per level below superhuman; no missiles</span>
+<span class="w">      </span><span class="nt">engage</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">burst</span><span class="p">:</span><span class="w"> </span><span class="nv">0.02s</span><span class="p p-Indicator">,</span><span class="nt"> pause</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.7s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.65s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.6s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.55s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.5s</span><span class="p p-Indicator">]},</span><span class="nt"> missiles</span><span class="p">:</span><span class="w"> </span><span class="nv">0</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>The Wraith (and the Spectre, which inherits it) and the drone wait between trigger pulls; the
+other classes fire whenever their guns are ready. Accuracy is 50 % because pilots carry no records
+into battle yet and the original's aliens have none (<a href="../../implementation/deviations/">Deviations</a>).
+When a class breaks off, jinks or flees is still the pack's own (derived).</p>
 <h3 id="modelsets"><code>modelsets</code><a class="headerlink" href="#modelsets" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -8245,19 +8491,31 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>boost</code></td>
 <td>number</td>
 <td>150</td>
-<td>Afterburner speed bonus, m/s.</td>
+<td>Afterburner speed bonus, m/s. Not used under <code>drive</code>, where the afterburner adds <code>drive.afterburner</code> of the full thrust.</td>
 </tr>
 <tr>
 <td><code>cost</code></td>
 <td>number</td>
 <td>50</td>
-<td>Afterburner energy per second.</td>
+<td>Afterburner energy per second. <code>interceptor</code>: 100 (verified; the original file's <code>Afterburners</code> keys are only sent to multiplayer peers).</td>
 </tr>
 <tr>
 <td><code>lock_angle</code></td>
 <td>angle</td>
 <td>10°</td>
-<td>Missile lock cone half-angle.</td>
+<td>Missile lock cone half-angle, for a ship whose sensor sets no <a href="#systems"><code>lock_angle</code></a>. <code>interceptor</code>: 2.5°.</td>
+</tr>
+<tr>
+<td><code>lock_decay</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>Off target, a part-built missile lock runs down as fast as it built up instead of being lost at once (app 0.22.0). <code>interceptor</code>: <code>true</code> (verified).</td>
+</tr>
+<tr>
+<td><code>lock_hold</code></td>
+<td>number</td>
+<td>1</td>
+<td>Once locked, the lock cone is this many times wider (app 0.22.0; at least 1). <code>interceptor</code>: 2 (verified).</td>
 </tr>
 <tr>
 <td><code>radar_range</code></td>
@@ -8282,6 +8540,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>time</td>
 <td>0.3 s</td>
 <td>With <code>bolt_frame: ship</code>, how long a shot stays in the ship's frame.</td>
+</tr>
+<tr>
+<td><code>bolt_inherit</code></td>
+<td>bool</td>
+<td><code>true</code></td>
+<td><code>true</code>: a shot leaves with the firing ship's velocity (and the muzzle's turn velocity) plus its muzzle speed. <code>false</code>: with its muzzle speed alone, along the barrel (app 0.22.0). The AI's lead and the HUD's lead indicator follow it. <code>interceptor</code>: <code>false</code>, as the original (verified).</td>
 </tr>
 <tr>
 <td><code>lighting</code></td>
@@ -8319,8 +8583,147 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>see below</td>
 <td>Radar blip and target-marker colours by relation to the player: <code>friendly</code> (own faction, default green), <code>hostile</code> (either side hostile, red), <code>neutral</code> (yellow), <code>objective</code> (objects with <code>protect: true</code>, cyan). Each is <code>[r, g, b]</code>, 0..1.</td>
 </tr>
+<tr>
+<td><code>drive</code></td>
+<td>map</td>
+<td>none</td>
+<td>The original's motion model (app 0.21.0): thrust, mass and drag for the player, a drive factor for AI ships. Replaces <code>model</code> for every ship that is not on simple physics (<a href="#flightdrive">below</a>).</td>
+</tr>
+<tr>
+<td><code>turning</code></td>
+<td>map</td>
+<td>none</td>
+<td>The original's turn model (app 0.21.0): hull turn rates in its own units with its damping, AI pilots at fixed rates (<a href="#flightturning">below</a>).</td>
+</tr>
 </tbody>
 </table>
+<h4 id="flightdrive"><code>flight.drive</code><a class="headerlink" href="#flightdrive" title="Permanent link">&para;</a></h4>
+<p>Every ship is slowed by drag, <code>dv/dt = a − drag × v</code>, stepped exactly, so it settles at
+<code>a / drag</code> and a coasting ship comes to rest. <strong>The player's craft</strong> pushes along the nose with
+<code>a = thrust (kN) × thrust_scale × engine power × throttle / mass</code> and is then held to its
+<code>max_speed</code>. Engine power is <code>1 − power_cost × steps</code>, where the steps are the beam and shield
+levels (A = 0) plus every switched-on system's <code>power</code>; mass is the hull's <code>mass</code> plus
+<code>shield_mass</code> if it has shields, plus each carried missile's and each fitted system's <code>mass</code>.
+Reverse gives <code>reverse</code> of the push; the afterburner adds <code>afterburner × thrust ×
+thrust_scale / mass</code> at any throttle while it pays <code>flight.cost</code> per second; match speed (<code>M</code>)
+picks the throttle whose settling speed is the wanted one. <strong>AI-flown ships</strong> with an <code>ai_speed</code>
+push with <code>S × throttle</code> (throttle −0.25 … 1), with no mass and no speed cap; their behaviours'
+speed requests are read as a share of the class's <code>max_speed</code> (DEV-069). Engine damage scales
+the push (half when damaged, none when knocked out).</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>drag</code></td>
+<td>number</td>
+<td>2</td>
+<td>Per second: <code>dv/dt = a − drag × v</code>. 0 = no drag (thrust only).</td>
+</tr>
+<tr>
+<td><code>thrust_scale</code></td>
+<td>number</td>
+<td>1000</td>
+<td>Newtons per kN of thrust at full throttle. The original multiplies by its throttle percentage, so the <code>interceptor</code> pack writes 100000.</td>
+</tr>
+<tr>
+<td><code>power_cost</code></td>
+<td>fraction</td>
+<td>0 %</td>
+<td>Engine power lost per beam or shield level and per switched-on system step.</td>
+</tr>
+<tr>
+<td><code>reverse</code></td>
+<td>fraction</td>
+<td>50 %</td>
+<td>Reverse thrust as a share of forward thrust.</td>
+</tr>
+<tr>
+<td><code>afterburner</code></td>
+<td>fraction</td>
+<td>50 %</td>
+<td>Afterburner thrust as a share of full thrust.</td>
+</tr>
+<tr>
+<td><code>shield_mass</code></td>
+<td>number</td>
+<td>0</td>
+<td>Kilograms a fitted shield adds.</td>
+</tr>
+<tr>
+<td><code>ai_speed_range</code></td>
+<td>2 numbers</td>
+<td>100, 500</td>
+<td>AI drive factors are held to this range.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/flight.yaml (the original's numbers, verified)</span>
+<span class="nt">flight</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cost</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">drive</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">drag</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> thrust_scale</span><span class="p">:</span><span class="w"> </span><span class="nv">100000</span><span class="p p-Indicator">,</span><span class="nt"> power_cost</span><span class="p">:</span><span class="w"> </span><span class="nv">8.333%</span><span class="p p-Indicator">,</span><span class="nt"> reverse</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> afterburner</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> shield_mass</span><span class="p">:</span><span class="w"> </span><span class="nv">250</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>Worked example: a Lightning (75 kN, about 8,300 kg as fitted, beams and shields at C so engine
+power 2/3) settles at about 150 m/s at 50 % throttle and 300 m/s at full; with both settings at A
+about 450 m/s; <code>max_speed</code> 600 caps the afterburner. A campaign without <code>drive</code> keeps <code>model</code>.</p>
+<h4 id="flightturning"><code>flight.turning</code><a class="headerlink" href="#flightturning" title="Permanent link">&para;</a></h4>
+<p>Per axis the stick asks for <code>u = rate × gain × stick</code> (the hull's <code>roll_rate</code>, <code>pitch_rate</code> or
+<code>yaw_rate</code>; pitch and yaw fall linearly to zero at <code>lock_speed</code>, roll does not), and the turn
+rate approaches <code>u / k</code> with time constant <code>1 / k</code>, where
+<code>k = damping × (1 − damp_step × angular_damp) × q</code> and <code>q</code> is the manoeuvring system's
+efficiency (at least 1/40). AI pilots instead turn at their class's <code>ai_turn</code> rates, or
+<code>ai_rates</code>, with no smoothing. Without <code>turning</code>, rates are degrees per second smoothed by
+<code>angular_damp</code> (<a href="../../implementation/architecture/sim/#flight-model-simflight">Simulation</a>).</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gain</code></td>
+<td>number</td>
+<td>0.08</td>
+<td>Turn request per unit of hull rate at full stick.</td>
+</tr>
+<tr>
+<td><code>damping</code></td>
+<td>number</td>
+<td>4</td>
+<td>Response <code>k</code> at <code>angular_damp</code> 0, per second.</td>
+</tr>
+<tr>
+<td><code>damp_step</code></td>
+<td>number</td>
+<td>0.1</td>
+<td>How much each point of <code>angular_damp</code> slows the response.</td>
+</tr>
+<tr>
+<td><code>ai_rates</code></td>
+<td><code>{pitch, yaw, roll}</code></td>
+<td>2, 2, 3</td>
+<td>AI turn rates in rad/s for classes without <code>ai_turn</code>.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="nt">flight</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">turning</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">gain</span><span class="p">:</span><span class="w"> </span><span class="nv">0.08</span><span class="p p-Indicator">,</span><span class="nt"> damping</span><span class="p">:</span><span class="w"> </span><span class="nv">4</span><span class="p p-Indicator">,</span><span class="nt"> damp_step</span><span class="p">:</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">,</span><span class="nt"> ai_rates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">pitch</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> yaw</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> roll</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">}}</span>
+<span class="nt">ships</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">wraith</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">ai_turn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">pitch</span><span class="p">:</span><span class="w"> </span><span class="nv">2.3</span><span class="p p-Indicator">,</span><span class="nt"> yaw</span><span class="p">:</span><span class="w"> </span><span class="nv">2.1</span><span class="p p-Indicator">,</span><span class="nt"> roll</span><span class="p">:</span><span class="w"> </span><span class="nv">3.75</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p>A Lightning (roll 200, pitch and yaw 100, <code>angular_damp</code> 2) gets <code>k = 3.2</code>: it rolls at
+5 rad/s (286°/s) and pitches at 2.5 rad/s (143°/s) at rest, settling with a 0.31 s time constant.</p>
 <h3 id="formations"><code>formations</code><a class="headerlink" href="#formations" title="Permanent link">&para;</a></h3>
 <p>Named shapes for groups of craft (MD1, app 0.6.6): wingmen in battle now, cutscene formations
 later. A definition section: <code>formations: {&lt;id&gt;: {…}}</code>. Both campaigns ship <code>vee</code>, <code>line_abreast</code>,
@@ -8383,6 +8786,24 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 <td>Per level A, B, …: fraction of the ship's <code>energy_recharge</code>. 1 to 26 levels.</td>
 </tr>
 <tr>
+<td><code>energy</code></td>
+<td>number</td>
+<td>500</td>
+<td>The energy pool of every class without its own <code>energy</code> (app 0.21.0). <code>interceptor</code>: 1000.</td>
+</tr>
+<tr>
+<td><code>energy_recharge</code></td>
+<td>number</td>
+<td>40</td>
+<td>The pool's recharge per second at the top beam level, for classes without their own (app 0.21.0). <code>interceptor</code>: 22.</td>
+</tr>
+<tr>
+<td><code>balance</code></td>
+<td><code>shift</code> / <code>share</code></td>
+<td><code>shift</code></td>
+<td>What the shield balance (<code>S</code>) changes (app 0.21.0). <code>shift</code>: it moves <em>capacity</em> — the favoured facing holds more (<code>balance_shift</code>), and each facing recharges at the full rate. <code>share</code>: both facings hold the same, and the generator's one stream of points (<code>shield_recharge</code>) goes to the favoured facing first and the overflow to the other; <em>equal</em> gives each half (the original, verified).</td>
+</tr>
+<tr>
 <td><code>shield_recharge</code></td>
 <td>list of numbers</td>
 <td>0, 0.25, 0.5, 0.75, 1</td>
@@ -8410,10 +8831,21 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 <td><code>balance_shift</code></td>
 <td>fraction</td>
 <td>50 %</td>
-<td>With shields balanced forward the fore shield holds <code>1 + shift</code> times its normal capacity and the aft <code>1 − shift</code>.</td>
+<td>With <code>balance: shift</code> and shields balanced forward, the fore shield holds <code>1 + shift</code> times its normal capacity and the aft <code>1 − shift</code>.</td>
 </tr>
 </tbody>
 </table>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/systems.yaml (the original's pool, verified)</span>
+<span class="nt">power</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">beam_recharge</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.318</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.4545</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.682</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">]</span><span class="w">   </span><span class="c1"># 0, 7, 10, 15, 22 per second</span>
+<span class="w">  </span><span class="nt">shield_recharge</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">]</span><span class="w">        </span><span class="c1"># 0, 1, 2, 3, 5 per second</span>
+<span class="w">  </span><span class="nt">energy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">  </span><span class="nt">energy_recharge</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">22</span>
+<span class="w">  </span><span class="nt">balance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">share</span>
+<span class="w">  </span><span class="nt">budget</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">          </span><span class="c1"># the original has no budget: settings cost engine power instead</span>
+<span class="w">  </span><span class="nt">start_beam</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">       </span><span class="c1"># C</span>
+<span class="w">  </span><span class="nt">start_shield</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">     </span><span class="c1"># C</span>
+</code></pre></div>
 <h3 id="damage"><code>damage</code><a class="headerlink" href="#damage" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -8426,10 +8858,40 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 </thead>
 <tbody>
 <tr>
+<td><code>spread</code></td>
+<td>fraction</td>
+<td>100 %</td>
+<td>Each hit does between this share and all of its damage, rolled uniformly on the battle's seeded generator (app 0.21.0). <code>interceptor</code>: 75 % (verified).</td>
+</tr>
+<tr>
+<td><code>armor</code></td>
+<td><code>pool</code> / <code>per_side</code></td>
+<td><code>pool</code></td>
+<td>One armour pool struck from any side, or a fore and an aft bank that each hold the full armour, struck by the side that was hit (app 0.21.0; <code>interceptor</code>: <code>per_side</code>, verified). The HUD shows both: <code>ARMOR 40/25</code>.</td>
+</tr>
+<tr>
 <td><code>system_share</code></td>
 <td>fraction</td>
 <td>100 %</td>
-<td>Share of the damage past the armour that also strikes one system.</td>
+<td>Share of the damage reaching the hull that strikes one system (before app 0.21.0: of the damage past the armour).</td>
+</tr>
+<tr>
+<td><code>system_below</code></td>
+<td>fraction</td>
+<td>100 %</td>
+<td>Systems are struck only while the hull is below this share of its maximum (app 0.21.0; 100 % = always). <code>interceptor</code>: 75 %.</td>
+</tr>
+<tr>
+<td><code>system_divert</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td><code>true</code>: the system share is taken off the hull damage (the original); <code>false</code>: it is dealt to a system as well as the hull (app 0.21.0).</td>
+</tr>
+<tr>
+<td><code>difficulty</code></td>
+<td>map</td>
+<td>none</td>
+<td>Protection and damage factors per difficulty level (app 0.21.0; below).</td>
 </tr>
 <tr>
 <td><code>destroy_below</code></td>
@@ -8445,6 +8907,61 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 </tr>
 </tbody>
 </table>
+<p><code>damage.difficulty</code> holds lists with one factor per level, easiest first; a level beyond a short
+list uses 100 %. The bank maxima are set when a ship is placed (and when a campaign craft's fit is
+applied) and every bank starts full.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>side</code></td>
+<td>faction id</td>
+<td>The faction whose ships use the <code>own_*</code> factors; every other ship uses <code>other_*</code>.</td>
+</tr>
+<tr>
+<td><code>own_shields</code>, <code>own_armor</code></td>
+<td>list of fractions</td>
+<td>That side's shield and armour bank maxima.</td>
+</tr>
+<tr>
+<td><code>other_shields</code>, <code>other_armor</code></td>
+<td>list of fractions</td>
+<td>Everyone else's.</td>
+</tr>
+<tr>
+<td><code>player_hits</code></td>
+<td>list of fractions</td>
+<td>Beam damage dealt by the player's own craft.</td>
+</tr>
+<tr>
+<td><code>hits_on_player</code></td>
+<td>list of fractions</td>
+<td>Beam damage the player's own craft takes.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/systems.yaml (the original's pipeline, verified)</span>
+<span class="nt">damage</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">spread</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">75%</span>
+<span class="w">  </span><span class="nt">armor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_side</span>
+<span class="w">  </span><span class="nt">system_share</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30%</span>
+<span class="w">  </span><span class="nt">system_below</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">75%</span>
+<span class="w">  </span><span class="nt">system_divert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">difficulty</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">side</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xcom</span>
+<span class="w">    </span><span class="nt">own_shields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">150%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">125%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">own_armor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">130%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">115%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">other_shields</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">40%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">52%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">76%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">88%</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">other_armor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">60%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">70%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">80%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">90%</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">player_hits</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">115%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">115%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">hits_on_player</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">85%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100%</span><span class="p p-Indicator">]</span>
+</code></pre></div>
 <h3 id="sounds"><code>sounds</code><a class="headerlink" href="#sounds" title="Permanent link">&para;</a></h3>
 <p><code>&lt;event&gt;: &lt;asset&gt;</code> for the events the engine plays: <code>explosion</code>, <code>big_explosion</code>, <code>shield_hit</code>,
 <code>hull_hit</code>, <code>lock</code>, <code>missile_launch</code>, <code>afterburner</code>, <code>target</code>, <code>denied</code>, <code>collision</code>,
@@ -8667,7 +9184,7 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td><code>action</code></td>
 <td>text</td>
 <td>none</td>
-<td>A button's action: <code>open(&lt;screen&gt;)</code> (the screen must exist), <code>back</code>, <code>speed(0-4)</code>, <code>save</code>, <code>menu</code>, <code>testbed</code>. Another is a load error.</td>
+<td>A button's action: <code>open(&lt;screen&gt;)</code> (the screen must exist), <code>back</code>, <code>speed(n)</code> (an index into the campaign's <a href="../strategy/#clock"><code>clock.speeds</code></a>, 0 = the first; a number past the last picks the last), <code>save</code>, <code>menu</code>, <code>testbed</code>. Another is a load error.</td>
 </tr>
 <tr>
 <td><code>value</code></td>

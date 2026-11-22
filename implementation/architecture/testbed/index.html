@@ -2629,6 +2629,8 @@
       
         
       
+        
+      
     
     
     
@@ -2947,6 +2949,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6811,8 +6841,9 @@ launcher:</p>
 <h3 id="the-strategy-screen-app-071">The strategy screen (app 0.7.1)<a class="headerlink" href="#the-strategy-screen-app-071" title="Permanent link">&para;</a></h3>
 <p><code>app::strategy::StrategyScreen</code> (Stage 4.10) shows a <code>campaign::Campaign</code>. Since app 0.16.0
 (main <code>ac7ae62</code>) it is five widgets placed by the <code>screens.starmap</code> layout: the top bar (date,
-funds, score, base switcher, the clock's buttons — <code>SPEEDS</code>: paused, 1, 6, 24 and 120 campaign
-hours per real second — Save, Menu), the star map (zoom, pan, pick, hover, legend), the info
+funds, score, base switcher, the clock's buttons — one per speed of the campaign's
+<code>StrategyDef::clock</code> (<code>content::strategy::ClockDef</code>, app 0.21.0; by default paused, 1, 6, 24 and 120
+campaign hours per real second) — Save, Menu), the star map (zoom, pan, pick, hover, legend), the info
 panel for the selection (<code>Sel</code>) with its actions (up to six since app 0.16.1), the list buttons (<code>Tab</code>: eleven since app
 0.16.8 with <strong>Reports</strong>, twelve with the testbed's <strong>Debug</strong>; the <strong>Supply</strong> list, <code>Tab::Logistics</code>, since app 0.9.0) and the list panel whose rows carry their actions as
 buttons; notices, interceptions (with <em>Auto-resolve</em> since app 0.16.12), convoy ambushes,
@@ -7020,7 +7051,7 @@ the <code>default</code> campaign; <code>rocket-vs-saucer</code> takes its place
 <td><code>ContinueCampaign</code>, <code>NewCampaign</code> (app 0.7.1), <code>ModelViewer</code>, <code>AssetBrowser</code>, <code>Controls</code>, <code>Simulator</code>, <code>Scenario(i)</code>, <code>Mission(i)</code>.</td>
 </tr>
 <tr>
-<td><code>strategy::StrategyScreen</code>, <code>Tab</code>, <code>SPEEDS</code>, <code>BattleReport</code>, <code>save_path</code>, <code>slot_path</code>, <code>SLOTS</code></td>
+<td><code>strategy::StrategyScreen</code>, <code>Tab</code>, <code>BattleReport</code>, <code>save_path</code>, <code>slot_path</code>, <code>SLOTS</code></td>
 <td>The strategy screen (<a href="../campaign/">Campaign</a>); <code>from_campaign</code> (app 0.16.13) wraps a campaign made elsewhere.</td>
 </tr>
 <tr>

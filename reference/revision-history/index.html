@@ -2627,6 +2627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2945,6 +2947,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6408,6 +6438,16 @@
 <td>0.2.0</td>
 <td>2026-11-10</td>
 <td>Reconciled with the Stage 1 code as built (main <code>cf374a7</code>): architecture pages with real symbols, data/logic/event flows; controls from the bindings tables; modding reference for every rules and scenario key, plus <em>Make your first mod</em>; deviations DEV-008 – DEV-018; dependency evaluation (macroquad audio, glam, image); generated unit-test list (146); Stage 1 manual cases rewritten for the real scenarios; implementation status; command-line reference</td>
+</tr>
+<tr>
+<td>0.31.0</td>
+<td>2026-11-21</td>
+<td><strong>App 0.22.0 (main <code>2bc263b</code>): Track A2 — the original's AI fire control, missile lock and guidance</strong> (#45; from <code>notes/re/flight</code> §5.1 – 5.2, facts only). Definition and Specification unchanged (1.22.0). <strong>Modding:</strong> <em>Mod file reference</em> gains <code>flight.bolt_inherit</code>, <code>flight.lock_decay</code>, <code>flight.lock_hold</code>, the sensor keys <code>lock_time</code>, <code>lock_angle</code> and <code>lock_range</code>, the missile <code>lead_speed</code>, the behaviour state's <code>missile_range</code> and the skill's <code>accuracy</code> and <code>lead_range</code>, with a new section <em>The accuracy aim model</em> (lead-time scale <code>accuracy</code> or <code>2 − accuracy</code>, 15 – 25 m misses below 50 %, 6 % sluggish turning frames) and <code>interceptor</code>'s <code>original_attack</code> example; <em>Rulesets</em> gains <em>Missile lock</em> and <em>AI fire control</em>; <em>Behaviours</em> and <em>Missiles and mines</em> follow. <strong>Architecture:</strong> <em>Simulation</em> — the sensor-driven <code>combat::update_lock</code>, <code>bolt_inherit</code> at bolt launch, <code>guidance::lead_aim</code> with <code>LEAD_MIN_SPEED</code> / <code>LEAD_MIN_DISTANCE</code>, the accuracy model in <code>aim_point</code> and <code>ai::SLUGGISH</code>, <code>missile_range</code>, key symbols and API; <em>Cockpit and HUD</em> (the lead indicator follows <code>bolt_inherit</code>). <strong>Deviations:</strong> DEV-009, DEV-032, DEV-038 and DEV-073 revised; DEV-013 and DEV-043 resolved in <code>interceptor</code>; new DEV-074 – DEV-080 (lock cap, the AI's own lock timer, the miss axis, pilot Accuracy at 50 %, the missile interval, blast radii, weapon choice). <strong>Original game › Gameplay:</strong> missile lock, launchers, guidance, fuse and blast; new <em>AI fire control</em>. <strong>Plan:</strong> Track A (A2 bolts; A5 and A7 largely done); status. <strong>Testing:</strong> MT-4-63 – MT-4-65.</td>
+</tr>
+<tr>
+<td>0.30.0</td>
+<td>2026-11-21</td>
+<td><strong>App 0.21.0 (main <code>cb79f45</code>): Track A1 — the original's combat, energy, flight model and clock</strong> (#45; from the analysis of the player's own <code>Interceptor.exe</code> and <code>xcgen.dll</code>, facts only). Definition and Specification unchanged (1.22.0). <strong>Modding:</strong> <em>Mod file reference</em> gains <code>beams.shield_factor</code>, <code>missiles.mass</code>, <code>systems.mass</code>, the ship keys <code>protection_scale</code>, <code>mass</code>, <code>thrust</code>, <code>ai_speed</code> (a number or <code>{min, max, level_step}</code>), <code>ai_turn</code> and <code>fitted.engine</code>, <code>flight.drive</code> and <code>flight.turning</code> (each with its own table, example and worked Lightning numbers), <code>power.balance</code> (<code>shift</code> / <code>share</code>), <code>power.energy</code>, <code>power.energy_recharge</code>, and <code>damage.spread</code>, <code>armor</code> (<code>pool</code> / <code>per_side</code>), <code>system_below</code>, <code>system_divert</code> and <code>difficulty</code> (<code>side</code>, <code>own_shields</code>, <code>own_armor</code>, <code>other_shields</code>, <code>other_armor</code>, <code>player_hits</code>, <code>hits_on_player</code>); <code>system_share</code> now means the share of what reaches the hull; <code>speed(n)</code> indexes <code>clock.speeds</code>. <em>Rulesets</em> gains <em>How a hit lands</em> and <em>The original's flight model</em>; <em>Strategy layer</em> gains <code>clock</code> (<code>speeds</code>, <code>labels</code>, <code>on_event</code>, <code>run</code>); <em>Screen layouts</em> and the user guide's campaign keys follow the clock. <strong>Architecture:</strong> <em>Simulation</em> — the drive and turn models, the damage pipeline (diagram), protection maxima, shared shield recharge, the new <code>Ship</code> fields and key symbols (<code>fill_protection</code>, <code>protection_max</code>, <code>apply_hit</code>, <code>roll_damage</code>, <code>beam_factor</code>, <code>update_drive</code>, <code>original_turn</code>, <code>share_recharge</code>); <em>Cockpit and HUD</em> (<code>armor_text</code>, <code>armor_short</code>); <em>Campaign</em>, <em>Testbed</em>, <em>Presentation</em> (<code>ClockDef</code> replaces <code>SPEEDS</code>). <strong>Deviations:</strong> DEV-008 confirmed; DEV-011, DEV-012, DEV-024, DEV-029, DEV-043 and DEV-056 revised; new DEV-064 – DEV-073 (system thresholds, pilot injury, accumulator shields, knock-back, mount-health fire rate, AI speed requests, live mass, start throttle, the cloak's drain, Permeator and Enveloping splits). <strong>Original game › Gameplay:</strong> the damage chain, bank maxima by difficulty, system damage, repair, special weapons, the energy pool, turning, thrust, mass, motion, AI flight, missile lock and the clock (verified). <strong>Plan:</strong> new page <em>Track A — combat-stat fidelity</em> (A1, A2, A3, A6 largely done; B3 settled); status. <strong>Testing:</strong> MT-4-57 – MT-4-62.</td>
 </tr>
 <tr>
 <td>0.29.1</td>

@@ -2627,6 +2627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2945,6 +2947,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../implementation/plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6313,6 +6343,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#ai-fire-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI fire control
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6641,6 +6682,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#ai-fire-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI fire control
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -6778,20 +6830,123 @@ map, and the player leaves a battle by hyperspace (<code>H</code>, with an abort
 <p>Three layers: <strong>shields</strong> (fore and aft facings), then <strong>armour</strong>, then <strong>hull</strong>. The cockpit
 reports per-system damage and repair (shield generator, manoeuvring, sensors, engines,
 hyperdrive, tractor, cloak, VCT, damage control, ECM). (derived from cockpit strings)</p>
-<p><strong>In OpenInterceptor (Stage 2, implemented):</strong> every fitted system has hit points; damage past
-the armour also strikes one system at random; systems work at full, half or no effect, can be
-destroyed for the battle, and are repaired worst first (faster with a damage control computer).
-Engines and manoeuvring both out leaves a ship <em>disabled</em>. The thresholds are engine values
-(DEV-029). Rules: <a href="../../../modding/rulesets/">Rulesets › systems</a>; behaviour:
-<a href="../../../implementation/architecture/sim/">Simulation › systems</a>.</p>
+<p><strong>From the program (verified, app 0.21.0 notes).</strong> Read from the player's own <code>Interceptor.exe</code>
+as data; facts and numbers only.</p>
+<ul>
+<li><strong>A beam hit</strong> does <code>Damage − rand(Damage / 4 + 1)</code>: 75 – 100 % of <code>Damage</code>. On Beginner and
+  Experienced the player's own hits are × 1.15; on Beginner hits <strong>on</strong> the player are × 0.85.
+  A missile hit does <code>ImpactDamage</code> (direct) or <code>ProximityDamage</code>, each × 75 – 100 %, with no
+  difficulty factor.</li>
+<li><strong>The chain</strong>, on the side that was hit (fore or aft): the <strong>shield bank</strong> of that side stops the
+  hit if it holds <code>damage × m</code> (it loses that much), otherwise it stops <code>bank / m</code> and falls to 0;
+  <code>m</code> is 1.5 for the Phase Cannon and 1 for everything else. Then the <strong>armour bank of that side</strong>:
+  armour is per side, and each bank absorbs what it holds. Then the <strong>hull</strong>: below 75 % of the
+  hull's <code>HitPoints</code>, 30 % of what reaches it goes to the ship's systems instead; the ship is
+  destroyed when the hull cannot take the rest.</li>
+<li>
+<p><strong>Bank maxima.</strong> A shield bank holds the shield's <code>Special</code> × f and an armour bank the armour's
+  <code>HitPoints</code> × g, both banks full at the start:</p>
+<table>
+<thead>
+<tr>
+<th>Difficulty</th>
+<th>f, X-COM</th>
+<th>f, others</th>
+<th>g, X-COM</th>
+<th>g, others</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Beginner</td>
+<td>1.50</td>
+<td>0.40</td>
+<td>1.30</td>
+<td>0.50</td>
+</tr>
+<tr>
+<td>Experienced</td>
+<td>1.25</td>
+<td>0.52</td>
+<td>1.15</td>
+<td>0.60</td>
+</tr>
+<tr>
+<td>Veteran</td>
+<td>1.00</td>
+<td>0.64</td>
+<td>1.00</td>
+<td>0.70</td>
+</tr>
+<tr>
+<td>Genius</td>
+<td>1.00</td>
+<td>0.76</td>
+<td>1.00</td>
+<td>0.80</td>
+</tr>
+<tr>
+<td>Superhuman</td>
+<td>1.00</td>
+<td>0.88</td>
+<td>1.00</td>
+<td>0.90</td>
+</tr>
+</tbody>
+</table>
+<p>The Patton class holds three times its shields and four times its armour.</p>
+</li>
+<li>
+<p><strong>System damage.</strong> The 30 % share makes up to five tries at a random system (beam mounts and
+  launchers most often, then shield generator, flight control, sensor, engine, hyperdrive, a
+  special system; 2 % of tries hit nothing). Beam mounts fire at full rate above 50 % of their
+  <code>HitPoints</code>, at half rate at 25 – 50 % and not at all below; shield recharge is halved below
+  50 % and stops below 25 %; engine thrust is × 0.5 below 50 %, × 0.25 below 25 % and nothing
+  below 15 %.</p>
+</li>
+<li><strong>The pilot.</strong> A hull hit injures the pilot (1 – 3 health) with a chance of <code>min(damage, 100)</code> %;
+  Permeator and Enveloping hits always do. A dead pilot's ship tumbles out of control.</li>
+<li><strong>Repair</strong> runs once a second: 2 points, or 4 with a damage control computer, to the first item
+  that needs it in a fixed order (engine, hull, shield generator, flight control, hyperdrive,
+  sensor, then beam mounts, launchers and special systems). A destroyed system is never
+  repaired. The INI <code>RepairRate</code> keys are never read.</li>
+<li><strong>Special weapons.</strong> The Heavy Laser and Plasma Cannon also knock the target back. The Tachyon
+  Pulser's damage, after the shield, bypasses armour and hull and goes to systems (mostly the
+  engine). The Psi Blaster does no damage: it can take control of, panic or rout the enemy pilot
+  for 30 – 120 s. The fourth shield type (accumulator) turns a hit on a raised bank into a quarter
+  of its damage added to the bank. A Permeator sends half its damage past the shield; an
+  Enveloping torpedo splits it between the fore and aft chains.</li>
+<li><strong>Point defence</strong> is not a turret: a beam bolt that strikes a missile applies the beam's
+  <code>Damage</code> with a 90 % chance; a missile with fewer hit points (10 – 500) is destroyed, otherwise
+  it loses that much.</li>
+</ul>
+<p><strong>In OpenInterceptor (Stage 2, implemented; the original's pipeline since app 0.21.0):</strong> the
+<code>interceptor</code> campaign uses the original's spread, per-side armour, Phase Cannon factor, 30 % of
+hull damage to systems below 75 % hull, and the difficulty factors (<a href="../../../modding/rulesets/#how-a-hit-lands">Rulesets › How a hit
+lands</a>). Every fitted system has hit points; systems
+work at full, half or no effect, can be destroyed for the battle, and are repaired worst first
+(faster with a damage control computer). Engines and manoeuvring both out leaves a ship
+<em>disabled</em>. Not yet modelled: the per-system thresholds (DEV-064), the pilot (DEV-065),
+accumulator shields (DEV-066), knock-back (DEV-067), mount damage (DEV-068) and the original's
+repair order (DEV-029). Behaviour: <a href="../../../implementation/architecture/sim/">Simulation › systems</a>.</p>
 <h3 id="power">Power<a class="headerlink" href="#power" title="Permanent link">&para;</a></h3>
 <p>One power supply feeds <strong>beam weapons</strong> and <strong>shields</strong>. Each has a recharge setting with five
 steps (A–E) cycled with F9 / F10; <code>;</code> and <code>'</code> move power between them; <code>S</code> cycles shield balance
 (equal / full forward / full aft). Tractor, cloak and ECM also draw power; beams cannot fire
 while the tractor is on. (GameSettings.ini <code>BeamRechargeRate</code>, <code>ShieldRechargeRate</code>; strings)</p>
+<p><strong>From the program (verified, app 0.21.0 notes).</strong> Each ship has one <strong>energy pool</strong> of 1000
+points, full at the start. Once a second it gains <code>BeamRechargeRate</code> for the beam setting (0, 7,
+10, 15, 22) and the shields gain <code>ShieldRechargeRate</code> for the shield setting (0, 1, 2, 3, 5),
+shared by the balance: fore first and the overflow aft, half each, or aft first; each bank is
+capped at its maximum. Every beam shot costs <code>EnergyCost</code>; <code>RateOfFire</code> is shots per second per
+mount. The afterburner costs 100 a second (the INI's <code>Afterburners</code> keys are only sent to
+multiplayer peers). A cloaked ship loses 50 a second instead of recharging its shields, and the
+cloak drops at 0. There is no step budget: ships start at C / C (50 / 50 %, throttle 50 %), and
+the settings and systems cost engine power instead (below).</p>
 <p><strong>In OpenInterceptor (Stage 2, implemented):</strong> all of the above, with the original's keys
-(<a href="../controls/">Controls</a>). The charge tables are the original's (verified); how many steps may be
-high at once — the power budget — and the start levels are engine values (DEV-024). The tractor
+(<a href="../controls/">Controls</a>). Since app 0.21.0 the <code>interceptor</code> campaign has the original's pool,
+start levels and balance routing; the budget is set out of reach, and the cloak's drain is not
+modelled (DEV-024, DEV-072). The tractor
 beam tows a target and a disabled ship held at the moment of a hyperjump is captured; the cloak
 hides the ship from enemy sensors beyond its range and is dropped by firing (DEV-025); ECM and
 the cloak make homing missiles lose their target; the hyperdrive counts down and can be aborted
@@ -6800,14 +6955,100 @@ the cloak make homing missiles lose their target; the hyperdrive counts down and
 <p>Per hull, <code>GameSettings.ini</code> gives roll, yaw and pitch rates, an angular damping value
 ("0 tight – 10 loose"), a <strong>LockSpeed</strong> ("speed at which pitch and yaw rates are zero") and a
 <strong>MaxSpeed</strong>. Turn rate therefore falls as speed rises: the central handling idea. Speeds are in
-metres per second (weapon speeds are commented in m/s). The afterburner has <code>Boost</code> and <code>Cost</code>
-values whose units are not yet confirmed (derived: +150 m/s for 50 energy per second).</p>
+metres per second (weapon speeds are commented in m/s). The afterburner's <code>Boost</code> and <code>Cost</code>
+values are read only for multiplayer (verified).</p>
+<p><strong>From the program (verified, app 0.21.0 notes).</strong></p>
+<ul>
+<li><strong>Turning (the player).</strong> Per axis the stick asks for <code>u = Rate × stick × 0.08</code>, pitch and yaw
+  times <code>1 − speed / LockSpeed</code> (roll is not slowed). The turn rate approaches <code>u / k</code> with time
+  constant <code>1 / k</code>, <code>k = 4 × (1 − 0.1 × AngularDamp) × q</code>, where <code>q</code> is the flight control's
+  health / 40 (1 undamaged). Angles are radians. A Lightning (Roll 200, Pitch and Yaw 100,
+  AngularDamp 2) rolls at 5 rad/s (286°/s) and pitches at 2.5 rad/s (143°/s) at rest, τ 0.31 s.</li>
+<li><strong>Thrust (the player).</strong> Engine power is <code>1 − (beam% + shield%) / 300 − draw%</code> (2/3 at the
+  start); the push is <code>EngineType Special (kN) × 1000 × power × throttle% / mass</code>, half in
+  reverse; the afterburner adds <code>Special × 50 / mass</code>. Mass is the hull's base (6,700 kg for
+  IntType1 up to 250,000 for the Patton), 250 kg with a shield, each missile carried (85 kg for an
+  X-Winder … 11,000 for a Nova Bomb) and the special systems (damage control 100, VCT 450, jump
+  drive 350, cloak 550, ECM 200, tractor 300).</li>
+<li><strong>Motion.</strong> Every object obeys <code>dv/dt = a − 2v</code>: it settles at <code>a / 2</code> with a 0.5 s time
+  constant and coasts to rest. The player's speed is then scaled back to <code>MaxSpeed</code>. A Lightning
+  as fitted (75 kN, about 8,300 kg) settles at about 150 m/s at 50 % throttle, 300 m/s at full,
+  450 m/s with beams and shields at A.</li>
+<li><strong>AI ships</strong> ignore the hull's turn and speed values. Each class turns at fixed rates from a
+  table (about 1.3 – 3.75 rad/s for fighters, 0.3 – 1.0 for freighters, 0.15 – 0.3 for the
+  Patton) and drives with a factor S, <code>a = S × throttle</code>, so its top speed is S / 2: 250 m/s for
+  every fighter class, 175 – 250 m/s for the lighter alien saucers (rising with difficulty),
+  50 – 87 m/s for freighters. Mass, engines, power settings and <code>MaxSpeed</code> play no part.</li>
+</ul>
 <p><strong>VCT</strong> (Vector Control Thrusters) is fitted equipment that lets a ship slide sideways and
 vertically. Alien ships have it, which is why they out-turn missiles.</p>
 <h3 id="missile-lock">Missile lock<a class="headerlink" href="#missile-lock" title="Permanent link">&para;</a></h3>
 <p>Three sensor settings give a lock time and a lock cone: A 2.5 s, B 2.0 s, C 1.5 s, with widening
 cones. They correspond (derived) to the three targeting systems: Standard, Emissions and AATS.
 Some missiles need a minimum targeting system.</p>
+<p><strong>From the program (verified, app 0.21.0 notes).</strong> <code>LockAngle</code> is in millidegrees: the cones are
+2.5°, 5° and 6° (half-angles), with ranges of 3, 4 and 5 km against ships. The lock builds by
+frame time while the target is in the cone and decays as fast outside it; once locked the cone
+doubles; a shot fired before the lock flies unguided. Missile <code>Duration</code> is in seconds; <code>Range</code>
+and <code>Penalty</code> are never read. Guided missiles turn at most 2.5 rad/s and lead a target as if it
+flew 200 m/s.</p>
+<p><strong>More from the program (verified, app 0.22.0 notes).</strong> The <code>interceptor</code> campaign adopts the
+lock and the guidance turn and lead in app 0.22.0
+(<a href="../../../modding/rulesets/#missile-lock">Rulesets › Missile lock</a>).</p>
+<ul>
+<li><strong>Lock.</strong> Against stations and other non-ship objects the three sensors reach 5, 6 and 7 km.
+  With no sensor, or while cloaked, the lock time is 0, and a cloaked ship cannot fire missiles.
+  The lock timer runs for the player's ship only; AI ships keep their own (below).</li>
+<li><strong>Launchers.</strong> A launcher fires <code>RateOfFire</code> rounds per second, at half that rate at or below
+  50 % of its hit points and not at all at or below 25 %. Launchers of one type alternate.</li>
+<li><strong>Guidance.</strong> A missile flies straight for its first 250 ms. Within 100 m it aims at the
+  target itself (the Permeator always does); targets slower than 50 m/s get no lead. Each axis
+  turns by at most 2.5 rad/s, with roll at 0.3 × yaw (none for the Sidestep). More than 5° off
+  target (within 7.5 km) the missile throttles back, by more the further off it is; within 2°
+  it throttles up again. The lock is lost when the target is more than 170° off in both yaw and
+  pitch, except for the Enveloping and Passive Cloaking torpedoes. A cloaked target keeps a
+  missile's lock every 2 – 3 s with a chance of 50 + 2 d % for one side's launchers and
+  50 − 5 d % for the others (d the difficulty 0 – 4) — the only difficulty term in missiles. The
+  Sidestep adds a sideways push of 2.5 m/s² per degree of error beyond 10°.</li>
+<li><strong>Fuse and blast.</strong> A missile detonates on a collision, or within 25 m of its target when more
+  than 45° off it (passing). Every object within 15 m takes <code>ImpactDamage</code> and every object
+  within 15 – 200 m <code>ProximityDamage</code>, each × 75 – 100 %, with no fall-off with distance. An
+  expired missile disappears without a blast.</li>
+<li><strong>Missile hit points</strong> are <code>HitPoints</code> clamped to 10 – 500; beam bolts can shoot missiles down
+  (see point defence above).</li>
+</ul>
+<h3 id="ai-fire-control">AI fire control<a class="headerlink" href="#ai-fire-control" title="Permanent link">&para;</a></h3>
+<p><strong>From the program (verified, app 0.22.0 notes).</strong> Every fighter class (the program's interceptor, pirate and
+corporate hulls, alien classes 1 – 4 and the drone) runs one attack routine; freighters, alien
+classes 5 and 6 and the Patton do not. With d the difficulty 0 (Beginner) – 4 (Superhuman):</p>
+<ul>
+<li><strong>Aim.</strong> Beyond 1,750 m the pilot flies straight at the target. Within it the pilot leads:
+  the aim point is the target's position plus its velocity × the bolt's flight time
+  (distance / the beam's <code>Speed</code>), and half the time that time is scaled by <code>A</code> and half the time
+  by <code>2 − A</code>, where <code>A</code> is the pilot's accuracy: the pilot under- or over-leads by <code>1 − A</code>. Below
+  50 %, a failed roll against <code>A</code> beyond 200 m also aims 15 – 25 m to one side, along the target's
+  x or y axis. On a failed roll the ship also turns in a sluggish mode.</li>
+<li><strong>Accuracy.</strong> A ship without a pilot uses 50. From Veteran up the pilot's Accuracy is used as
+  it is; on Beginner and Experienced it is clamped to 50 – 100 for X-COM pilots and to
+  25 + 10 d – 50 + 10 d for the others. Whether alien ships carry pilot records is not confirmed
+  (derived: they do not, so they use 50).</li>
+<li><strong>Beam fire</strong> when yaw and pitch are both within <code>2.5 − 0.25 (4 − d)</code> degrees (1.5° on
+  Beginner … 2.5° on Superhuman), the target is within <code>2500 − 125 (4 − d)</code> m (2,000 … 2,500), a
+  line of sight along the nose is clear, and the trigger interval has passed. The interval is 0
+  for every class except the drone (1.5 s + 50 ms × (4 − d)) and alien classes 1 and 2
+  (0.5 s + 60 ms × (4 − d); in <code>interceptor</code> the Wraith and Spectre, a derived mapping). The guns' own charge, energy cost and rate of fire still apply.
+  Within 5° of yaw, a roll on the mean of Intelligence and Accuracy fires all mounts of the
+  selected type together.</li>
+<li><strong>Missiles</strong> are tried first, in the same cone: within half the beam range, at least 5 s after
+  the last one, with a <code>5 + 2 d</code> % chance each frame, while the AI's own lock timer (started when
+  yaw and pitch are within ±5°, reset when either leaves) has not yet passed the sensor's lock
+  time — as read, which may be an inversion in the original.</li>
+<li><strong>Breaking off</strong> under 250 m.</li>
+<li><strong>Weapon choice</strong>, at most every 3 s: within 1,500 m the Gatling Laser or Phase Cannon is
+  preferred, beyond it the Heavy Laser or Phase Cannon; the chance follows 0.75 × Intelligence +
+  0.25 × Flying (25 without a pilot). An empty missile slot is replaced by the first launcher with
+  rounds left that is not a Nova Bomb. Alien classes 4 – 6 keep their first choice.</li>
+</ul>
 <h2 id="ships">Ships<a class="headerlink" href="#ships" title="Permanent link">&para;</a></h2>
 <h3 id="player-hulls">Player hulls<a class="headerlink" href="#player-hulls" title="Permanent link">&para;</a></h3>
 <table>
@@ -6919,6 +7160,11 @@ sent via <strong>downlinks</strong>; manufacturing and purchase; pilots; probes;
 protection payments and salvage; an alien strategic AI with its own budget split between
 research, goods and the Doomsday project (<code>Think.ini</code>). The tech tree is the <code>R_*</code> sections of
 <code>GameSettings.ini</code>.</p>
+<p><strong>The clock (verified, app 0.21.0 notes).</strong> The time dial has six speeds — 5 s, 1 min, 5 min,
+30 min, 1 h and 1 day of game time per real second — and <strong>no pause</strong>: the slowest is five times
+real time, and the "(5 secs)" buttons select it. Modal dialogs pause the clock while they are
+open. The <code>interceptor</code> campaign's <code>clock:</code> reproduces the dial
+(<a href="../../../modding/strategy/#clock">Strategy layer › <code>clock</code></a>).</p>
 <h2 id="multiplayer">Multiplayer<a class="headerlink" href="#multiplayer" title="Permanent link">&para;</a></h2>
 <p>Dogfight arenas (deep space, asteroids, black hole, around each station type) and team modes
 (<code>MPSettings.INI</code>, <code>NetSettings.ini</code>). Deferred: see <a href="../../../implementation/deviations/">deviations</a>.</p>

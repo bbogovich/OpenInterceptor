@@ -2627,6 +2627,8 @@
       
         
       
+        
+      
     
     
     
@@ -2945,6 +2947,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation/plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6725,8 +6755,8 @@ sets how well the pilot aims and how fast it reacts.</p>
 </tr>
 <tr>
 <td><code>attack</code></td>
-<td>Pursues the target (its current one, else the nearest visible hostile within 8 km) with lead and aim error; fires in bursts inside <code>fire_cone</code> and <code>range</code> (and 95 % of its first beam's reach); launches a missile every <code>missiles</code> seconds when locked; breaks off for 2 s when about to ram; VCT hulls strafe when the target faces them. Without a target it cruises at half speed.</td>
-<td><code>range</code>, <code>fire_cone</code>, <code>burst</code>, <code>pause</code>, <code>missiles</code>, <code>speed</code></td>
+<td>Pursues the target (its current one, else the nearest visible hostile within 8 km) with lead and aim error; fires in bursts inside <code>fire_cone</code> and <code>range</code> (and 95 % of its first beam's reach); launches a missile every <code>missiles</code> seconds when locked and within <code>missile_range</code>; breaks off for 2 s when about to ram; VCT hulls strafe when the target faces them. Without a target it cruises at half speed.</td>
+<td><code>range</code>, <code>fire_cone</code>, <code>burst</code>, <code>pause</code>, <code>missiles</code>, <code>missile_range</code>, <code>speed</code></td>
 </tr>
 <tr>
 <td><code>evade</code></td>
@@ -6880,7 +6910,7 @@ reaction 0.7 s. A pack may define its own <code>builtin_attack</code> to change 
 </tr>
 <tr>
 <td><code>skill.reaction</code></td>
-<td>Seconds between the pilot's looks at its target: between looks the pilot assumes the target flies straight on from its last sighting, so a slow pilot leads where the target <em>was</em> going. Lead uses the target's velocity relative to the shooter (bolts carry the shooter's velocity).</td>
+<td>Seconds between the pilot's looks at its target: between looks the pilot assumes the target flies straight on from its last sighting, so a slow pilot leads where the target <em>was</em> going. Lead uses the target's velocity relative to the shooter (bolts carry the shooter's velocity), or the target's own with <a href="../reference/#flight"><code>flight.bolt_inherit: false</code></a>.</td>
 </tr>
 <tr>
 <td><code>burst</code>, <code>pause</code></td>
@@ -6890,13 +6920,23 @@ reaction 0.7 s. A pack may define its own <code>builtin_attack</code> to change 
 <td><code>fire_cone</code></td>
 <td>Only fire when the aim point is within this angle of the nose.</td>
 </tr>
+<tr>
+<td><code>skill.accuracy</code>, <code>skill.lead_range</code></td>
+<td>The original's aim model instead of <code>aim</code> (app 0.22.0): the pilot errs in <strong>how far ahead</strong> it aims — the lead time × <code>accuracy</code> or × <code>2 − accuracy</code> — misses by 15 – 25 m below 50 %, turns sluggishly on a failed roll, and flies straight at the target beyond <code>lead_range</code> (<a href="../reference/#the-accuracy-aim-model">reference › The accuracy aim model</a>).</td>
+</tr>
+<tr>
+<td><code>missile_range</code></td>
+<td>Launch missiles only this close (app 0.22.0; default 2.5 × <code>range</code>, at least 2 km).</td>
+</tr>
 </tbody>
 </table>
 <p>Together with per-level values these make difficulty. Both campaigns ship behaviours for
 every enemy type in <code>rules/behaviours.yaml</code> — the default campaign's saucers, robots, gun
 platforms, tugs, hot-rods and Guard pilots; the <code>interceptor</code> Wraith, Spectre, Phantasm, Shade,
-Harbinger (tow), drones, pirate and corporate pilots and X-COM wingmen (derived from the strategy
-guide's descriptions; the original's AI is hard-coded). In the default campaign a cadet-level
+Harbinger (tow), drones, pirate and corporate pilots and X-COM wingmen. Since app 0.22.0 the
+<code>interceptor</code> fighters inherit one <code>original_attack</code> behaviour, the original's attack routine as
+data (verified: fire cone and range by level, missiles, trigger intervals, <code>accuracy: 50%</code>); when
+they break off, jink or flee is derived from the strategy guide's descriptions. In the default campaign a cadet-level
 saucer aims within about 6–7°, looks every 1.2–1.4 s and fires short bursts with long pauses; at
 space ace it aims within about 3°, looks every 0.5 s and fires long bursts.</p>
 <h2 id="the-condition-language">The condition language<a class="headerlink" href="#the-condition-language" title="Permanent link">&para;</a></h2>

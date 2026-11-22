@@ -2629,6 +2629,8 @@
       
         
       
+        
+      
     
     
     
@@ -2947,6 +2949,34 @@
     
   
     Stage 8 — Platforms and release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/track-a-fidelity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track A — Combat-stat fidelity
   
 
     
@@ -6816,7 +6846,10 @@ so that damage done this tick can knock a system out before repair and recharge 
 <pre class="mermaid"><code>flowchart TD
     C["Controls (player or AI)"] --&gt; T["update_throttle&lt;br/&gt;set / delta / reverse;&lt;br/&gt;any manual input clears speed_hold"]
     T --&gt; R["turn(): desired rates × turn_factor,&lt;br/&gt;exponential smoothing, quaternion update"]
-    R --&gt; M{"flight.model"}
+    R --&gt; D{"flight.drive?"}
+    D -- yes --&gt; O["driven(): a = thrust × power × throttle / mass&lt;br/&gt;(AI: S × throttle);&lt;br/&gt;v ← a/drag + (v − a/drag)·e^(−drag·dt);&lt;br/&gt;player held to max_speed"]
+    D -- no --&gt; M{"flight.model"}
+    O --&gt; P
     M -- newtonian --&gt; N["brake? approach_vec(v, 0)&lt;br/&gt;hold? approach_vec(v, nose × hold)&lt;br/&gt;else thrust = nose × acceleration × throttle&lt;br/&gt;(reverse: −nose; afterburner: ×2)&lt;br/&gt;+ VCT thrust; cap at max_speed (+boost)"]
     M -- assisted --&gt; A["forward speed → throttle × max_speed;&lt;br/&gt;drift damped; brake = 0"]
     N --&gt; P["position += velocity × dt"]
@@ -6843,7 +6876,33 @@ so that damage done this tick can knock a system out before repair and recharge 
 forward speed (<code>throttle × max_speed</code>, reverse −½), the ship accelerates or decelerates towards
 it, sideways drift is damped, VCT slides at 25 % of <code>max_speed</code> (<code>VCT_SPEED_FRACTION</code>), brake
 targets zero.</p>
-<p><strong>Both models</strong>: pitch and yaw rates scale with
+<p><strong>The original's motion (<code>flight.drive</code>, app 0.21.0).</strong> When the ruleset has
+<code>content::rules::Drive</code>, <code>driven()</code> replaces both models for every ship not on simple physics.
+Drag acts on every ship, <code>dv/dt = a·fwd − drag·v</code>, stepped with its exact solution
+<code>v ← target + (v − target)·e^(−drag·dt)</code>, <code>target = a·fwd / drag</code> — frame-rate independent and
+never overshooting, so a ship settles at <code>a / drag</code> and coasts to rest. The <strong>player's</strong> push is
+<code>thrust × thrust_scale × engine_power × efficiency(Engines) × throttle / mass</code> (a class with no
+<code>thrust</code> uses its <code>acceleration</code>); reverse is <code>reverse</code> of it, the afterburner adds
+<code>afterburner</code> of the full push, match speed solves for the throttle whose settling speed is the
+wanted one, and the speed is then scaled back to <code>max_speed</code>. An <strong>AI</strong> ship with a
+<code>drive_factor</code> S pushes with <code>S × throttle</code>, throttle clamped to −0.25 … 1, where a behaviour's
+speed request (<code>hold_speed</code>) becomes <code>request / max_speed</code>; it has no mass and no cap.
+<code>flight::update_drive(ship, rules)</code>, called for every ship each tick before flight, refreshes
+<code>Ship::mass</code> (hull <code>mass</code>, <code>shield_mass</code> if it has shields, the <code>mass</code> of every missile still in
+its racks and of every fitted system) and <code>Ship::engine_power</code> (<code>1 − power_cost × power_used</code>,
+the beam and shield levels plus switched-on system steps). The drive factor is rolled once when
+the ship is placed (<code>AiSpeed::pick</code>: a uniform roll between <code>min</code> and <code>max</code>, plus <code>level_step</code> ×
+the difficulty level, clamped to <code>ai_speed_range</code>).</p>
+<p><strong>The original's turning (<code>flight.turning</code>, app 0.21.0).</strong> <code>original_turn(ship, class, turning,
+controls) -&gt; (target rate, τ)</code>: per axis <code>u = rate × gain × stick</code>, pitch and yaw times
+<code>turn_factor</code> (roll not slowed), <code>k = damping × (1 − damp_step × angular_damp) × q</code> with
+<code>q = max(efficiency(Manoeuvring), 1/40)</code>, giving the steady rate <code>u / k</code> and <code>τ = 1 / k</code>; the
+same exact first-order step as below then blends the angular velocity toward it. Hull rates are
+read in the original's units, not degrees: a Lightning rolls at 5 rad/s with τ 0.31 s
+(<code>Turning::steady_rate</code>, <code>Turning::k</code>). AI pilots get their class's <code>ai_turn</code> (or <code>ai_rates</code>)
+and <code>τ = 0</code>: they turn at the fixed rate at once. A collision tumble still quarters the stick
+and slows the response sixfold.</p>
+<p><strong>Both models</strong> (without <code>flight.turning</code>): pitch and yaw rates scale with
 <code>turn_factor(speed, lock_speed) = clamp(1 − |speed| / lock_speed, 0, 1)</code>; roll is not reduced.
 Angular velocity approaches the desired value with <code>blend = 1 − exp(−dt / τ)</code>,
 <code>τ = damping_time(angular_damp) = 0.05 + 0.06 × angular_damp</code>. Orientation is a quaternion
@@ -6861,10 +6920,16 @@ kept), emitting <code>Message "ARENA BOUNDARY"</code> when it first arrives. <co
 limit. Default 60 000 m.</p>
 <h3 id="combat-simcombat">Combat (<code>sim::combat</code>)<a class="headerlink" href="#combat-simcombat" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Lock</strong>: the target inside the cone <code>flight.lock_angle</code> and within
-  <code>missile speed × duration</code> for the selected missile's <code>lock_time</code> seconds → <code>locked</code>,
-  <code>SimEvent::LockAcquired</code>. Leaving the cone resets it. Lock builds at
-  <code>efficiency(Sensors)</code> speed, halved again while the target's ECM is on.</li>
+<li><strong>Lock</strong> (<code>update_lock</code>): the target inside a cone ahead of the nose and within range for
+  the lock time → <code>locked</code>, <code>SimEvent::LockAcquired</code>. Since app 0.22.0 the <strong>sensor</strong> sets the
+  three values: the fitted <code>Sensors</code> system's <code>SystemDef::lock_time</code>, <code>lock_angle</code> and
+  <code>lock_range</code>, each falling back when 0 to the selected missile's <code>lock_time</code>,
+  <code>flight.lock_angle</code> and the missile's reach <code>speed × duration</code> (a small closure <code>pick</code> does
+  the "0 means fall back" choice once for all three). Once locked the cone is
+  <code>flight.lock_hold</code> times wider (capped at 180°). Progress builds at <code>efficiency(Sensors)</code>
+  speed, halved while the target jams or an ion storm rages, and is <strong>capped at the lock time</strong>
+  (DEV-074). Off target it is reset — or, with <code>flight.lock_decay</code>, runs down by <code>dt</code> per tick
+  and clears <code>locked</code> while the progress is kept, as the original's timer does.</li>
 <li><strong>Tractor and cloak</strong>: while the tractor beam is on, beams do not fire ("BEAMS OFF-LINE:
   TRACTOR BEAM ON"); firing beams or a missile drops an active cloak ("CLOAK DROPPED").</li>
 <li><strong>Beams</strong>: <code>LinkMode::Linked</code> fires mounts in pairs, <code>Full</code> all at once, <code>Unlinked</code> one at a
@@ -6876,7 +6941,10 @@ limit. Default 60 000 m.</p>
   ship's turn rate in world axes; <code>Ship::angular_velocity</code> is kept in body axes, so
   <code>ω = rotation × angular_velocity</code>. A gun on the right wing of a ship yawing left is swinging
   forwards, and its shot keeps that speed. After launch the bolt flies straight, whatever the
-  ship does (<code>flight.bolt_frame: world</code>, the default).</li>
+  ship does (<code>flight.bolt_frame: world</code>, the default). With <code>flight.bolt_inherit: false</code>
+  (app 0.22.0, the original) the carried part <code>ship.velocity + ω × r</code> is dropped and the bolt
+  leaves at <code>dir × beam.speed</code> alone; the AI's <code>aim_point</code> and the HUD's lead indicator then
+  lead with the target's own velocity instead of its velocity relative to the shooter.</li>
 <li><strong><code>bolt_frame: ship</code></strong> (the arcade option): the bolt also stores its offset and velocity in
   the owner's body axes (<code>local_offset</code>, <code>local_velocity</code>, made with <code>rotation.conjugate()</code>)
   and a <code>carry</code> time from <code>flight.bolt_carry</code>. While <code>carry &gt; 0</code> and the owner lives,
@@ -6894,14 +6962,37 @@ limit. Default 60 000 m.</p>
 <li><strong>Missiles</strong> are launched and flown by <code>sim::guidance</code> (below); impact damage on a hit; the
   proximity fuse detonates on a near <em>miss</em> (inside <code>proximity_radius</code> and moving away);
   expired missiles pop harmlessly.</li>
-<li><strong>Damage</strong> (<code>apply_damage</code>): fore or aft shield (by which side was hit) → armour → hull;
-  hull ≤ 0 → <code>alive = false</code>, <code>Destroyed</code>, and every ship targeting or towing it lets go
-  (<code>forget_ship</code>). Damage that gets past the armour without destroying the ship also strikes a
-  system (<code>systems::damage_system</code>). A shield facing reaching zero says "FORE/AFT SHIELD DOWN".</li>
+<li><strong>Damage</strong> (app 0.21.0: <code>apply_hit(world, id, amount, at, mode, shield_factor)</code>; <code>apply_damage</code>
+  is the plain beam case). A hit's <code>amount</code> comes from <code>roll_damage(world, base)</code> — between
+  <code>damage.spread</code> and all of <code>base</code>, on the world's seeded generator so a battle replays
+  identically — times <code>beam_factor(world, owner, target)</code> for beams (the difficulty's
+  <code>player_hits</code> when the owner is the <code>Pilot::External</code> craft, <code>hits_on_player</code> when the target
+  is). Then the pipeline (diagram below): the shield bank on the side that was hit, the armour,
+  the systems' share, the hull. <code>DamageMode::BypassShields</code> skips the shield step; <code>Enveloping</code>
+  puts half the amount on each shield bank. Hull ≤ 0 → <code>alive = false</code>, <code>Destroyed</code>, and every
+  ship targeting or towing it lets go (<code>forget_ship</code>).</li>
+<li><strong>Protection.</strong> <code>sim::protection_max(rules, class, faction) -&gt; (shield, armour)</code> is the class's
+  protection × its <code>protection_scale</code> × (with <code>damage.difficulty</code>) the level's <code>own_*</code> factor for
+  the <code>side</code> faction or <code>other_*</code> for everyone else. <code>sim::fill_protection(ship, rules)</code> stores
+  them as <code>Ship::shield_max</code> / <code>armor_max</code> and fills every bank (both shields; <code>armor</code>, and
+  <code>armor_aft</code> with <code>per_side</code>); it runs when a ship is spawned and when a campaign craft's fit is
+  applied (<code>app::flight::apply_loadout</code>).</li>
 <li><strong>Collisions</strong>: fighter–fighter spheres (60 % of radius) push apart and swap half their
   velocities; a fighter sweeping into a station mesh is backed out and bounced. Damage =
   relative speed × 0.1.</li>
 </ul>
+<p><strong>The damage pipeline</strong> (<code>combat::apply_hit</code>, app 0.21.0):</p>
+<pre class="mermaid"><code>flowchart TD
+    H["hit: amount, side (fore if in front of the target's centre)"] --&gt; S{"shield bank on that side&lt;br/&gt;≥ amount × shield_factor?"}
+    S -- yes --&gt; X["bank −= amount × shield_factor; done"]
+    S -- no --&gt; S2["amount −= bank / shield_factor; bank = 0&lt;br/&gt;('FORE/AFT SHIELD DOWN')"]
+    S2 --&gt; A["armour: the pool, or with armor: per_side&lt;br/&gt;armor (fore) / armor_aft; absorbs what it holds"]
+    A --&gt; Y{"hull &lt; system_below × max?"}
+    Y -- yes --&gt; Z["system_share of the rest → systems::damage_system&lt;br/&gt;(taken off the hull with system_divert)"]
+    Y -- no --&gt; U["hull −= rest"]
+    Z --&gt; U
+    U --&gt; K{"hull ≤ 0?"}
+    K -- yes --&gt; Q["alive = false, Destroyed, forget_ship"]</code></pre>
 <h3 id="point-defence-stage-2">Point defence (Stage 2)<a class="headerlink" href="#point-defence-stage-2" title="Permanent link">&para;</a></h3>
 <p><code>combat::point_defence</code> runs before the missiles move: each ship with a <code>PointDefence</code>
 (<code>range</code>, <code>rate</code>, <code>chance</code>, <code>energy</code>) whose gun is cooled down and that has the energy fires at
@@ -7015,6 +7106,12 @@ pattern as the AI).</p>
     LU --&gt; ST["steer: homing / sidestep (2 × turn inside 600 m, weave)&lt;br/&gt;/ cluster (split near the target or at half fuel)&lt;br/&gt;/ cloaked_wait (sleep until prey in trigger_range)&lt;br/&gt;/ dumbfire"]
     ST --&gt; HIT["segment test against ships → impact;&lt;br/&gt;proximity fuse; fuel out"]
     HIT --&gt; BL["blasts → apply_damage_mode&lt;br/&gt;(normal / bypass_shields / enveloping)"]</code></pre>
+<p><strong>Lead (app 0.22.0).</strong> With a class <code>lead_speed</code> above 0, a homing missile that is not chasing a
+decoy aims at <code>guidance::lead_aim(target, target_velocity, distance, lead_speed, speed)</code> =
+<code>target + v̂ × lead_speed × distance / speed</code>: the original assumes the target flies at a fixed
+speed along its heading rather than at its real speed. Targets slower than <code>LEAD_MIN_SPEED</code>
+(50 m/s) or nearer than <code>LEAD_MIN_DISTANCE</code> (100 m) get no lead. Sidestep and the other kinds
+then steer as before towards that aim point at the class's <code>turn_rate</code>.</p>
 <p><code>area_blast(world, at, radius, damage, except)</code> damages every ship in <code>radius</code>, falling off
 linearly, <code>enveloping</code>; mines use it (<code>systems::handle_requests</code> on a <code>detonate</code> request:
 radius = 4 × the warhead's <code>proximity_radius</code>, at least 100 m). The modder's view:
@@ -7064,7 +7161,7 @@ make a moving hub work, each found while building the convoy ambush:</p>
       R5["H: start countdown (hyperspace_time / efficiency)&lt;br/&gt;or abort"]
     end
     subgraph step["step (after combat)"]
-      S1["recharge(): energy × beam_recharge[level];&lt;br/&gt;shields × shield_recharge[level] × efficiency;&lt;br/&gt;excess over a facing's cap flows to the other"]
+      S1["recharge(): energy × beam_recharge[level] (not while afterburning);&lt;br/&gt;shields × shield_recharge[level] × efficiency;&lt;br/&gt;shift: excess over a facing's cap flows to the other;&lt;br/&gt;share: share_recharge routes the stream by balance"]
       S2["repair(): one system, worst first,&lt;br/&gt;repair_rate × damage-control multiplier"]
       S3["disabled = engines and manoeuvring both at 0"]
       S4["tractors(): collect Tow::Pull / Tow::Release, then apply"]
@@ -7079,14 +7176,19 @@ make a moving hub work, each found while building the convoy ambush:</p>
 <code>ONLINE_AT</code> = 25 % of its hit points, so the first moments of repair do not bring a wreck
 straight back. A knocked-out switchable system switches off; a knocked-out hyperdrive aborts a
 countdown.</p>
-<p><strong>Damage.</strong> <code>damage_system</code> strikes one random non-destroyed system with the damage that got
-past the armour × <code>system_share</code>, and emits <code>SystemChanged</code> when the condition changes.</p>
+<p><strong>Damage.</strong> <code>damage_system</code> strikes one random non-destroyed system with the share of the hit
+that <code>combat::apply_hit</code> set aside (<code>system_share</code> of what reached the hull, below
+<code>system_below</code>), and emits <code>SystemChanged</code> when the condition changes.</p>
 <p><strong>Repair.</strong> <code>repair</code> keeps working on the current job; otherwise it takes the worst-off system
 (first in fitting order on a tie). Speed = class <code>repair_rate</code> × (1 + (<code>repair_rate</code> of the damage
 control computer − 1) × its efficiency); the computer does not speed up its own repair.</p>
 <p><strong>Power.</strong> <code>raise</code> and <code>cycle</code> work on a plain <code>Power</code> value and the <code>PowerRules</code>, not on the
-world, so they are tested exhaustively. <code>shield_caps(shields, balance, shift)</code> gives the fore
-and aft capacities <code>shields × (1 ± shift)</code>.</p>
+world, so they are tested exhaustively. With <code>power.balance: shift</code>, <code>shield_caps(shield_max,
+balance, shift)</code> gives the fore and aft capacities <code>shield_max × (1 ± shift)</code>. With <code>share</code> (app
+0.21.0, the original) both banks hold <code>shield_max</code> and <code>share_recharge(ship, gain)</code> routes the
+tick's gain: <em>forward</em> fills the fore bank and sends the overflow aft, <em>aft</em> the reverse, <em>equal</em>
+gives each half and a full bank's half to the other. A class without its own <code>energy</code> /
+<code>energy_recharge</code> takes <code>power.energy</code> / <code>power.energy_recharge</code>.</p>
 <p><strong>Tractor.</strong> The beam holds its target on its current bearing at a distance between 1.2 × the
 two radii and 0.6 × <code>range</code>, steering the target's velocity towards the captor's by at most
 <code>strength × efficiency</code> m/s². The hold is lost beyond 1.5 × <code>range</code>, if the target goes, or if
@@ -7127,10 +7229,20 @@ engine's <code>builtin_attack</code>.</p>
   target (position and velocity) and draws a new aim error, uniform over a disc of radius
   <code>(1 − aim) × MAX_AIM_ERROR</code> (8°). Between looks it assumes the target flies straight on from
   the last sighting. The lead point uses the target's velocity relative to the shooter
-  (bolts carry the shooter's velocity).</li>
+  (bolts carry the shooter's velocity), or the target's own with <code>flight.bolt_inherit: false</code>.</li>
+<li><strong>The accuracy model (app 0.22.0).</strong> With <code>skill.accuracy</code> set, <code>aim_point</code> reuses the
+  <code>aim_error: Vec2</code> slot for two different numbers — <code>x</code> the lead-time scale for this look
+  (<code>accuracy</code> or <code>2 − accuracy</code>, 50/50) and <code>y</code> a sideways miss in metres (15 – 25 m, either
+  sign, only when <code>accuracy &lt; 0.5</code> and a roll fails). The aim point is then
+  <code>believed + velocity × (distance / bolt_speed × scale) + target.right() × miss</code> (no miss within
+  200 m), or the target itself beyond <code>skill.lead_range</code>. In <code>attack</code>, each tick a roll against
+  <code>accuracy</code> fails, the commanded pitch, yaw and roll are multiplied by <code>SLUGGISH</code> (0.06), the
+  original's sluggish turn. The rolls come from the ship's own <code>AiState::rng</code>, so a seeded battle
+  replays exactly.</li>
 <li><strong>Fire discipline.</strong> <code>in_burst</code> alternates <code>burst</code> seconds of firing with <code>pause</code> seconds of
   holding; guns fire only inside <code>fire_cone</code> and inside <code>range</code> (and 95 % of the first beam's
-  reach). Missiles every <code>missiles</code> seconds when locked (0 = never).</li>
+  reach). Missiles every <code>missiles</code> seconds (± 25 %) when locked and within <code>missile_range</code>
+  (default 2.5 × <code>range</code>, at least 2 km; 0 = never).</li>
 <li><strong>Systems use.</strong> At each transition check, <code>systems:</code> conditions of the behaviour are evaluated
   (<code>ObjectContext</code>) and turned into ordinary <code>Requests</code>: <code>cloak</code> / <code>ecm</code> switched to match their
   condition, <code>power_to_shields</code> while <code>shields_first</code> holds and shields are below the top level,
@@ -7260,7 +7372,7 @@ current order, and <code>DISABLED</code> if so.</p>
 </tr>
 <tr>
 <td><code>Ship</code></td>
-<td>Class, faction, name, position, rotation (<code>Quat</code>), velocity, angular velocity, throttle, reverse, afterburning, <code>braking</code>, <code>speed_hold</code>, hull/armor/shields/energy, <code>controls</code>, <code>pilot</code>, <code>target</code>, link mode, beam cooldowns, missile racks, <code>lock</code>, <code>since_hit</code>, <code>alive</code>; Stage 2: <code>power</code>, <code>systems</code>, <code>repairing</code>, <code>towing</code>, <code>hyperspace</code>, <code>disabled</code>, <code>departed</code>. Helpers <code>system(kind)</code>, <code>efficiency(kind)</code>, <code>is_on(kind)</code>, <code>cloaked()</code>.</td>
+<td>Class, faction, name, position, rotation (<code>Quat</code>), velocity, angular velocity, throttle, reverse, afterburning, <code>braking</code>, <code>speed_hold</code>, hull/armor/shields/energy, <code>controls</code>, <code>pilot</code>, <code>target</code>, link mode, beam cooldowns, missile racks, <code>lock</code>, <code>since_hit</code>, <code>alive</code>; Stage 2: <code>power</code>, <code>systems</code>, <code>repairing</code>, <code>towing</code>, <code>hyperspace</code>, <code>disabled</code>, <code>departed</code>; app 0.21.0: <code>armor_aft</code> (the aft bank with <code>damage.armor: per_side</code>; <code>armor</code> is then the fore bank), <code>shield_max</code> and <code>armor_max</code> (one bank's maximum, from <code>protection_max</code>), <code>mass</code> and <code>engine_power</code> (refreshed by <code>flight::update_drive</code>), <code>drive_factor</code> (the AI drive factor S it rolled; 0 = none). Helpers <code>system(kind)</code>, <code>efficiency(kind)</code>, <code>is_on(kind)</code>, <code>cloaked()</code>.</td>
 </tr>
 <tr>
 <td><code>Controls</code></td>
@@ -7281,6 +7393,14 @@ current order, and <code>DISABLED</code> if so.</p>
 <tr>
 <td><code>guidance::LURE_RANGE</code>, <code>LURE_CHANCE</code></td>
 <td>2 500 m, 0.8 per second.</td>
+</tr>
+<tr>
+<td><code>guidance::lead_aim</code>, <code>LEAD_MIN_SPEED</code>, <code>LEAD_MIN_DISTANCE</code></td>
+<td>The original's missile lead (target + heading × <code>lead_speed × distance / speed</code>); no lead below 50 m/s or within 100 m (app 0.22.0).</td>
+</tr>
+<tr>
+<td><code>combat::update_lock</code></td>
+<td>One ship's lock for one tick: sensor-set time, cone and range, <code>lock_hold</code>, <code>lock_decay</code> (app 0.22.0).</td>
 </tr>
 <tr>
 <td><code>content::rules::Guidance</code>, <code>DamageMode</code></td>
@@ -7311,12 +7431,48 @@ current order, and <code>DISABLED</code> if so.</p>
 <td>Answers condition queries about one ship (<a href="../script/">Conditions</a>).</td>
 </tr>
 <tr>
+<td><code>ai::SLUGGISH</code></td>
+<td>0.06: the share of the usual turn a pilot with <code>skill.accuracy</code> makes on a tick it fails its accuracy roll (app 0.22.0).</td>
+</tr>
+<tr>
 <td><code>ai::CHECKS_PER_SECOND</code>, <code>MAX_AIM_ERROR</code>, <code>ENGAGE_RADIUS</code>, <code>HUNT_RADIUS</code></td>
 <td>4, 8°, 3 km (wingmen engage near the leader), 8 km (enemies look for targets).</td>
 </tr>
 <tr>
 <td><code>FlightModel</code></td>
 <td><code>Newtonian</code> or <code>Assisted</code> (<code>flight.model</code>), in <code>FlightRules</code> with <code>arena_radius</code>.</td>
+</tr>
+<tr>
+<td><code>content::rules::Drive</code>, <code>FlightRules::drive</code></td>
+<td>App 0.21.0: the original's motion model (<code>flight.drive</code>): <code>drag</code>, <code>thrust_scale</code>, <code>power_cost</code>, <code>reverse</code>, <code>afterburner</code>, <code>shield_mass</code>, <code>ai_speed_range</code>.</td>
+</tr>
+<tr>
+<td><code>content::rules::Turning</code>, <code>FlightRules::turning</code></td>
+<td>App 0.21.0: the original's turn model (<code>flight.turning</code>): <code>gain</code>, <code>damping</code>, <code>damp_step</code>, <code>ai_rates</code>; <code>steady_rate(rate, angular_damp)</code>, <code>k(angular_damp, q)</code>.</td>
+</tr>
+<tr>
+<td><code>content::rules::AiSpeed</code>, <code>ShipClass::ai_speed</code>, <code>ShipClass::ai_turn</code></td>
+<td>App 0.21.0: an AI drive factor <code>{min, max, level_step}</code> and <code>pick(level, roll, range)</code>; the class's fixed AI turn rates <code>[pitch, yaw, roll]</code> in rad/s. <code>ShipClass</code> also gains <code>mass</code>, <code>thrust</code>, <code>shield_scale</code>, <code>armor_scale</code>; <code>Beam::shield_factor</code>, <code>Missile::mass</code>, <code>System::mass</code>.</td>
+</tr>
+<tr>
+<td><code>content::equipment::DamageRules</code>, <code>ArmorMode</code>, <code>DifficultyFactors</code>, <code>BalanceMode</code></td>
+<td>App 0.21.0: <code>spread</code>, <code>armor</code> (<code>Pool</code> / <code>PerSide</code>), <code>system_share</code>, <code>system_below</code>, <code>system_divert</code>, <code>difficulty</code> (per-level lists; <code>DifficultyFactors::at(table, level)</code> gives 1 past the end); <code>PowerRules::balance</code> (<code>Shift</code> / <code>Share</code>), <code>energy</code>, <code>energy_recharge</code>.</td>
+</tr>
+<tr>
+<td><code>sim::protection_max</code>, <code>sim::fill_protection</code></td>
+<td>App 0.21.0: a class's bank maxima for a faction at the current level; set them on a ship and fill every bank.</td>
+</tr>
+<tr>
+<td><code>combat::apply_hit</code>, <code>combat::roll_damage</code>, <code>combat::beam_factor</code></td>
+<td>App 0.21.0: the damage pipeline with a shield factor; a hit's spread roll; the difficulty factor on a beam hit.</td>
+</tr>
+<tr>
+<td><code>flight::update_drive</code>, <code>flight::original_turn</code></td>
+<td>App 0.21.0: refresh a ship's mass and engine power; the original's turn target and time constant.</td>
+</tr>
+<tr>
+<td><code>systems::share_recharge</code></td>
+<td>App 0.21.0: route one shield recharge stream by the balance setting (<code>balance: share</code>).</td>
 </tr>
 <tr>
 <td><code>Pilot</code></td>
@@ -7333,6 +7489,10 @@ current order, and <code>DISABLED</code> if so.</p>
 <tr>
 <td><code>content::rules::BoltFrame</code>, <code>FlightRules::bolt_carry</code></td>
 <td><code>World</code> (default) or <code>Ship</code>; the carry time (0.3 s).</td>
+</tr>
+<tr>
+<td><code>FlightRules::bolt_inherit</code>, <code>lock_decay</code>, <code>lock_hold</code>; <code>MissileClass::lead_speed</code>; <code>SystemDef::lock_time</code>, <code>lock_angle</code>, <code>lock_range</code>; <code>behaviour::Skill::accuracy</code>, <code>lead_range</code>; <code>Params::missile_range</code></td>
+<td>App 0.22.0: the original's fire control as data (true / false / 1; 0; 0 = fall back; <code>None</code> / 0; 0 = 2.5 × <code>range</code>, at least 2 km).</td>
 </tr>
 <tr>
 <td><code>collision::Shape</code>, <code>TriMesh</code></td>
@@ -7382,10 +7542,17 @@ current order, and <code>DISABLED</code> if so.</p>
   <code>hold_in_arena(&amp;mut Ship, radius) -&gt; bool</code>; constants <code>VCT_THRUST_FRACTION</code>,
   <code>VCT_SPEED_FRACTION</code>.</li>
 <li><code>combat::step(&amp;mut World, dt)</code>, <code>apply_damage(world, id, amount, at)</code>, <code>ship_collisions</code>,
-  <code>rotate_towards</code>, <code>mount_offset</code>.</li>
+  <code>rotate_towards</code>, <code>mount_offset</code>; app 0.21.0: <code>apply_hit(world, id, amount, at, DamageMode,
+  shield_factor)</code>, <code>roll_damage(&amp;mut World, base) -&gt; f32</code>, <code>beam_factor(&amp;World, owner, target) -&gt; f32</code>.</li>
+<li><code>sim::protection_max(&amp;Ruleset, ShipClassId, FactionId) -&gt; (f32, f32)</code>,
+  <code>sim::fill_protection(&amp;mut Ship, &amp;Ruleset)</code> (app 0.21.0).</li>
+<li><code>flight::update_drive(&amp;mut Ship, &amp;Ruleset)</code>, <code>flight::original_turn(&amp;Ship, &amp;ShipClass, &amp;Turning,
+  &amp;Controls) -&gt; (Vec3, f32)</code> (app 0.21.0).</li>
 <li><code>combat::forget_ship(world, id)</code> — every ship targeting or towing <code>id</code> lets go.</li>
 <li><code>guidance::launch(&amp;mut World, Missile)</code>, <code>guidance::step(&amp;mut World, dt, &amp;Ruleset)</code>,
-  <code>guidance::area_blast(world, at, radius, damage, except)</code>.</li>
+  <code>guidance::area_blast(world, at, radius, damage, except)</code>,
+  <code>guidance::lead_aim(target, target_velocity, distance, lead_speed, missile_speed) -&gt; Vec3</code>
+  (app 0.22.0).</li>
 <li><code>world.spawn_placement(&amp;Placement, player) -&gt; Result&lt;ShipId, String&gt;</code> (one scenario object or
   mission role member: class, faction, pilot, modules, starting damage and speed);
   <code>world.same_slot(id)</code>.</li>
@@ -7394,7 +7561,7 @@ current order, and <code>DISABLED</code> if so.</p>
   the nearest hostile with distances divided by matching preference weights.</li>
 <li><code>systems::handle_requests(&amp;mut World)</code>, <code>systems::step(&amp;mut World, dt)</code>,
   <code>raise(&amp;mut Power, Setting, &amp;PowerRules, switched) -&gt; bool</code>, <code>cycle(...) -&gt; bool</code>,
-  <code>shield_caps(shields, balance, shift) -&gt; (f32, f32)</code>, <code>power_message(&amp;Power, &amp;PowerRules)</code>,
+  <code>shield_caps(shields, balance, shift) -&gt; (f32, f32)</code>, <code>share_recharge(&amp;mut Ship, gain)</code> (app 0.21.0), <code>power_message(&amp;Power, &amp;PowerRules)</code>,
   <code>switched_power(&amp;Ship, &amp;Ruleset)</code>, <code>power_used(&amp;Ship, &amp;Ruleset)</code>,
   <code>recharge(&amp;mut Ship, &amp;ShipClass, &amp;PowerRules, dt)</code>,
   <code>repair(&amp;mut Ship, &amp;ShipClass, &amp;Ruleset, dt) -&gt; Option&lt;(index, before, after)&gt;</code>,
