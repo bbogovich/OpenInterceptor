@@ -435,14 +435,14 @@ and the launchers' rounds; `flight.start_throttle`; Parallax `images`, Passive C
 Doppelganger `retarget_every`; the pirate and corporate hulls from their own sections. D-18 (the
 Patton's protection from its fit) is open: DEV-095.
 
-**#120 follow-up** (app NEXT; `notes/re/flight` §3, §12): the Patton is an X-COM ship with its fit
+**#120 follow-up** (app 0.22.20; `notes/re/flight` §3, §12): the Patton is an X-COM ship with its fit
 (ShieldType3, ArmorType3, EngineType3) and `protection_scale: {shields: 3, armor: 4}` — 1,500 / 1,700
 from Veteran up; `interceptor`'s `original_attack` has no `break_call` (message 7 is rejected).
 
-**#121** (app NEXT; audit D-31, D-42, D-43): `--balance` fills the banks as the battle does
+**#121** (app 0.22.20; audit D-31, D-42, D-43): `--balance` fills the banks as the battle does
 (difficulty, `protection_scale`, station pools), spends the energy pool at the start beam setting
 before the sustained rate, and applies `player_hits`; a soak reports the first hit and hits on
-friends. Re-measured with `--soak <duel> --difficulty <level> --seconds 180` (`interceptor`, app NEXT):
+friends. Re-measured with `--soak <duel> --difficulty <level> --seconds 180` (`interceptor`, app 0.22.20):
 each cell is *destroyed at* (time under fire); enemies destroyed — or *lives* with the hull left.
 
 `passive` pilot

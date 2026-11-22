@@ -330,4 +330,4 @@ behaviours:
 Its break-off is the original's (app 0.22.19, `reengage_beyond`): under 250 m the pilot breaks off;
 when a break-off manoeuvre ends it comes round if the target is beyond 1,200 m, or — once
 5 s − 0.5 s × level have passed — with a 25 % chance, otherwise it flies another. The original also rolls a radio call
-on breaking off, but its radio rejects that message, so `interceptor` has no `break_call` (app NEXT).
+on breaking off, but its radio rejects that message, so `interceptor` has no `break_call` (app 0.22.20).
