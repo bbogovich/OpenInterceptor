@@ -365,7 +365,7 @@ Module `maintenance`, hull `upkeep` and pilot `salary` are charged monthly on th
 
 ### `outposts`
 
-`outposts:` (app NEXT, RQ-S-04/05) — corporate outposts as campaign objects: they pay the
+`outposts:` (app 0.22.26, RQ-S-04/05) — corporate outposts as campaign objects: they pay the
 player, and how well funded they are follows how the player does against the aliens where they
 are. Without the section there are none, and `incomes` pay as written. `interceptor` has them in
 place of its old flat corporate income; `default` has a small set beside the Senate's stipend.
