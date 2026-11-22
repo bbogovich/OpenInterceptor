@@ -193,7 +193,7 @@ yet.
 | `requires_all` | list of topic ids | none | App NEXT: topics that must **all** be known as well — `research(a) and research(b)` joined to `requires` (and to the translated `prereq*`). `interceptor`: Nova Bomb's five extra prerequisites, which the original's code adds to its INI ones (**verified**). |
 | `level` | number | 0 | App NEXT: the original's `Level` (read through inheritance); a finished topic earns `research_model.score_by_level` at its level. |
 | `requires_item` | item id or list | none | App 0.22.25: an **artefact-gated** topic (the original's Prereq 127, RQ-S-03): offered only once one of these items has been *recovered* by salvage (the destroyed ships' [`salvage_fits`](#research-and-research_model), raids' [`salvage_items`](#raids)) and only while one stays in some base's stores. A list (app 0.22.27) accepts any of them — the original takes a launcher or its torpedoes. When none is left (sold, lost) the topic closes, and stays closed until another is recovered. Unknown item: load error. |
-| `unlock_on` | list of events | none | App NEXT: an **event-gated** special topic, offered once any of these battle events has happened: `destroyed(<class>)` (an enemy of that class destroyed), `captured(<class>)` (captured or disabled), `won(<raid>)` or `won(<raid>#<n>)` (that raid's n-th won battle). It stays open. |
+| `unlock_on` | list of events | none | App NEXT: an **event-gated** special topic, offered once any of these battle events has happened: `destroyed(<class>)` (an enemy of that class destroyed), `captured(<class>)` (captured or disabled), `won(<raid>)` or `won(<raid>#<n>)` (that raid's n-th won battle), `kind(<kind>)` (a won raid's [`kinds`](#raids) pick, app NEXT). It stays open. |
 | `complete_on` | list of events | none | App NEXT: the same events finish the topic outright (the original's topics 74 / 75 for captured freighters and AlienType5). |
 | `lab`, `site`, `start_cost` | | none | A **station-only** topic: see [Logistics › research stations](#research-stations-and-station-only-topics) (app 0.9.0). |
 
@@ -220,7 +220,9 @@ says so, and its `score_by_level` score is added to the month's.
 table at 0x66f768: eleven special topics need an item — the five corpses, the three torpedoes (the
 launcher or its torpedoes) and the Phase, Plasma and Psi beams. The others open on an event: the
 saucer examinations on `captured(wraith | spectre | phantasm)`, Shade on `captured(shade)`, the
-three probes on `destroyed(drone)` (this pack's one probe class opening all three: *derived*),
+probes by the probe's type (`kind(sensor_probe | intel_jammer_probe | comm_jammer_probe)`; of the
+original's seven types the other four give nothing; the `alien_probe` raid's `kinds` stand for
+them, one per contact, all as likely: *derived*),
 the Doomsday pieces on `won(doomsday_convoy#1 | #2 | #3)` (the n-th convoy carrying piece n:
 *derived*). Still open as before: the mines (the flight layer does not report destroyed mines
 yet), Poltergeist and the Drone (no source known). Topics 74 and 75 are not in this pack's tree.
@@ -364,6 +366,7 @@ its `cargo` modules limit nothing: the original hub's own cargo room is unknown.
 | `requires` | condition | none | Rolled only while this holds (`day >= 10`). |
 | `target` | `base` / `system` | `base` | What it heads for: one of the player's bases, or any system. |
 | `speed` | number | 600 | Map units per hour. |
+| `kinds` | list of ids | none | App NEXT: what a launch of this raid may be (`interceptor`'s `alien_probe`: the original's seven probe types); one is picked per contact and a **won** battle reports it as the event `kind(<kind>)` for research's `unlock_on`. Every kind is as likely. |
 | `salvage_items` | list of `{item, goodies}` | none | App 0.22.25: artefacts a **won** battle with this raid may recover besides the destroyed ships' `salvage_fits` (`interceptor`: the alien corpses, which raid yields which race *derived*): each is rolled once with its [`goodies`](#research-and-research_model) table's chance at the campaign's difficulty and goes to the home base of the first craft in the battle (base 0 if none), opening the topics whose `requires_item` it is. Unknown item or table: load error. |
 | `react_on_detect` | fraction (`per_level`) | 0 | App NEXT: once a base's sensors see the contact, with this chance it turns on that base — it heads for it (along the lanes on a lane map) and strikes it if not stopped. A plan's shipment keeps its course. `interceptor`: alien raids `{per_level: [25%, 35%, 45%, 55%, 65%]}` (the original's 25 + 10 × level %, **verified**; that it re-tasks against the detector is *derived*). |
 
