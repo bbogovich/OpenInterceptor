@@ -87,7 +87,7 @@ deliveries and strategic speed (RQ-S-21…23), the alien raid planner and base g
 mission rating (RQ-S-27), the pilot "temperament" = pilot grade (RQ-C-23), gimballed turret aim (RQ-C-22),
 the save layout (RQ-S-28), station/outpost shield pools (RQ-C-24, for #113).
 
-What truly remains: `MissionScores` counters 36–90 and 95–104 (objective events) and the debrief field
-+0x30c; raid fleet sizes per target type and difficulty (two jump tables in `0x573998`); the alien base
-variant A/B flag; alien ship build time; Doomsday piece costs; the two small ints per outpost/OPP chart;
-the byte layout inside each save chunk (not needed for our own format).
+What truly remains (after the passes of 2026-11-22, `unknowns-2026-11.md` §11–§12): mission counters 8,
+29–34, 87 and the meaning of the objective flags 88–90; the exact slot → kind order of special-system
+salvage counters 75–79; which clip or subtitle the computer voice uses per event beyond `soundfx.ini`;
+the byte meaning of fields inside each save chunk (not needed for our own format).

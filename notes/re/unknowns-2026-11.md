@@ -474,6 +474,82 @@ So waves **33–36** (Nova messages 0x46–0x49) are clips **v33–v36** of the 
 computer voice (`Comp_*`) is separate (`soundfx.ini` keys). No subtitle `S_` id was found for waves
 (derived: voice only).
 
+## 12. Follow-up pass 3 (2026-11-22, verified unless marked)
+
+### 12.1 Alien base variant A / B (agent +0x28, set by `0x57d6f1`)
+
+`0x572771(initial)` founds an alien base and calls the set-up with variant **1 (A)** when `initial`
+≠ 0, else **2 (B)**. The two bases created at game start (`0x572992`) are **A**; every base founded
+later (the 5-day "no base left" check and the 20-hour expansion, `0x575852`, `0x57587c`, `0x575a2d`)
+is **B**. Effects: concurrent module builds (+0x2c) = d/2 + 2 for A, d/2 + 1 for B; only **A** bases
+queue ships (`0x57e51e`), so only A bases can launch raids (`0x573998` needs ≥ 3 queued ships) and
+5-day scouts; the stage counter uses `Think.ini` DCountA for A and DCountB for B.
+
+### 12.2 Doomsday pieces (`0x57b6xx`, table 0x67c568, 6 ints per difficulty)
+
+| d | total pieces | work per piece (outpost-hours) | fund cap | type 1 | type 2 | type 3 |
+|---|---|---|---|---|---|---|
+| 0 | 25 | 100,000 | 250,000 | 8 | 8 | 9 |
+| 1 | 25 | 80,000 | 200,000 | 9 | 8 | 8 |
+| 2 | 25 | 70,000 | 150,000 | 10 | 8 | 7 |
+| 3 | 20 | 50,000 | 100,000 | 7 | 7 | 6 |
+| 4 | 18 | 30,000 | 80,000 | 7 | 6 | 5 |
+
+* Pieces are built one at a time, type 1 first, then 2, then 3, while the build orders for that type
+  last. Every 20 h (72,000 s) the current piece's remaining work drops by **elapsed seconds × the
+  number of alien outposts**; a piece needs `work × 3600` of that, i.e. *work* hours with one
+  outpost. When done it is logged as built (`0x57ab52`) and shipped by freighter; shipments
+  received (messages 0x3a–0x3c, `0x57a94f`) count up to the per-type maximum; type-3 arrivals raise
+  the warnings `DD_WARNING1` / `DD_WARNING2` at max − 4 / max − 3. The Doomsday is complete when the
+  received pieces add up to the total (`0x57b37a`).
+* There is **no money cost** per piece. The "fund cap" (derived name): once the alien Doomsday fund
+  holds twice this amount, the Doomsday share of the treasury split falls to a random 1–5 %
+  (`0x576e7c`); below it the share is `Think.ini` DoomsdayDefault.
+
+### 12.3 The two extra outpost/OPP chart values
+
+The pairs written beside the HP/shield maxima (X-COM outpost 6/4, X-COM OPP 2/2, alien outpost 8/8,
+alien OPP 3/3; `0x5f0bc1`) have **no reader**: no direct or table-indexed reference was found. Unused.
+
+### 12.4 Target / location kinds (`0x417490` callers)
+
+0 base, 1 outpost, 2 OPP, **3 a map point** (x, y in 0…60,000, `0x44cb30`), **4 a position inside a
+stellar system** (system, sub-position; `0x49c52c`), 5 a flight plan, 6 a global locator
+(`0x49bc30`). So raid sizes "kinds 3 and 4" are raids sent at a map point or into a system.
+
+### 12.5 More counters
+
+From the hull-class table 0x4e041b: **6 = AlienType4 destroyed, 7 = AlienType5 destroyed**
+(AlienType6 and the alien freighter both count as 2). Still unknown: 8, 29–34, 87, and what the
+objective flags 88–90 mean.
+
+### 12.6 Save chunk layouts (`GameState.NNN`; enough for our own format)
+
+Every chunk starts with its NUL-terminated tag; the loader compares the tag and refuses a mismatch.
+Field sizes are the writer's `fwrite` calls (verified); meanings are derived.
+
+| Chunk | Contents written, in order |
+|---|---|
+| `gPlayerInfo` | per faction: 8 bytes (header), 0xc8 (name / money block), 4 × 0x20, 2 × 0x80 (known / available flags), 0x50, 0x200 (research progress), 0xc8, 0x64; repeated per faction |
+| `gShipInfo` | count (4), capacity (4), next id (4), then per slot a used byte and, if used, the **0x13c-byte ship record** |
+| `gPilotInfo` | count, capacity, next id and two more ints, then per slot a used byte and the **0x48-byte pilot record**, then a list of 0x38-byte entries |
+| `gGameClock` | speed byte, time (4), 0x14 (4), 4, 0x18 (4) |
+| `gHistory` | list of 0x38-byte events |
+| `gShipmentQueue` | list of 0x24-byte shipments (§2.1) |
+| `Globals` | difficulty and the player/game settings ints and bytes (13 fields, incl. difficulty 0x740b9c and player side 0x66f6d4) |
+| `gUniverse` | count (4) + 0x4c98 bytes of systems |
+| `gOptions` | 2 bytes |
+| `gBaseInfo` | 0x3c-byte header block + the base records |
+| `gOutpostInfo` | X-COM and alien per-system scores (0x190, 0x154 ×2), pools (4 + 4), 0x154, 0x100, 0x10, 4, 4, **0x6644 bytes of outpost records** (85), 0x55 bytes, 4, 0x100 |
+| `gAIManager` | manager ints and agent ids, then each agent's own tagged block (`Agent000v3` …) |
+| `gFlightPlanManager_v5` | per plan: fields one by one (byte, ints, 0x14 block …), with `SquadronSet_v3` blocks (ints at +0xc8…+0xe8 and up to 25 ship ids) |
+| trailer (`0x4e900e`) | a 5-byte tag, a count, then one byte per entry |
+
+For RQ-S-20 / RQ-S-28 the shape to keep is: a header with magic, check value, version and name; then
+one tagged section per subsystem, each refusing to load when its tag or version differs; records as
+fixed-size blocks with count + used flags. The engine's own save can mirror this with YAML or binary
+sections without copying the byte layout.
+
 ## 10. What remains unknown
 
 * Counter meanings 36–90 and 95–104 (objective events); the debrief field +0x30c.
