@@ -50,6 +50,22 @@
     {
       "name": "console",
       "description": "The tablet control console: web server, protocol, web components, themes, Arduino transport"
+    },
+    {
+      "name": "parity-m1",
+      "description": "X-COM parity plan M1: combat feel"
+    },
+    {
+      "name": "parity-m2",
+      "description": "X-COM parity plan M2: text and widgets on the original screens"
+    },
+    {
+      "name": "parity-m3",
+      "description": "X-COM parity plan M3: strategy logic"
+    },
+    {
+      "name": "parity-re",
+      "description": "X-COM parity plan: remaining reverse-engineering analysis"
     }
   ]
 }

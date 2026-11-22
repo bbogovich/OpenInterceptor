@@ -21,6 +21,17 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | D-01 / RQ-S-01: tech ids from `GameSettings.ini`'s numbered topic list (was a databank table, off by one) | 0.22.3 |
 | RQ-S-02 (part): research progress belongs to the topic (`switching: keep_progress`) | 0.22.3 |
 
+## Issues
+
+Filed 2026-11-22 as GitHub issues (labels `parity-m1`, `parity-m2`, `parity-m3`, `parity-re`):
+
+| Track | Issues |
+|---|---|
+| M1 combat | #113 station hull/shields, #114 alien base hard points and layouts, #115 turret fire control, #116 repair and system damage, #117 shield types and special weapons, #118 AI piloting, #119 AI retreat and Nova, #120 missiles/cloak/PD/hulls, #121 balance report and re-measure |
+| M2 screens | #122 sheet fonts and anchors, #123 CSD readouts and captions, #124 compact lists, #125 sprites and buttons, #126 sounds/tooltips/dial/lamps, #127 dialogs/history/clock, #128 screen content |
+| M3 strategy | #129 research, #130 sensors, #131 outposts, #132 bases, #133 pilots, #134 auto-resolve, #135 aliens, #137 deliveries and saves |
+| RE | #136 remaining unknowns |
+
 ## Order of work
 
 Ordered by what a player meets first and what blocks other work. Track A (combat) and Track B (screens) touch
