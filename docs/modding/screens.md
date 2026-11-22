@@ -185,7 +185,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `y_range`, `y_steps` | `[low, high]`, number | fitted, 18 / about 6 | A `graph`'s fixed y range in that many grid steps (the original's income report: `[0, 18000]`, 18); without it the range fits the values (app 0.22.22). |
 | `base_portraits`, `base_portrait_frames` | list of assets, number | none, 1 | A `map`'s system picture for a system with the player's base (first) and, for when the map has them, enemy bases (second), animated over that many rows (app 0.22.22). |
 | `knob` | `{frames, count, stops, reach, lamps_off, lamps_on, unavailable}` | none | A `knob`'s turning frames (rows N … N + count − 1, at `pos`), its click points (one per level), the px around a point that picks it (14), and a lamp per point (app 0.22.22). |
-| `panel` | name | none | The panel the widget belongs to: `hide(<panel>)` and `show(<panel>)` hide and show it (app NEXT). |
+| `panel` | name | none | The panel the widget belongs to: `hide(<panel>)` and `show(<panel>)` hide and show it (app 0.22.23). |
 | `zoom_levels` | list of numbers | none | A `map`'s fixed zoom levels in map units per design pixel, in place of free zoom (app 0.22.21, [Zoom levels](#zoom-levels)). |
 | `months`, `legend` | list of text | Jan … Dec, none | A `graph`'s month names (January first), and the labels of a finance graph's low / high lines or of an activity map's four classes; text keys allowed (app 0.22.21). |
 | `labels` | `{font, colour, base_colour, rise, base_rise, box, cycle, margin}` | none | A `map`'s labels the original's way ([Map labels](#map-labels), app 0.22.17). Without it every star's name is drawn beside it. |
@@ -217,7 +217,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `save` | The save prompt, as the testbed layout's *Save*. |
 | `menu` | Saves and returns to the main menu. |
 | `testbed` | Switches to the testbed layout. |
-| `hide(<panel>)`, `show(<panel>)` | Since app NEXT: hides or shows the widgets with that `panel:` (hidden ones are neither drawn nor clicked), e.g. Bases' side panel. |
+| `hide(<panel>)`, `show(<panel>)` | Since app 0.22.23: hides or shows the widgets with that `panel:` (hidden ones are neither drawn nor clicked), e.g. Bases' side panel. |
 | `list(prev)`, `list(next)`, `list(act)` | Since app 0.22.22: moves the screen's list selection up or down a row, or runs the selected row's first action (the original's one-at-a-time panels: Bases' previous, next and close-panel buttons). |
 
 ### Values
@@ -331,7 +331,7 @@ items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style
   module panel shows one module at a time and steps with three 42 × 32 buttons (§14.2,
   **verified**): previous 402 at (387, 247) (rows 1377 / 1378), close panel 400 at (484, 247)
   (1381 / 1382) and next 401 at (580, 247) (1379 / 1380). Close panel closes the side panel in
-  every mode: its buttons hidden, the slide sound, placement mode cleared. Since app NEXT
+  every mode: its buttons hidden, the slide sound, placement mode cleared. Since app 0.22.23
   `interceptor` puts the list and the three buttons in a `panel: side` that close panel hides
   (`hide(side)`, with `sndSlideSide`) and the add-module button 202 at (504, 324) shows again
   (`show(side)`; its rows 1343 / 1344 **derived** from the side buttons' numbering); previous
@@ -341,7 +341,7 @@ items: {kind: list, source: market, rect: [18, 272, 538, 188], font: body, style
   icons only, since app 0.22.21 (§13.2, **verified**): since app 0.22.22 the fitted item's icon
   (§14.3, a launcher and its missile sharing one), row 1237 where the hull has no hard point, the
   selection overlay 1235 at (+1, +1). Names and stats stay in the right-hand panel in the body
-  font (23011). Probes by INI section (since app NEXT): HunterProbe 1429, SensorProbe 1438
+  font (23011). Probes by INI section (since app 0.22.23): HunterProbe 1429, SensorProbe 1438
   (CommunicationsProbe 1418 and CommunicationsJammerProbe 1417 are not in `interceptor`'s items);
   the ECM, Intel and IntelJammer probes have none.
 - Research keeps its rows on the art's slots.
@@ -402,7 +402,7 @@ income report read in full, `unknowns-2026-11.md` §13.1, §14.8, **verified**):
 | `finance` | The series the screen's list picks: its rows are income, expenditure, maintenance, balance and score. Also draws the low and high lines of the months shown, labelled by `legend`. |
 | `alien`, `xcom` | Alien and X-COM incursions each month (below). |
 
-Since app NEXT the activity is the original's (§14.7, **verified**): an alien incursion is each
+Since app 0.22.23 the activity is the original's (§14.7, **verified**): an alien incursion is each
 alien fleet sighting the player is alerted to, counted at the fleet's position; an X-COM
 incursion is each mission launched, counted at its launch point. Each is binned into a 16 × 16
 grid over the galaxy (3,750 units a cell on the 60,000-unit map; the map's size / 16) with a
