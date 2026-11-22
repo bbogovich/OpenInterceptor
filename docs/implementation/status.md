@@ -374,7 +374,7 @@ them. Soak (veteran, `--seconds 180`) against 0.22.6: `duel-wraith` passive 9.7 
 `default`: unchanged. Manual case MT-4-68; **505** `#[test]` functions. Not yet: weapon choice,
 campaign pilots in battle (#133), the miss axis.
 
-**Parity M1, #114** (app NEXT; RQ-C-05 and RQ-C-07, facts from `notes/re/flight` §8.4 and §8.6,
+**Parity M1, #114** (app 0.22.11; RQ-C-05 and RQ-C-07, facts from `notes/re/flight` §8.4 and §8.6,
 which this change extends with the pirate turret tables and the mine rings read from the
 player's exe): `modules` by `at`/`facing` and `chance`; `hard_points` and `destroyed_when`;
 `minefields`. `interceptor`: the pirate base's six and the arms dealer's five laser turrets at

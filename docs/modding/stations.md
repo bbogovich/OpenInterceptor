@@ -128,7 +128,7 @@ plants keep the ship damage model: the original's own hull routines for them are
 
 ## Modules by position and chance
 
-Since app NEXT (issue #114) a module may be placed by position instead of an attachment point,
+Since app 0.22.11 (issue #114) a module may be placed by position instead of an attachment point,
 and may be there only by chance — the original's pirate stations have turrets on fixed points
 of their own model, some of which are missing:
 
@@ -150,7 +150,7 @@ objects:
 ## Hard points
 
 A station can have **weak points** with hit points of their own, as the original's alien base
-has its connection point (app NEXT; flight notes §8.4, **verified**):
+has its connection point (app 0.22.11; flight notes §8.4, **verified**):
 
 ```yaml
 objects:
@@ -174,7 +174,7 @@ yet — where they are on the model is not traced — so it is still destroyed b
 
 ## Minefields
 
-An object can lay **mines** around itself when it is placed (app NEXT):
+An object can lay **mines** around itself when it is placed (app 0.22.11):
 
 ```yaml
 objects:

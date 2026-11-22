@@ -336,7 +336,7 @@ modules survives ("STATION SHIELDS DOWN") or, for a `shield_pool` station, sets 
 maximum from its first standing generator (`Ruleset::pool_capacity`) and clears
 `Ship::pool_powered` (and, with `drop`, the points) when none stands.
 
-**Module layouts, hard points and minefields** (app NEXT, #114). `rules::ModuleSlot` is a
+**Module layouts, hard points and minefields** (app 0.22.11, #114). `rules::ModuleSlot` is a
 `modules:` entry: an attachment `slot` or an `at` position with `facing`, and a `chance`;
 `spawn_modules` rolls `World::random` only for entries with a chance below 1 (so worlds without
 them draw the same numbers as before). `World::spawn_minefields(hub)` (after `spawn_modules` in
