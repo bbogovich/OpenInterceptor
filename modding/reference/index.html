@@ -9306,7 +9306,7 @@ section: <code>skins: {&lt;skin id&gt;: {…}}</code>; <code>campaign.skin</code
 <td><code>text_button</code></td>
 <td><code>{font, colour, line, fill}</code></td>
 <td>none (plain buttons)</td>
-<td>The original's TextButton for labelled buttons, list actions and dialog buttons (app 0.22.7; <a href="../skins/#text-buttons-and-dialogs-app-next">Skins › Text buttons and dialogs</a>). Defaults: the original's 200,200,200 caption, 0,150,0 lines, 0,200,0 fill at 50 %.</td>
+<td>The original's TextButton for labelled buttons, list actions and dialog buttons (app 0.22.7; <a href="../skins/#text-buttons-and-dialogs-app-0227">Skins › Text buttons and dialogs</a>). Defaults: the original's 200,200,200 caption, 0,150,0 lines, 0,200,0 fill at 50 %.</td>
 </tr>
 <tr>
 <td><code>dialog</code></td>
@@ -9480,6 +9480,30 @@ keeps its shape (one scale factor, centred) instead of stretching.</p>
 <td>4 numbers</td>
 <td>none</td>
 <td>A <code>list</code> with <code>font</code>: where the selected row's actions go, as text buttons (a row when each is at least 60 wide, else a column). Without it a double click does the first action.</td>
+</tr>
+<tr>
+<td><code>style</code></td>
+<td><code>plain</code>, <code>compact</code></td>
+<td><code>plain</code></td>
+<td>A <code>list</code> with <code>font</code> (app 0.22.9): <code>compact</code> is the original's list box — rows a line + 2 apart, <code>round((h − 7)/(lh + 2))</code> of them, a pulsing selection bar, a pressed row flashing amber (<a href="../screens/#compact-list-boxes">Compact list boxes</a>). Another value is a load error.</td>
+</tr>
+<tr>
+<td><code>columns</code></td>
+<td>text</td>
+<td>none</td>
+<td>A <code>list</code> with <code>font</code>: a header template (text or <code>@key</code>) split at <code>~</code>; each column as wide as its header text in <code>title_font</code>; <code>#</code> marks the editable column. Cells per source: <code>market</code>, <code>factory</code>, <code>hangar</code>.</td>
+</tr>
+<tr>
+<td><code>bar</code></td>
+<td>3 numbers</td>
+<td>green</td>
+<td><code>compact</code>: the selection bar's colour at full level.</td>
+</tr>
+<tr>
+<td><code>up</code>, <code>down</code></td>
+<td><code>[x, y, w, h]</code> or <code>{rect, images}</code></td>
+<td>none</td>
+<td>A <code>list</code> with <code>font</code>: scroll arrows — one row per press, repeating after 20 ticks every 5 while held, disabled at the ends; <code>images</code>: normal, pressed, disabled (sprite colour key transparent). <code>--check</code> loads the images.</td>
 </tr>
 <tr>
 <td><code>shape</code></td>

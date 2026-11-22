@@ -4905,6 +4905,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Lists in sheet fonts (app 0.22.7)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compact-list-boxes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compact list boxes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -6749,6 +6766,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Lists in sheet fonts (app 0.22.7)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#compact-list-boxes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compact list boxes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -7107,7 +7141,13 @@ and kept; one that cannot be loaded is reported on standard error once
 <td><code>row_height</code>, <code>row_size</code>, <code>header</code>, <code>title_font</code>, <code>detail</code>, <code>detail_font</code>, <code>buttons</code></td>
 <td></td>
 <td></td>
-<td>A <code>list</code> in a sheet font: where its parts go (<a href="#lists-in-sheet-fonts-app-next">Lists in sheet fonts</a>, app 0.22.7).</td>
+<td>A <code>list</code> in a sheet font: where its parts go (<a href="#lists-in-sheet-fonts-app-0227">Lists in sheet fonts</a>, app 0.22.7).</td>
+</tr>
+<tr>
+<td><code>style</code>, <code>columns</code>, <code>bar</code>, <code>up</code>, <code>down</code></td>
+<td></td>
+<td></td>
+<td>A <code>list</code> in a sheet font as the original's list box: rows, columns, the pulsing bar, scroll arrows (<a href="#compact-list-boxes">Compact list boxes</a>, app 0.22.9).</td>
 </tr>
 <tr>
 <td><code>shape</code></td>
@@ -7289,7 +7329,7 @@ the art (audit D-32 – D-38). Each part goes where the art has room for it:</p>
 </tr>
 <tr>
 <td>Its actions</td>
-<td>Text buttons (<a href="../skins/#text-buttons-and-dialogs-app-next">skin <code>text_button</code></a>) in <code>buttons</code>: a row of equal buttons when each is at least 60 px wide (at most 150), else a column of 20 px buttons.</td>
+<td>Text buttons (<a href="../skins/#text-buttons-and-dialogs-app-0227">skin <code>text_button</code></a>) in <code>buttons</code>: a row of equal buttons when each is at least 60 px wide (at most 150), else a column of 20 px buttons.</td>
 </tr>
 </tbody>
 </table>
@@ -7299,6 +7339,74 @@ the art (audit D-32 – D-38). Each part goes where the art has room for it:</p>
 <span class="nt">topics</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">list</span><span class="p p-Indicator">,</span><span class="nt"> source</span><span class="p">:</span><span class="w"> </span><span class="nv">research</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">330</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">49</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">250</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">264</span><span class="p p-Indicator">],</span><span class="nt"> font</span><span class="p">:</span><span class="w"> </span><span class="nv">body</span><span class="p p-Indicator">,</span><span class="nt"> row_height</span><span class="p">:</span><span class="w"> </span><span class="nv">34</span><span class="p p-Indicator">,</span><span class="nt"> row_size</span><span class="p">:</span><span class="w"> </span><span class="nv">25</span><span class="p p-Indicator">,</span>
 <span class="nt">         detail</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">26</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">374</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">412</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">],</span><span class="nt"> buttons</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">26</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">442</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">412</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">20</span><span class="p p-Indicator">]}</span>
 </code></pre></div>
+<h4 id="compact-list-boxes">Compact list boxes<a class="headerlink" href="#compact-list-boxes" title="Permanent link">&para;</a></h4>
+<p><code>style: compact</code> (app 0.22.9, plan M2 #124, RQ-UI-13) draws a list in a sheet font as the
+original's list box (ListBox.cpp, <strong>verified</strong> unless marked):</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rows</td>
+<td>One row-font line + 2 px apart (the body font 23011: 16 px). A box <code>h</code> tall below its header strip shows <code>round((h − 7) / (line height + 2))</code> rows; the first sits 3 px below the strip (<strong>derived</strong>).</td>
+</tr>
+<tr>
+<td>Columns</td>
+<td><code>columns: &lt;template&gt;</code> — text or a <code>@key</code>, such as <code>@orig.S_S6B_PURCHASE_HDR</code>. It splits at <code>~</code> and each column starts where the previous header text ends, trailing spaces included, measured in the <code>title_font</code>. So the template's padding sets the layout. A <code>#</code> before a header marks the editable column and is not shown. The headers are drawn in the <code>header</code> strip. A cell wider than its column is cut with "...".</td>
+</tr>
+<tr>
+<td>Selection bar</td>
+<td>The full row in <code>bar</code> (default green) at a pulsing level: 150 · (1 − n/74) falling to 75, then back up to 150, as <code>n</code> counts 0 – 74 every 2 ticks (2.5 s). A pressed row flashes amber, RGB(200, 150, 0), on alternate frames.</td>
+</tr>
+<tr>
+<td>Scroll arrows</td>
+<td><code>up</code> and <code>down</code>: <code>[x, y, w, h]</code> or <code>{rect, images: [normal, pressed, disabled]}</code>. An arrow moves the list one row when pressed, then again after 20 ticks and every 5 ticks while held. At the ends it is disabled and shows its third image. Images are drawn with the original's sprite colour key (pure cyan) transparent. Without images an arrow is a hot spot over the art. The mouse wheel also scrolls one row.</td>
+</tr>
+</tbody>
+</table>
+<p>Without <code>columns</code>, or for a row the engine gives no cells, the row's text spans the row. The
+lists that fill columns, in this order:</p>
+<table>
+<thead>
+<tr>
+<th><code>source</code></th>
+<th>Cells</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>market</code></td>
+<td>name, size, cost, stores (craft: name, —, cost)</td>
+</tr>
+<tr>
+<td><code>factory</code></td>
+<td>name, size, build time (production units), stores (craft: name, —, units)</td>
+</tr>
+<tr>
+<td><code>hangar</code></td>
+<td>craft, pilot, base and state (pilots and recruits span the row)</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="c1"># packs/interceptor/rules/screens.yaml: Equipment &amp; Personnel's list box</span>
+<span class="nt">items</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">list</span><span class="p p-Indicator">,</span><span class="nt"> source</span><span class="p">:</span><span class="w"> </span><span class="nv">market</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">18</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">272</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">538</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">188</span><span class="p p-Indicator">],</span><span class="nt"> font</span><span class="p">:</span><span class="w"> </span><span class="nv">body</span><span class="p p-Indicator">,</span><span class="nt"> style</span><span class="p">:</span><span class="w"> </span><span class="nv">compact</span><span class="p p-Indicator">,</span><span class="nt"> header</span><span class="p">:</span><span class="w"> </span><span class="nv">18</span><span class="p p-Indicator">,</span><span class="nt"> title_font</span><span class="p">:</span><span class="w"> </span><span class="nv">readout</span><span class="p p-Indicator">,</span>
+<span class="nt">        columns</span><span class="p">:</span><span class="w"> </span><span class="s">"@orig.S_S6B_PURCHASE_HDR"</span><span class="p p-Indicator">,</span><span class="nt"> detail</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">305</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">46</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">132</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">115</span><span class="p p-Indicator">],</span><span class="nt"> buttons</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">139</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">46</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">132</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">115</span><span class="p p-Indicator">],</span>
+<span class="nt">        up</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">562</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">290</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">],</span><span class="nt"> images</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"original:WrappersDLL.dll#6911"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"original:WrappersDLL.dll#6912"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"original:WrappersDLL.dll#6913"</span><span class="p p-Indicator">]},</span>
+<span class="nt">        down</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">562</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">314</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">24</span><span class="p p-Indicator">],</span><span class="nt"> images</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"original:WrappersDLL.dll#6914"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"original:WrappersDLL.dll#6915"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"original:WrappersDLL.dll#6913"</span><span class="p p-Indicator">]}}</span>
+</code></pre></div>
+<p><code>interceptor</code> (app 0.22.9):</p>
+<ul>
+<li>Purchase, Manufacture and Equip Ships use compact boxes with columns and their arrows. The
+  arrows' positions and images are <strong>verified</strong>; Equip Ships' columns borrow the CSD's ship-list
+  template (<strong>derived</strong>).</li>
+<li>Bases, Base Stats, UFOpedia and Reports use compact boxes without columns. Their arrows'
+  positions are not recovered yet, so they scroll with the wheel.</li>
+<li>Research keeps its rows on the art's slots.</li>
+</ul>
 <p>A <code>button</code> with a <code>label</code> and no images is drawn as a <strong>text button</strong> when the skin has
 <code>text_button</code>: its caption is centred on its own rectangle in the caption font.</p>
 <h3 id="the-testbed-layout-and-screen">The testbed layout and <code>--screen</code><a class="headerlink" href="#the-testbed-layout-and-screen" title="Permanent link">&para;</a></h3>

@@ -7785,10 +7785,15 @@ elements it belongs to</em>. Branch <code>parity/m2</code>.</p>
 <td><strong>Done</strong> (app 0.22.7; MT-6-29 not yet run; DEV-083, DEV-084)</td>
 <td><code>src/app/caption.rs</code>, <code>src/content/smallfont.rs</code>, <code>src/app/strategy.rs</code>, <code>src/app/widgets.rs</code>, <code>src/content/skin.rs</code>, <code>src/content/screens.rs</code>, <code>packs/interceptor/rules/{skin,screens}.yaml</code>, <code>resources/default/rules/skin.yaml</code></td>
 </tr>
+<tr>
+<td>#124 RQ-UI-13, D-33/D-35 – D-38: the compact list box (<code>app::listbox</code>; list <code>style: compact</code>, <code>columns</code>, <code>bar</code>, <code>up</code>, <code>down</code>): rows a line + 2 apart and <code>round((h − 7)/(lh + 2))</code> of them, columns from the LangFile header templates with cells for market, factory and hangar, "...", the pulsing bar and pressed amber, scroll arrows with the original's images that fire on press and repeat 20/5 ticks; sprite colour key <code>0x03FF</code></td>
+<td><strong>Done</strong> (app 0.22.9; MT-6-30 not yet run; DEV-086)</td>
+<td><code>src/app/listbox.rs</code>, <code>src/app/strategy.rs</code>, <code>src/content/screens.rs</code>, <code>src/content/mod.rs</code>, <code>src/formats/tga.rs</code>, <code>src/check.rs</code>, <code>packs/interceptor/rules/screens.yaml</code></td>
+</tr>
 </tbody>
 </table>
-<p>Not yet: map labels in the TrueType font (#128); the compact list's columns, pulsing bar and
-arrows (#124); button sprites and caps (#125); dialog frame art (#127). The default campaign has no
+<p>Not yet: map labels in the TrueType font (#128); the list box's spinners, row icons, blinking
+rows and sounds (DEV-086); button sprites and caps (#125); dialog frame art (#127). The default campaign has no
 screen set: its sheet fonts show in its dialogs only.</p>
 
 

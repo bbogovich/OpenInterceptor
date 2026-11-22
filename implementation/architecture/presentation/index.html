@@ -3612,6 +3612,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-compact-list-box-applistbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The compact list box (app::listbox)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6732,6 +6743,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#the-compact-list-box-applistbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The compact list box (app::listbox)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-main-menu-and-credits-appmenu-appcredits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7157,6 +7179,32 @@ advances, every design narrower than its advance, the sheet reads),
 <code>formats::sheetfont::tests</code> (given advances win), <code>app::text::tests</code> (centre raise, top-aligned
 detail text), <code>content::skin::tests::text_button_and_dialog_styles_parse_over_the_originals_look</code>,
 <code>content::screens::tests</code> (list keys), <code>cli::tests</code> (<code>--notice</code>).</p>
+<h3 id="the-compact-list-box-applistbox">The compact list box (<code>app::listbox</code>)<a class="headerlink" href="#the-compact-list-box-applistbox" title="Permanent link">&para;</a></h3>
+<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #124; RQ-UI-13).</em> <code>app::listbox</code> holds the original
+ListBox's rules (0x51b7c6) as pure functions:</p>
+<ul>
+<li><code>visible_rows(h, lh)</code>: rounds in integers.</li>
+<li><code>columns(face, template)</code>: the exe's 0x51c46b. Each column starts where the previous <code>~</code> token
+  ends, measured in the header font, <code>#</code> marking the editable one. The token split also takes
+  newlines, since the text tables turn <code>~</code> into them.</li>
+<li><code>column_width</code>.</li>
+<li><code>pulse_step(ticks)</code> and <code>pulse_level(n)</code>: the selection bar.</li>
+<li><code>Repeat</code>: a held button's fire-on-press and 20/5-tick auto-repeat (0x41767b).</li>
+</ul>
+<p><code>StrategyScreen::draw_list_art</code> uses them when <code>ListStyle::compact</code> is set:</p>
+<ul>
+<li>It fills <code>Row::cells</code> (market, factory, hangar) under the template's columns.</li>
+<li>It keeps one <code>Repeat</code> per arrow in <code>StrategyScreen::arrows</code>.</li>
+<li>It loads arrow images through <code>image_keyed</code>, which uses <code>Content::load_image_keyed</code> and
+  <code>tga::SPRITE_KEY_555</code>. The arrows' cyan key is <code>0x03FF</code>, not the cockpits' <code>0x03DF</code>.</li>
+</ul>
+<p>Tests:</p>
+<ul>
+<li><code>app::listbox::tests</code>: rounding, columns from a synthetic font, the pulse curve and period, the
+  repeat timeline 0/20/25/30/35.</li>
+<li><code>content::screens::tests</code>: <code>style</code>, <code>columns</code>, <code>up</code>, <code>down</code>.</li>
+<li><code>check::tests</code>: a missing arrow image.</li>
+</ul>
 <h3 id="the-main-menu-and-credits-appmenu-appcredits">The main menu and credits (<code>app::menu</code>, <code>app::credits</code>)<a class="headerlink" href="#the-main-menu-and-credits-appmenu-appcredits" title="Permanent link">&para;</a></h3>
 <p>Since app 0.14.0 <code>app::run</code> opens <code>Screen::Menu(MainMenu)</code> instead of the launcher when the
 campaign has a strategy layer (<code>rules.strategy.is_some()</code>); <code>Next::Menu</code> — from the launcher's
@@ -7307,6 +7355,11 @@ play without it.</p>
 <td><code>caption::{text_button, capsule_caption, check_label, stack_buttons, dialog_layout, button_block, rows_that_fit, ellipsize, draw_text_button, dialog}</code>; <code>StrategyScreen::draw_list_art</code>, <code>notice</code></td>
 <td><code>app::caption</code>, <code>app::strategy</code></td>
 <td>Captions from their control's rect; text buttons, lists and dialogs in the original's look (app 0.22.7).</td>
+</tr>
+<tr>
+<td><code>listbox::{visible_rows, columns, Column, column_width, pulse_step, pulse_level, PRESSED, Repeat}</code>; <code>Row::cells</code>; <code>StrategyScreen::arrows</code>, <code>image_keyed</code>; <code>Content::load_image_keyed</code>; <code>tga::SPRITE_KEY_555</code>; <code>ListStyle::{compact, columns, bar, up, down}</code>, <code>Arrow</code></td>
+<td><code>app::listbox</code>, <code>app::strategy</code>, <code>content</code>, <code>formats::tga</code>, <code>content::screens</code></td>
+<td>The original's compact list box (app 0.22.9).</td>
 </tr>
 <tr>
 <td><code>smallfont::{REFERENCE, advances, sheet}</code>; <code>SheetFont::with_advances</code>; <code>TextButtonStyle</code>, <code>DialogStyle</code>, <code>ListStyle</code></td>
