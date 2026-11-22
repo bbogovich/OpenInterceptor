@@ -157,20 +157,28 @@ objects:
   alien_base:
     hard_points:
       - {name: connection_point, hit_points: 1400, at: [0, -217, 0], radius: 124m, message: "@orig.S_GREP_363"}
-    destroyed_when: hull        # hull (default), hard_points, or either
+      - {name: tendril_1, hit_points: 550, at: [286.9, 212.8, 0], radius: 100m, hits: any, explosion: 100m}
+    destroyed_when: either      # hull (default), hard_points, or either
 ```
 
-- A **direct** hit — a beam bolt or an ordinary missile, not a shield-bypassing or enveloping
-  one — that lands within `radius` of a standing hard point's centre (`at`, model space) while
-  the station's shields on that side (or its pool) were already down damages the hard point
-  instead of the hull. What the hard point cannot hold goes on to the hull (*derived*).
-- When one falls, its `message` (a text or `@key`) appears on every player's message line.
+- What gets past the shields (all of a hit while they are down, or the overflow when a hit
+  empties them) and lands within `radius` of a standing hard point's centre (`at`, model space)
+  is taken by that hard point **whole**: its hit points may go below 0, and nothing reaches the
+  hull (the original, **verified**). With `hits: direct` (the default) only direct hits count —
+  beam bolts and ordinary missiles, not shield-bypassing or enveloping ones; with `hits: any`,
+  every hit.
+- When one falls, its `message` (a text or `@key`) appears on every player's message line, and
+  with `explosion` an explosion of that radius is shown there. A fallen hard point takes no more
+  hits: they reach the hull.
 - **`destroyed_when`**: `hull` — only the hull destroys the station (hard points just soak
   hits); `hard_points` — only all hard points at 0 do; `either` — whichever comes first (the
   original's alien base, with its connection point and three tendrils).
 
-`interceptor`'s alien base has its connection point. Its three 550-point tendrils are not placed
-yet — where they are on the model is not traced — so it is still destroyed by its hull alone.
+`interceptor`'s alien base has its connection point and its three 550-point tendrils
+(`hits: any`, a 100 m explosion) and is destroyed by its hull **or** all four (**verified**). The
+original gives the tendrils no position of their own (they are separate objects hit through their
+own geometry): here they sit at the `AL-BASE01` attachment points with ids 1 – 3, 120° apart
+287 m out and 213 m up (*derived*), with a 100 m radius (an assumption).
 
 ## Minefields
 
@@ -188,14 +196,17 @@ objects:
         rings: [[45, 0, 0], [-45, 0, 0]]     # yaw, pitch, roll of each ring
 ```
 
-Each ring is the horizontal circle of `radius` round `center`, turned by its yaw, pitch and roll;
-`count` mines sit on it evenly spaced, with the object's faction. The whole field is laid with
+Mine k of a ring sits at the unit X vector turned by yaw 360° × k / `count`, then by the ring's
+yaw, pitch and roll, times `radius`, plus `center` — the original's own construction (**verified**,
+with its angles read as yaw about Y, pitch about X, roll about Z); the mines have the object's
+faction. The whole field is laid with
 `chance` (rolled once on the seeded generator). An object placed in a construction `state` lays
 none. `interceptor`'s alien base lays the original's fields (flight notes §8.6, **verified** but
 for the ring planes): from Superhuman, 70 %, two rings of four missile mines 4 km out; from
 Experienced, 25 + 5 × level %, two rings of level + 5 explosive mines 2 km round a point 500 m
-above the base. What the original's mines do when triggered is not traced: here they are
-ordinary `kind: mine` objects with the original's warhead damage (300 and 250) and 50 hit points.
+above the base. They go off **on contact** (`range: 0` on their `mine` state: when the two hulls
+touch; the original's mines are collidable objects with a 10 m radius and no trigger range,
+*derived*), with the original's warhead damage (300 and 250) and 50 hit points.
 
 ## Cargo containers and moving hubs
 

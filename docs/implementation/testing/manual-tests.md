@@ -1377,6 +1377,7 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-67 | `interceptor`: system damage, mounts and repair | `duel-wraith` (`interceptor`), Lightning | not run | | | App NEXT; #116, `system_table`, `repair_order`, `efficiency`, `disables_below` |
 | MT-4-68 | `interceptor`: AI flying and missiles | `duel-wraith`, `duel-pirate-lightning`, a scenario with wingmen (`interceptor`), Lightning | not run | | | App NEXT; #118, `steer`, `lock_cone`, `pilot_grades`, speed requests |
 | MT-4-69 | `interceptor`: station layouts, the connection point and minefields | `base-assault`, `station-tour` (`interceptor`) | not run | | | App NEXT; #114, `hard_points`, `modules` by `at`, `minefields` |
+| MT-4-70 | `interceptor`: station and freighter turrets | `base-assault`, `station-tour`, `escort` (`interceptor`) | not run | | | App NEXT; #115, `aim: fixed`/`gimballed`, `interval`, `free_fire`, `line_of_sight` |
 
 ## Stage 4 cases
 
@@ -1930,6 +1931,15 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 | Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario station-tour`; then `--scenario base-assault --difficulty superhuman` and `--difficulty beginner`. |
 | Steps | 1. Fly round the pirate base and the arms dealer; count their turrets and watch where they sit. 2. Restart `station-tour` a few times. 3. In `base-assault` on Superhuman, look round the alien base from a distance before closing. 4. Bring its shields down, then fire at the underside of the hub (the connection point, about 217 m below its centre) until it is destroyed. 5. Repeat 3 on Beginner. |
 | Expected | 1: the arms dealer has five laser turrets — on top, two on the underside angled down, and one on each side; the pirate base up to six — top, bottom and on its mid-ring — each standing on the hull and firing outwards. 2: the pirate base's turret count varies (each is there 75 % of the time on Beginner). 3: mines ring the base (most likely: two rings of four missile mines 4 km out and two of nine explosive mines 2 km out); they go off when you fly near. 4: shots at the underside drain the connection point first (the hull does not drop); "Connection Point Destroyed" appears; the base is not destroyed by it alone. 5: no minefields on Beginner. |
+
+
+### MT-4-70 — `interceptor`: station and freighter turrets
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario base-assault`, then `station-tour`, then `escort`. |
+| Steps | 1. Approach the alien base from 5 km and fly across its front, then hold still at 3 km. 2. Watch an X-COM base's turrets engage an enemy (`station-tour` or a base defence mission). 3. Fly round the pirate base at 2 – 3 km. 4. In `escort`, watch the X-COM freighters' guns when enemies close. |
+| Expected | 1: the plasma pods open fire from about 5 km, steadily (about one shot a second each, not bursts), and hit a still target most of the time but miss by up to 20 m sideways now and then; they do not fire at you from behind their facing. 2: X-COM turrets fire at the laser's rate and almost never miss a target in front of them. 3: pirate turrets fire singly at a steady pace, some stop when part of the station is between you and them. 4: each freighter fires from a nose turret and a tail turret (no longer from its own beams), within 2 km. |
 
 ## Stage 5 results
 

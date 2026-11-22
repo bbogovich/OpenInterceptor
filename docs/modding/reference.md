@@ -167,7 +167,7 @@ The same keys; `objects` defaults to `kind: station`.
 | `turret_arc` | angle | 0 | Beams can aim this far off the nose (turrets). |
 | `debris` | list of assets | none | Shorthand (with `model`): wreckage models. With a model set, its debris set is used instead. |
 | `modules` | list of `{slot \| at, facing, class, chance}` | none | Stations (and, since app 0.9.2, any ship — they move and jump out with it): modules mounted at the model's attachment points — `slot` is an OBJ `slot_<name>` group's name or an original mesh's attachment index (quoted: `'0'`) ([Stations and modules](stations.md)). Since app 0.22.11 an entry may give `at` (model-space position) and `facing` instead of `slot`, and a `chance` (per level) that it is there ([Modules by position and chance](stations.md#modules-by-position-and-chance)). |
-| `hard_points` | list of `{name, hit_points, at, radius, message}` | none | Stations (app 0.22.11): weak points that take direct hits landing within `radius` of `at` while the shields are down; `message` is said when one falls ([Hard points](stations.md#hard-points)). `interceptor`: the alien base's connection point (**verified**). |
+| `hard_points` | list of `{name, hit_points, at, radius, hits, explosion, message}` | none | Stations (app 0.22.11; `hits`, `explosion` and whole-hit absorption app NEXT): weak points that take whole what gets past the shields and lands within `radius` of `at` (`hits: direct` — direct hits only, the default — or `any`); nothing reaches the hull; `message` is said and an `explosion` of that radius shown when one falls ([Hard points](stations.md#hard-points)). `interceptor`: the alien base's connection point and three tendrils (**verified**; tendril positions *derived*). |
 | `destroyed_when` | `hull`, `hard_points`, `either` | `hull` | What destroys the object (app 0.22.11): its hull at 0, all its hard points at 0, or either. |
 | `minefields` | list of `{mine, count, radius, center, rings, chance}` | none | Mines laid round the object when it is placed (app 0.22.11; [Minefields](stations.md#minefields)). `interceptor`: the alien base's two fields (**verified** but for the ring planes). |
 | `shield_generator` | bool | `false` | Modules: while one survives, its station's shields work. Implied by a `shield_capacity` above 0. |
@@ -249,7 +249,7 @@ A state:
 | `call` | text | *required with* `do: script` | The script function, `scripts/<file>.ois:<function>`, run in the object context. Only on `do: script` states. |
 | `every` | time | 0.5 s | `do: script`: seconds between runs (at least one tick); it also runs on the state's first tick. |
 | `fly` | a manoeuvre (not `script`) | `attack` | `do: script`: the manoeuvre flown meanwhile, with this state's other parameters. Only on `do: script` states. |
-| `range` | distance | 2000 m | Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); escort: how close a hostile may come to the leader or the escort before it attacks; travel: how far to fly before jumping; mine: trigger distance. |
+| `range` | distance | 2000 m | Attack: open fire inside it (and inside 95 % of the first beam's reach); patrol: radius around the spawn point; turret: reach; tow: search radius (at least 5 km); escort: how close a hostile may come to the leader or the escort before it attacks; travel: how far to fly before jumping; mine: trigger distance (`0`: on contact, when the two hulls touch — app NEXT). |
 | `fire_cone` | angle | 5° | Fire when the aim point is within this angle of the nose. |
 | `burst` | time | 1.5 s | Seconds of firing. |
 | `pause` | time | 1 s | Seconds holding fire between bursts. |
@@ -261,6 +261,16 @@ A state:
 | `escape` | distance | 2.5 km | Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2). |
 | `break_off` | distance | 0 | Attack (app 0.22.8): break off when closer than this; 0 = the engine's 120 m + 0.15 × `max_speed` with the target ahead. `interceptor`: 250 m (**verified**). |
 | `lock_cone` | angle | 0 | Attack (app 0.22.8): the pilot's **own missile lock**, as the original's AI keeps it: a timer starts while the aim point is within this angle on both axes and is dropped when it leaves; a missile may go during the sensor's `lock_time` (or the missile's) after it started, `missiles` seconds apart exactly, with `missile_chance` per tick, and it homes without a sensor lock. A ship with no sensor cannot fire this way. 0 = fire on a full sensor lock (± 25 % on the interval). `interceptor`: 5° (**verified** as the code reads; the window may be inverted in the original, *derived*). |
+| `aim` | `engine`, `fixed`, `gimballed` | `engine` | Turret (app NEXT): the original's fixed or gimballed turret instead of bursts and aim error ([Turret fire control](behaviours.md#turret-fire-control)). |
+| `lead_speed` | number | 2000 | Gimballed turret: the shot speed its lead assumes, m/s. |
+| `accuracy` | `[from, to]`, number or `pilot` | 50 | Fixed turret: accuracy in %, a band rolled once per turret, or the pilot record's (25 with none). |
+| `accuracy_factor` | fraction | 100 % | With `accuracy: pilot`: times this. |
+| `miss`, `miss_beyond` | distance | 20 m, 200 m | Fixed turret: the largest sideways miss on a failed roll, and the range inside which it never misses. |
+| `interval` | time or `rate_of_fire` | 0 | Turret: seconds between shots (0 = `burst` and `pause`); `rate_of_fire` = once per beam rate of fire. |
+| `interval_jitter` | time | 0 | Turret: up to this much more per shot, at random. |
+| `line_of_sight` | bool | `false` | Turret: fire only when the 5 km line ahead meets nothing, the target or another side. |
+| `free_fire` | bool | `false` | Turret: shots draw no energy and ignore the mounts' cooldown. |
+| `lock_time` | time | 0 | Missile turret: seconds a target must stay in arc and range before the first launch. |
 | `missile_chance` | fraction | 100 % | With `lock_cone`: the chance per tick that a ready missile fires. `interceptor`: 5 + 2 × level % (**verified**). |
 
 #### Pilot records and grades

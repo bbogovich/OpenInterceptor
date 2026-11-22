@@ -341,14 +341,24 @@ maximum from its first standing generator (`Ruleset::pool_capacity`) and clears
 `spawn_modules` rolls `World::random` only for entries with a chance below 1 (so worlds without
 them draw the same numbers as before). `World::spawn_minefields(hub)` (after `spawn_modules` in
 `spawn_placement`) lays each `rules::Minefield` its `chance` allows: per ring
-(`euler(yaw, pitch, roll)`) `count` mines at `center + ring × rot_y(2πk/count) × (0, 0, radius)`,
-named `<hub>.mine<n>`. `rules::HardPoint`s give each ship `hard_hp: Vec<f32>`; in
-`combat::apply_hit` a `DamageMode::Normal` hit on a class with hard points notes whether the
-struck shields (or pool) were already down, and after armour and systems the first standing
-hard point whose sphere holds the impact point takes the rest (overflow to the hull) and emits
-`SimEvent::HardPointDestroyed` when it falls (`app::flight::event_messages` shows its text).
-`DestroyedWhen` (`Hull`, `HardPoints`, `Either`) decides destruction from the hull and
-`hard_hp`.
+(`euler(yaw, pitch, roll)`) `count` mines at `center + ring × rot_y(2πk/count) × X × radius`,
+named `<hub>.mine<n>`. `rules::HardPoint`s give each ship `hard_hp: Vec<f32>`; in `combat::apply_hit`, after armour and
+systems, the first standing hard point whose sphere holds the impact point (`direct_only` points
+only for a `DamageMode::Normal` hit) takes all of what is left — its points may go below 0 and the
+hull gets nothing — and emits `SimEvent::HardPointDestroyed { position, explosion, … }` when it falls
+(`app::flight::event_messages` shows its text, `render::effects` the explosion). `DestroyedWhen`
+(`Hull`, `HardPoints`, `Either`) decides destruction from the hull and `hard_hp`. A `mine` state
+with `range: 0` goes off when its hull touches a hostile's.
+
+**Turret fire control** (app NEXT, #115). A `turret` state whose `Params::turret.aim` is not
+`Engine` runs `ai::original_turret`: the lead (`dist ÷ beam speed`, or `lead_speed` when
+gimballed), for fixed turrets an accuracy rolled once into `AiState::turret_accuracy` (band, or the
+pilot record's of the turret or its carrier) and a per-tick miss along the target's `right()` or
+`up()`; the arc test (`turret_arc` off the mount's forward, or in front for gimballed); the
+interval gate `AiState::next_shot`; `sight_clear` (`combat::first_hit` along 5 km); and the
+controls `aim`, `link: Unlinked`, `free_fire` (read by `combat::fire_beams`: no energy, no
+cooldown). A turret class with missiles and no beams starts `AiState::lock_start` in arc and range
+and launches homing (`guide_missile`) after `lock_time`, one per interval.
 
 **`sim::stations`** (app 0.22.4, #113) holds the station shield rules. A pool is stored in both
 banks (`shield_fore == shield_aft`), so the HUD, the remote console and the AI read it without
