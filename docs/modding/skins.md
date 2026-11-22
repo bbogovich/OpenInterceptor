@@ -296,7 +296,7 @@ original's three frame kits) is #127.
 ### The original's message box (`dialog.kits`)
 
 Since app 0.22.15 frame kits make prompts the original's message boxes (MsgBox.cpp, **verified**,
-`ui-framework.md` §4). In app NEXT, `kits` and `styles` replace 0.22.15's `kit` and `frame_style`:
+`ui-framework.md` §4). In app 0.22.17, `kits` and `styles` replace 0.22.15's `kit` and `frame_style`:
 
 ```yaml
 # packs/interceptor/rules/skin.yaml

@@ -142,7 +142,7 @@ How a new campaign begins. **Without `start:` the campaign has no strategy layer
 | `lanes` | list of `{between: [a, b]}` | none | Lanes between two of the map's systems (drawn on the map). |
 | `travel` | `free` / `lanes` | `free` | Straight lines anywhere (the original) or along the lanes (app 0.7.3; see [Travel](#travel)). |
 | `size` | `[w, h]` | `[60000, 60000]` | Generated: the rectangle, map units. |
-| `names` | list of text | none | Generated: system names to draw from (then numbered). An entry `original:<file>/<section>` (app NEXT) stands for the lines of `[section]` in a text file of the player's data — `interceptor` uses `original:starcorp1.txt/STAR NAMES`, the original's 101 star names. A missing file or section is a load warning. |
+| `names` | list of text | none | Generated: system names to draw from (then numbered). An entry `original:<file>/<section>` (app 0.22.17) stands for the lines of `[section]` in a text file of the player's data — `interceptor` uses `original:starcorp1.txt/STAR NAMES`, the original's 101 star names. A missing file or section is a load warning. |
 | `seed` | number | the campaign's | Generated: a fixed seed, so every campaign gets the same map. |
 | `black_holes` | number | 1 | Generated: how many systems are hidden black holes. |
 | `unit_ly` | number | 0.001 | Light years per map unit (display only). |
@@ -152,7 +152,7 @@ a campaign with [logistics](#logistics), `deposits` and `features` (app 0.9.0).
 
 `star_classes: {<id>: {color: [r, g, b], weight, icon}}` — how a star of that class is drawn, and
 (for generated maps) how often it appears relative to the others (`weight`, default 1; 0 = never
-rolled). `icon` (asset, app NEXT) draws that image at its own size, centred on the star, instead
+rolled). `icon` (asset, app 0.22.17) draws that image at its own size, centred on the star, instead
 of a dot; `interceptor` uses the CSD's 9 × 9 class icons (`original:sprite#893` – `#901`,
 **verified**; which original class each of its six classes stands for is **derived**). Generated systems are scattered at least a little apart, take a class by weight and a
 name from `names`.
