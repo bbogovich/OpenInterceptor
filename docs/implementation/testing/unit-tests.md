@@ -8,6 +8,11 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#121 (app NEXT)** two more, so **566**: `balance::tests::protection_follows_the_difficulty_and_station_pools`
+and `soak::tests::default_scenarios_engage_the_players_friends`. **Changed:**
+`balance::tests::energy_limits_sustained_fire_and_kill_times_follow` checks the start beam setting
+and the pool (10 s of full fire, then the sustained rate).
+
 **#120 (app 0.22.19)** seven more, so **563**: `sim::combat::tests::bolts_shoot_down_missiles_and_cloaks_cost_energy_shields_and_missiles`
 (a 30-damage bolt destroys a 20-point missile 80 – 97 times in 100; a cloaked hit skips the shields;
 no missile from cloak; −50 energy a second, no shield recharge, the cloak drops at 0),
