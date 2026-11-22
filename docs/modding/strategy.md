@@ -166,8 +166,14 @@ dwarf, blue, white, yellow, orange, red dwarf, black hole) weighted by its class
 §13.5; black holes weigh 0 and are placed by `black_holes`), each with its CSD icon and a
 portrait: five 20-frame star pictures (**verified** since app 0.22.22, §14.4): 454 yellow, 474
 orange, 494 red giant and red dwarf, 514 blue giant and blue, 534 white dwarf and white; black
-holes have none. Planets per system (2 – 5 by a per-class
-table) are not generated.
+holes have none.
+
+`planets` (list of numbers, app NEXT): the planet counts a generated system of the class draws one
+from at random (empty: none; drawn after the positions and classes, so a map is otherwise the
+same). `interceptor` gives each class the original's results (**verified**, `0x5dab1e`): 1 plus the
+class's entry in a 10 × 9 table (row `rand % 10`), held to 2 – 5 — a yellow star `[3, 3, 3, 4, 4, 5,
+5, 5, 5, 5]`, a red dwarf always 2. The count is kept with the system and saved; no screen shows it
+yet.
 
 ### `research` and `research_model`
 
@@ -277,7 +283,7 @@ never refused. A whole base can be dismantled too ([below](#dismantling-a-whole-
 | `max_bases` | number | 8 | The most bases of this type. |
 | `limits` | mapping group: count | none | The most modules of each group. |
 | `template` | ids | none | Modules a new base comes with. An entry names a module, or (app 0.19.0) a module **group**: then the best module of that group available when the base is ordered — the costliest whose `requires` holds, the later one in the file on a tie — and nothing while none is. A starting base's template is taken at the start, with the start's research known. |
-| `sensor_range` | number | 0 | The hub's own sensor range, map units (modules add to it). |
+| `sensor_range` | number | 0 | The hub's own sensor range, map units (modules add to it). `interceptor`: 0 since app NEXT — the original's base sees only through its sensor module: SensorType1 – 3 scan 2,000 / 4,000 / 6,000 map units (⅓, ⅔, 1 ly; **verified**, strategy README §3.2). |
 | `hangar`, `quarters` | number | 0 | Craft and pilots the hub alone houses. The default Guard base houses 6 pilots (4 before app 0.16.15, which the opening crew filled). |
 | `storage` | number | 0 | The hub's store capacity in item `size`s (app 0.16.15). 0: no store limit at bases of this type; above 0, its `storage` modules add to it. |
 | `placement` | condition | none (anywhere) | Where a base of this type may be built: a condition over the candidate `system` (app 0.19.0; [below](#where-a-base-or-facility-may-be-built)). `base_distance(system) <= 3500` is "within 3500 map units of one of your bases". |
@@ -324,6 +330,7 @@ its `cargo` modules limit nothing: the original hub's own cargo room is unknown.
 | `requires` | condition | none | Rolled only while this holds (`day >= 10`). |
 | `target` | `base` / `system` | `base` | What it heads for: one of the player's bases, or any system. |
 | `speed` | number | 600 | Map units per hour. |
+| `react_on_detect` | fraction (`per_level`) | 0 | App NEXT: once a base's sensors see the contact, with this chance it turns on that base — it heads for it (along the lanes on a lane map) and strikes it if not stopped. A plan's shipment keeps its course. `interceptor`: alien raids `{per_level: [25%, 35%, 45%, 55%, 65%]}` (the original's 25 + 10 × level %, **verified**; that it re-tasks against the detector is *derived*). |
 
 On a free-travel map a launched raid appears well outside the map, in a random direction, and
 flies straight for its target; on a lane map it enters at a system and follows the lanes

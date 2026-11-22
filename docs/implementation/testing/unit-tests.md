@@ -8,6 +8,10 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#130 (app NEXT)** two more: `campaign::tests::a_seen_contact_may_turn_on_the_base_that_saw_it`
+(unseen beyond 3,000 map units, seen inside, then heading for the base) and
+`campaign::tests::generated_systems_draw_planets_from_their_class`.
+
 **#121 (app 0.22.20)** two more, so **566**: `balance::tests::protection_follows_the_difficulty_and_station_pools`
 and `soak::tests::default_scenarios_engage_the_players_friends`. **Changed:**
 `balance::tests::energy_limits_sustained_fire_and_kill_times_follow` checks the start beam setting
