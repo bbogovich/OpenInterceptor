@@ -2408,3 +2408,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Preconditions | App NEXT or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --chapter 2 --screen reports`; step through all six with next. 2. On Finance click each of the five rows. 3. Start a new game: on the CSD turn the wheel over the map, then click a star, then turn the wheel back. 4. Open Equip Ships; click a socket. 5. Open Bases, Base Stats and the UFOpedia and use their arrows. |
 | Expected | 1: green line graphs with a dark-green grid and month labels; the activity reports show a coloured system map and its legend; Outposts a table and a small map; Player status the pilots with their ranks. 2: the graph changes series, with LOW and HIGH lines. 3: the map shows a handful of stars around the base at 45 units a pixel, closer at 30; a star opens its animated picture; the wheel goes back. 4: the sockets show icons only; the unusable ones the dark sprite; the selected one an overlay. 5: each arrow scrolls its list one row and is greyed at the end. |
+
+### MT-6-36 — The view knob, base pictures, Bases' panel buttons and the report axes
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy`. Click the view knob's three positions (lower left, middle, upper right) with and without a star selected. 2. Click the system with the base, then a black hole. 3. Open Bases; press previous, next and the check mark. 4. `--chapter 2 --screen reports`; look at the axes; step to Alien activity. |
+| Expected | 1: each click turns the knob and plays the rotary sound; lower left = far view, middle = closer; upper right only with a star selected (its lamp shows unavailable otherwise) and shows the star's animated picture. 2: the base system shows the base picture; the black hole is only centred. 3: previous / next move the module selection; the check mark builds the selected module. 4: income 0 – 18,000 in 18 steps, 22 month columns with names under them and the years between brackets; the alien legend stays inside the panel. |
