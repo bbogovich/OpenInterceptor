@@ -28,6 +28,7 @@ ships:
   lightning:
     inherit: original:GameSettings.ini/Ship_IntType1
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
+    voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
     mass: 6700
     ai_speed: 500
     ai_turn: {pitch: 2.1, yaw: 2.0, roll: 2.55}
@@ -48,6 +49,7 @@ ships:
   firestar:
     inherit: original:GameSettings.ini/Ship_IntType2
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
+    voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
     mass: 12700
     ai_speed: 500
     ai_turn: {pitch: 1.7, yaw: 1.4, roll: 1.5}
@@ -67,6 +69,7 @@ ships:
   avenger:
     inherit: original:GameSettings.ini/Ship_IntType3
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
+    voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
     mass: 22700
     ai_speed: 500
     ai_turn: {pitch: 1.5, yaw: 1.3, roll: 1.5}
@@ -256,29 +259,85 @@ ships:
   # --- Pirates and corporations (same three hulls, different paint) ---------------------
     behaviour: drone
   pirate_lightning:
-    inherit: lightning
+    # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
+    # no flight values: mass, ai_speed and ai_turn are IntType1's in the original's
+    # agent tables (README AI; its turn is the "others" row); the player flight values
+    # are Ship_IntType1's (DERIVED).
+    inherit: original:GameSettings.ini/Ship_PirateType1
     pilot_grade: 1   # pirates (VERIFIED)
+    mass: 6700
+    ai_speed: 500
     ai_turn: {pitch: 2, yaw: 2, roll: 3}
+    roll_rate: 200
+    yaw_rate: 100
+    pitch_rate: 100
+    angular_damp: 2
+    lock_speed: 1000
+    max_speed: 600
+    acceleration: 140
     faction: pirate
     playable: false
     name: Pirate Lightning II
     model_set: pirate_lightning
+    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType1, engine: original:GameSettings.ini/EngineType1}   # as IntType1's default equipment (DERIVED)
+    # A loadout within its mounts (the fit is not in the data, DERIVED).
+    beams: [laser_cannon, laser_cannon]
+    systems+: [ecm]
+    engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   pirate_firestar:
-    inherit: firestar
+    # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
+    # no flight values: mass, ai_speed and ai_turn are IntType2's in the original's
+    # agent tables (README AI); the player flight values are Ship_IntType2's (DERIVED).
+    inherit: original:GameSettings.ini/Ship_PirateType2
     pilot_grade: 1   # pirates (VERIFIED)
+    mass: 12700
+    ai_speed: 500
+    ai_turn: {pitch: 1.7, yaw: 1.4, roll: 1.5}
+    roll_rate: 150
+    yaw_rate: 80
+    pitch_rate: 80
+    angular_damp: 3
+    lock_speed: 1000
+    max_speed: 600
+    acceleration: 110
     faction: pirate
     playable: false
     name: Pirate Firestar
     model_set: pirate_firestar
+    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType2, engine: original:GameSettings.ini/EngineType2}   # as IntType2's default equipment (DERIVED)
+    # A loadout within its mounts (the fit is not in the data, DERIVED).
+    beams: [gatling_laser, gatling_laser, laser_cannon, laser_cannon]
+    missiles: {xwinder: 5, permeator: 3, sidestep: 4}
+    systems+: [ecm]
+    engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   pirate_avenger:
-    inherit: avenger
+    # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
+    # no flight values: mass, ai_speed and ai_turn are IntType3's in the original's
+    # agent tables (README AI); the player flight values are Ship_IntType3's (DERIVED).
+    inherit: original:GameSettings.ini/Ship_PirateType3
     pilot_grade: 1   # pirates (VERIFIED)
+    mass: 22700
+    ai_speed: 500
+    ai_turn: {pitch: 1.5, yaw: 1.3, roll: 1.5}
+    roll_rate: 100
+    yaw_rate: 50
+    pitch_rate: 50
+    angular_damp: 4
+    lock_speed: 900
+    max_speed: 600
+    acceleration: 90
     faction: pirate
     playable: false
     name: Pirate Super Avenger
     model_set: pirate_avenger
+    fitted: {shield: original:GameSettings.ini/ShieldType3, armor: original:GameSettings.ini/ArmorType2, engine: original:GameSettings.ini/EngineType3}   # as IntType3's default equipment (DERIVED)
+    # A loadout within its mounts (the fit is not in the data, DERIVED).
+    beams: [heavy_laser, heavy_laser, laser_cannon, laser_cannon]
+    missiles: {xwinder: 5, fusion: 2}
+    systems+: [ecm, damage_control]
+    engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   rogue_freighter:
     inherit: original:GameSettings.ini/Ship_PirateFreighter
@@ -302,31 +361,85 @@ ships:
       - {at: [0, 40.937, 77], facing: [0, 0, 1], class: freighter_turret_aft}
     missiles: {xwinder: 4}
   corporate_lightning:
-    inherit: lightning
+    # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
+    # no flight values: mass, ai_speed and ai_turn are IntType1's in the original's
+    # agent tables (README AI); the player flight values are Ship_IntType1's (DERIVED).
+    inherit: original:GameSettings.ini/Ship_CorporateType1
     pilot_grade: 0   # corporate pilots' grade is not traced (DERIVED: as X-COM's)
+    mass: 6700
+    ai_speed: 500
+    ai_turn: {pitch: 2.1, yaw: 2.0, roll: 2.55}
+    roll_rate: 200
+    yaw_rate: 100
+    pitch_rate: 100
+    angular_damp: 2
+    lock_speed: 1000
+    max_speed: 600
+    acceleration: 140
     faction: corporate
     playable: false
     name: Corporate Lightning II
     model_set: corporate_lightning
+    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType1, engine: original:GameSettings.ini/EngineType1}   # as IntType1's default equipment (DERIVED)
+    # A loadout within its mounts (the fit is not in the data, DERIVED).
+    beams: [laser_cannon, laser_cannon]
+    missiles: {xwinder: 5, sidestep: 4}
+    systems+: [ecm, damage_control]
+    engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   corporate_firestar:
-    inherit: firestar
+    # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
+    # no flight values: mass, ai_speed and ai_turn are IntType2's in the original's
+    # agent tables (README AI); the player flight values are Ship_IntType2's (DERIVED).
+    inherit: original:GameSettings.ini/Ship_CorporateType2
     pilot_grade: 0   # corporate pilots' grade is not traced (DERIVED: as X-COM's)
+    mass: 12700
+    ai_speed: 500
+    ai_turn: {pitch: 1.7, yaw: 1.4, roll: 1.5}
+    roll_rate: 150
+    yaw_rate: 80
+    pitch_rate: 80
+    angular_damp: 3
+    lock_speed: 1000
+    max_speed: 600
+    acceleration: 110
     faction: corporate
     playable: false
     name: Corporate Firestar
     model_set: corporate_firestar
+    fitted: {shield: original:GameSettings.ini/ShieldType1, armor: original:GameSettings.ini/ArmorType2, engine: original:GameSettings.ini/EngineType2}   # as IntType2's default equipment (DERIVED)
+    # A loadout within its mounts (the fit is not in the data, DERIVED).
+    beams: [gatling_laser, gatling_laser]
+    systems+: [ecm]
+    engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   corporate_avenger:
-    inherit: avenger
+    # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
+    # no flight values: mass, ai_speed and ai_turn are IntType3's in the original's
+    # agent tables (README AI); the player flight values are Ship_IntType3's (DERIVED).
+    inherit: original:GameSettings.ini/Ship_CorporateType3
     pilot_grade: 0   # corporate pilots' grade is not traced (DERIVED: as X-COM's)
+    mass: 22700
+    ai_speed: 500
+    ai_turn: {pitch: 1.5, yaw: 1.3, roll: 1.5}
+    roll_rate: 100
+    yaw_rate: 50
+    pitch_rate: 50
+    angular_damp: 4
+    lock_speed: 900
+    max_speed: 600
+    acceleration: 90
     faction: corporate
     playable: false
     name: Corporate Super Avenger
     model_set: corporate_avenger
+    fitted: {shield: original:GameSettings.ini/ShieldType3, armor: original:GameSettings.ini/ArmorType2, engine: original:GameSettings.ini/EngineType3}   # as IntType3's default equipment (DERIVED)
+    # A loadout within its mounts (the fit is not in the data, DERIVED).
+    beams: [heavy_laser, heavy_laser]
+    systems+: [ecm]
+    engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   xcom_freighter:
-    point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     inherit: original:GameSettings.ini/Ship_XCOMFreighter
     mass: 157000
     ai_speed: {min: 100, max: 174}
@@ -347,7 +460,6 @@ ships:
       - {at: [0, 4.27, -161.68], facing: [0, 0, -1], class: freighter_turret_fore}
       - {at: [0, 40.937, 77], facing: [0, 0, 1], class: freighter_turret_aft}
   patton:
-    point_defence: {range: 900m, rate: 3, chance: 35%, energy: 4}
     inherit: original:GameSettings.ini/Ship_PattonClass
     mass: 250000
     ai_speed: 100

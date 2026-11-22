@@ -62,6 +62,11 @@ systems:
     hit_points: 100
     mass: 550
     power: 6   # draws 50 % of engine power (Interceptor.exe; 6 steps x 8.33 %)
+    # Cloaked: 50 energy a second instead of the shield recharge, dropping at 0; hits skip
+    # the shields; no missiles (README §3-5, VERIFIED).
+    drain: 50
+    shields_off: true
+    no_missiles: true
     range: 400
     strength: 25
   ecm:

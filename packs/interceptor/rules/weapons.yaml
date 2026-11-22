@@ -58,6 +58,12 @@ missiles:
   xwinder:
     inherit: original:GameSettings.ini/XWinderMissile
     launcher_hit_points: 25   # XWinderMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    launcher_rate: 4   # launcher RateOfFire, shots a second (VERIFIED, flight README §5.2)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
     mass: 85   # kg per round (Interceptor.exe)
     name: X-Winder
     turn_rate: 143.2
@@ -67,6 +73,12 @@ missiles:
   permeator:
     inherit: original:GameSettings.ini/PermeatorMissile
     launcher_hit_points: 25   # PermeatorMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    launcher_rate: 2   # launcher RateOfFire, shots a second (VERIFIED, flight README §5.2)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
     mass: 370   # kg per round (Interceptor.exe)
     name: Permeator
     damage: permeator   # half the normal chain, half past the shield (README §5.2, VERIFIED)
@@ -77,6 +89,12 @@ missiles:
   sidestep:
     inherit: original:GameSettings.ini/SidestepMissile
     launcher_hit_points: 25   # SidestepMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    launcher_rate: 2   # launcher RateOfFire, shots a second (VERIFIED, flight README §5.2)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
     mass: 230   # kg per round (Interceptor.exe)
     name: Sidestep
     guidance: sidestep       # its own thrusters
@@ -87,6 +105,12 @@ missiles:
   fusion:
     inherit: original:GameSettings.ini/FusionMissile
     launcher_hit_points: 25   # FusionMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    launcher_rate: 6   # launcher RateOfFire, shots a second (VERIFIED, flight README §5.2)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
     mass: 940   # kg per round (Interceptor.exe)
     name: Fusion Missile
     turn_rate: 143.2
@@ -96,6 +120,12 @@ missiles:
   elerium_torpedo:
     inherit: original:GameSettings.ini/EleriumTorpedo
     launcher_hit_points: 25   # EleriumTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    launcher_rate: 1   # launcher RateOfFire, shots a second (VERIFIED, flight README §5.2)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
     mass: 70   # kg per round (Interceptor.exe)
     name: Elerium Torpedo
     turn_rate: 143.2
@@ -105,6 +135,11 @@ missiles:
   enveloping_torpedo:
     inherit: original:GameSettings.ini/EnvelopingFusionTorpedo
     launcher_hit_points: 25   # EnvelopingFusionTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    launcher_rate: 3   # launcher RateOfFire, shots a second (VERIFIED, flight README §5.2)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
     mass: 670   # kg per round (Interceptor.exe)
     name: Enveloping Fusion Torpedo
     damage: enveloping       # half the fore chain, half the aft chain (README §5.2, VERIFIED)
@@ -115,10 +150,16 @@ missiles:
   parallax_torpedo:
     inherit: original:GameSettings.ini/ParallaxTorpedo
     launcher_hit_points: 25   # ParallaxTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    launcher_rate: 3   # launcher RateOfFire, shots a second (VERIFIED, flight README §5.2)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
     mass: 210   # kg per round (Interceptor.exe)
     name: Parallax Torpedo
-    guidance: parallax       # two decoys
-    decoys: 2
+    # Two images 1 s after launch, 20 m to either side (README §12, VERIFIED).
+    images: {count: 2, offset: 20m, after: 1s}
     turn_rate: 143.2
     lead_speed: 200
     color: [0.9, 0.9, 1.0]
@@ -126,9 +167,15 @@ missiles:
   cloaking_torpedo:
     inherit: original:GameSettings.ini/PassiveCloakingTorpedo
     launcher_hit_points: 25   # PassiveCloakingTorpedoLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    launcher_rate: 3   # launcher RateOfFire, shots a second (VERIFIED, flight README §5.2)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
     mass: 440   # kg per round (Interceptor.exe)
     name: Passive Cloaking Torpedo
     guidance: cloaked_wait   # dropped; waits cloaked
+    max_life: 10s   # min(Duration, 10 s) (README §12, VERIFIED)
     trigger_range: 800m
     turn_rate: 90
     lock_time: 0.5
@@ -137,9 +184,16 @@ missiles:
   doppelganger:
     inherit: original:GameSettings.ini/DoppelgangerMissile
     launcher_hit_points: 25   # DoppelgangerMissileLauncher HitPoints (VERIFIED, notes/re/ini-files.md §1.3)
+    # launcher RateOfFire -1: the engine's refire (the original's meaning of -1 is not traced)
+    flight: original   # straight 250 ms, slows in hard turns (README §5.2, VERIFIED)
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}   # every object round it, no falloff
+    dud_on_expiry: true
+    lose_lock_beyond: 170
     mass: 1145   # kg per round (Interceptor.exe)
     name: Doppelganger
     guidance: doppelganger   # a decoy copy of your ship
+    retarget_every: [5s, 6s]   # hostile pilots turn to the decoy (README §12; the retarget DERIVED)
     turn_rate: 0
     lock_time: 0.5
     color: [1.0, 1.0, 1.0]
@@ -149,10 +203,11 @@ missiles:
   alien_mine_explosive: {name: Explosive mine, guidance: dumbfire, speed: 0, impact_damage: 0, proximity_damage: 300, proximity_radius: 40m}
   alien_mine_missile: {name: Missile mine, guidance: dumbfire, speed: 0, impact_damage: 0, proximity_damage: 250, proximity_radius: 40m}
   # The Nova bomb (README §12, VERIFIED): it does not go off on contact; 60 s after launch
-  # it detonates, and the battle is over 60 s later (the battle_over mission query). Its
-  # messages at +30 s (0x46), +60 s (0x47) and 32 s and 13 s before the end (0x48, 0x49)
-  # are given here in the engine's words (DERIVED: the message texts are not mapped). What
-  # its blast does to ships is not traced: it damages nothing here.
+  # it detonates, doing no damage, and the battle is over 60 s later (the battle_over
+  # mission query; with no objective deciding, a draw). Its messages at +30 s (0x46),
+  # +60 s (0x47) and 32 s and 13 s before the end (0x48, 0x49) are wingman radio
+  # messages, voice waves 33-36: the wingmen's voice lines wave33-wave36 (flight.yaml
+  # voices; there is no subtitle).
   nova_bomb:
     inherit: original:GameSettings.ini/NovaBomb
     name: Nova Bomb
@@ -163,8 +218,8 @@ missiles:
     fuse: 60s
     ends_battle_after: 60s
     warnings:
-      - {at: 30s, text: NOVA BOMB ARMED}
-      - {at: 60s, text: NOVA BOMB DETONATED}
-      - {at: 88s, text: BATTLE ENDS IN 32 SECONDS}
-      - {at: 107s, text: BATTLE ENDS IN 13 SECONDS}
+      - {at: 30s, line: wave33}
+      - {at: 60s, line: wave34}
+      - {at: 88s, line: wave35}
+      - {at: 107s, line: wave36}
     color: [0.9, 0.9, 1.0]

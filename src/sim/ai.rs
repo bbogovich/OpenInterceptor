@@ -158,6 +158,10 @@ pub struct AiState {
     pub last_retreat_roll: f64,
     /// This pilot has had its one roll to retreat from a Nova bomb.
     pub nova_rolled: bool,
+    /// When the current break-off began (world time).
+    pub break_started: f64,
+    /// A radio call decided this tick (`break_call`), for `think` to send.
+    pub call: Option<crate::content::behaviour::RadioCall>,
 }
 
 impl AiState {
@@ -192,6 +196,8 @@ impl AiState {
             next_shot: 0.0,
             last_retreat_roll: f64::NEG_INFINITY,
             nova_rolled: false,
+            break_started: 0.0,
+            call: None,
         }
     }
 }
@@ -484,6 +490,14 @@ fn run_behaviour(
     }
     let state = &def.states[st.state];
     let (mut c, t) = fly(w, me, st, state.manoeuvre, &state.params, &def.skill, &def.prefer);
+    if let Some(call) = st.call.take() {
+        if let Some(line) = call.line {
+            said.push(SimEvent::RadioLine { ship: me, line: line.as_str().to_string(), wingmen: false });
+        }
+        if let Some(text) = call.text {
+            said.push(SimEvent::Radio { ship: me, text: text.as_str().to_string() });
+        }
+    }
     // Requests act once: hand them over on this tick only.
     c.requests = c.requests.merge(std::mem::take(&mut st.pending));
     (c, t)
@@ -1055,6 +1069,16 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
         st.missile_timer = 3.0 + p.missile_interval.max(1.0) * next_random(&mut st.rng);
     }
     st.missile_timer -= TICK;
+    // The original's break-off (`reengage_beyond`, flight README §10, verified): when one
+    // break-off manoeuvre ends, come round if the target is far, or after `break_time`
+    // with a chance; otherwise fly another.
+    if p.reengage_beyond > 0.0 && st.break_timer > 0.0 && st.break_timer <= TICK {
+        let long = (w.time - st.break_started) as f32 > p.break_time;
+        let again = !(dist > p.reengage_beyond || (long && next_random(&mut st.rng) < p.reengage_chance));
+        if again {
+            st.break_timer = p.break_manoeuvre + TICK;
+        }
+    }
     if st.break_timer > 0.0 {
         // Breaking off: turn away and accelerate, then come round again.
         let away = ship.position + (ship.position - t.position).normalize_or(Vec3::Y) * 500.0 + ship.up() * 200.0;
@@ -1128,7 +1152,15 @@ fn attack(w: &World, me: ShipId, target: ShipId, st: &mut AiState, p: &Params, s
     let breaks =
         if p.break_off > 0.0 { dist < p.break_off } else { dist < 120.0 + class.max_speed * 0.15 && ahead > 0.5 };
     if breaks {
-        st.break_timer = p.break_time;
+        st.break_timer = if p.reengage_beyond > 0.0 { p.break_manoeuvre } else { p.break_time };
+        st.break_started = w.time;
+        // A radio call on breaking off: by chance, from a level on, never at the player.
+        if let Some(call) = p.break_call {
+            let at_player = t.pilot == Pilot::External;
+            if !at_player && w.rules.difficulty >= call.from_level && next_random(&mut st.rng) < call.chance {
+                st.call = Some(call);
+            }
+        }
     }
     // Strafe with VCT to dodge when the target faces us.
     if class.vct && (ship.position - t.position).normalize_or_zero().dot(t.forward()) > 0.95 {
@@ -1866,6 +1898,50 @@ behaviours:
         w.nova_at = Some(w.time);
         think(&mut w);
         assert_eq!(st_of(&w), (1, true));
+    }
+
+    #[test]
+    fn the_original_break_off_ends_with_its_manoeuvre_by_range_or_chance() {
+        let mut w = original_ai_world();
+        let me = spawn_ai(&mut w, "ace", 1, Vec3::ZERO, Behaviour::Enemy, None);
+        let t = spawn_ai(&mut w, "fighter", 0, Vec3::new(0.0, 0.0, -1500.0), Behaviour::Idle, None);
+        let b = w.rules.behaviour_id("orig").unwrap();
+        let mut p = w.rules.behaviours[b.0 as usize].states[0].params;
+        let skill = w.rules.behaviours[b.0 as usize].skill;
+        (p.reengage_beyond, p.reengage_chance, p.break_manoeuvre, p.break_time) = (1200.0, 0.25, 1.0, 5.0);
+        p.break_call = Some(crate::content::behaviour::RadioCall {
+            chance: 1.0,
+            from_level: 0,
+            line: Some(crate::content::behaviour::ShortName::new("radio_7")),
+            text: None,
+        });
+        // In a break-off at 1,500 m: when the 1 s manoeuvre ends, it comes round at once.
+        let mut st = AiState::new(Behaviour::Enemy, None, Vec3::ZERO);
+        (st.break_timer, st.break_started) = (1.0, w.time);
+        for _ in 0..70 {
+            attack(&w, me, t, &mut st, &p, &skill);
+            w.time += TICK as f64;
+        }
+        assert_eq!(st.break_timer, 0.0, "the target is beyond 1,200 m");
+        // At 800 m it flies another manoeuvre until 5 s have passed, then rolls 25 % each.
+        w.get_mut(t).unwrap().position = Vec3::new(0.0, 0.0, -800.0);
+        let start = w.time;
+        (st.break_timer, st.break_started) = (1.0, start);
+        let mut ended = None;
+        for k in 0..(60 * 60) {
+            attack(&w, me, t, &mut st, &p, &skill);
+            w.time += TICK as f64;
+            if st.break_timer == 0.0 {
+                ended = Some(k as f32 * TICK);
+                break;
+            }
+        }
+        let ended = ended.expect("a 25 % roll succeeds within a minute");
+        assert!(ended > 5.0, "not before break_time: {ended}");
+        // Breaking off at another ship (not the player) sends the call.
+        w.get_mut(t).unwrap().position = Vec3::new(0.0, 0.0, -100.0);
+        attack(&w, me, t, &mut st, &p, &skill);
+        assert!(st.call.is_some() && st.break_timer > 0.0);
     }
 
     #[test]

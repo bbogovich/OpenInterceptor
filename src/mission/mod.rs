@@ -524,8 +524,15 @@ impl MissionRun {
             Some("win")
         } else if self.def.draw.clone().is_some_and(|c| check(self, w, &c)) {
             Some("draw")
+        } else if let Some(t) = self.def.timer.as_ref().filter(|(after, _)| time >= *after) {
+            Some(t.1.as_str())
+        } else if w.battle_over_at.is_some_and(|t| w.time >= t) {
+            // A Nova bomb's battle end (`ends_battle_after`) with no objective deciding it:
+            // the flight ends as a draw (derived: the original's evaluators decide; write
+            // `win: battle_over and …` for a mission that knows).
+            Some("draw")
         } else {
-            self.def.timer.as_ref().filter(|(after, _)| time >= *after).map(|(_, then)| then.as_str())
+            None
         };
         if let Some(result) = result {
             let result = result.to_string();
@@ -626,6 +633,24 @@ mod tests {
         let before = m.rng;
         let _ = m.evaluate(&w, "random(0.5)", &[]);
         assert_eq!(m.rng, before, "looking never changes the battle");
+    }
+
+    #[test]
+    fn a_nova_battle_end_is_a_draw_unless_an_objective_decides() {
+        // `battle_over` with no objective: a draw.
+        let (mut w, mut m) = mission("player: {class: fighter}\nroles:\n  foes: {class: raider, ai: idle}\nobjectives: {win: destroyed_all(foes)}\n");
+        w.battle_over_at = Some(w.time + 1.0);
+        run(&mut w, &mut m, 2.0);
+        assert_eq!(m.debrief.as_ref().unwrap().result, "draw");
+        // A final mission can make it a win (the original: an X-COM Patton still there).
+        let (mut w, mut m) = mission(
+            "player: {class: fighter}\nroles:\n  patton: {class: base, ai: idle}\nobjectives: {win: battle_over and alive(patton)}\n",
+        );
+        assert_eq!(m.evaluate(&w, "nova_time", &[]).as_deref(), Ok("-1"));
+        w.nova_at = Some(w.time);
+        w.battle_over_at = Some(w.time + 1.0);
+        run(&mut w, &mut m, 2.0);
+        assert_eq!(m.debrief.as_ref().unwrap().result, "win");
     }
 
     #[test]

@@ -948,6 +948,31 @@ impl FlightSession {
                             }
                         }
                     }
+                    // A voice line on the radio (`RadioLine`): the speaker's voice set, or
+                    // one of the player's wingmen's (a Nova bomb's messages).
+                    if let SimEvent::RadioLine { ship, line, wingmen } = e {
+                        let pick = (self.world.time * 13.0) as usize;
+                        let clip = if *wingmen {
+                            wingman_voice(&self.world, self.player, None, line, pick)
+                        } else {
+                            let s = &self.world.ships[ship.index as usize];
+                            s.voice.and_then(|v| self.world.rules.voices.get(v as usize)).and_then(|v| {
+                                let c = v.clips(line);
+                                (!c.is_empty()).then(|| c[pick % c.len()])
+                            })
+                        };
+                        if let Some(clip) = clip {
+                            ctx.sounds.play(&crate::audio::SoundKey::Voice(clip), 0.9);
+                            let length = ctx.sounds.length(&crate::audio::SoundKey::Voice(clip));
+                            self.comms.speak(
+                                &ctx.content,
+                                &self.world.rules,
+                                self.world.rules.voice_of_clip(clip),
+                                length,
+                                self.world.time,
+                            );
+                        }
+                    }
                     if let SimEvent::Captured { captor, prize } = e {
                         if *captor == self.player {
                             let class = self.world.ships[prize.index as usize].class;

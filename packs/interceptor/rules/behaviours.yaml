@@ -30,9 +30,16 @@ behaviours:
         break_off: 250m
         lock_cone: 5
         missile_chance: {per_level: [5%, 7%, 9%, 11%, 13%]}
-        # The break-off lasts 5,000 - 500 x level ms before the pilot comes round again
-        # (README §10, DERIVED).
+        # The break-off (README §10, VERIFIED): it ends only when its manoeuvre ends; then
+        # the pilot comes round if the target is beyond 1,200 m, or after 5,000 - 500 x
+        # level ms with a 25 % chance, else flies another (the manoeuvre's 2 s length is
+        # DERIVED). Breaking off at anyone but the player, from level index 2 on, a
+        # 25 % radio call: message 7 (its voice line is not mapped: radio_7).
+        reengage_beyond: 1200m
+        reengage_chance: 25%
+        break_manoeuvre: 2s
         break_time: {per_level: [5s, 4.5s, 4s, 3.5s, 3s]}
+        break_call: {chance: 25%, from_level: 2, line: radio_7}
       flee: {do: retreat, jump: true}
     # No retreat on hull damage. A pilot whose beam mounts are all gone rolls every 5 s
     # (5 s after its last change of state) to jump out; every pilot rolls once when a Nova

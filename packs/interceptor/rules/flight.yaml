@@ -1,6 +1,12 @@
 # yaml-language-server: $schema=../../../schemas/rules.schema.json
 # Global flight settings.
 flight:
+  # Every ship starts at half throttle (the power block's start, README §2, VERIFIED).
+  start_throttle: 50%
+  # No automatic point defence: beam bolts strike missiles and apply their damage with a
+  # 90 % chance; a missile with fewer hit points than that is destroyed (README §4.4,
+  # VERIFIED; the 3 m pass radius is DERIVED).
+  beams_hit_missiles: {chance: 90%, radius: 3m}
   # The afterburner draws 100 energy a second from the pool (Interceptor.exe, verified;
   # the INI's Afterburners Boost/Cost are only sent to multiplayer peers).
   cost: 100
@@ -72,5 +78,21 @@ sounds:
   # The computer voice (named cues in the original's sound table).
   mission_accomplished: cue:Comp_MissionAccomplished
   mission_failed: cue:Comp_MissionFailed
-  # Pilot radio voices (voices: <set>) are not mapped yet: the original's FPilot/MPilot
-  # chatter clips are numbered, and which line each one says is not known (R-MSN-007).
+  # Pilot radio voices: see voices: below.
+
+# Pilot radio voices (notes/re/unknowns-2026-11.md §11, VERIFIED): radio wave n of voice set v
+# (1-5, male M / female F) plays SoundFX\\Chatter\\{M|F}Pilot{v}{nn}.wav, file number 100 v + n.
+# Which line most waves say is not known (R-MSN-007); waves 33-36 are the Nova bomb messages
+# 0x46-0x49, given here as the lines wave33-wave36. Which set a pilot speaks with comes from
+# its record; the X-COM craft use mpilot1 until pilot records reach battle (DERIVED).
+voices:
+  mpilot1: {name: Male pilot 1, wave33: ["original:MPilot133.wav"], wave34: ["original:MPilot134.wav"], wave35: ["original:MPilot135.wav"], wave36: ["original:MPilot136.wav"]}
+  mpilot2: {name: Male pilot 2, wave33: ["original:MPilot233.wav"], wave34: ["original:MPilot234.wav"], wave35: ["original:MPilot235.wav"], wave36: ["original:MPilot236.wav"]}
+  mpilot3: {name: Male pilot 3, wave33: ["original:MPilot333.wav"], wave34: ["original:MPilot334.wav"], wave35: ["original:MPilot335.wav"], wave36: ["original:MPilot336.wav"]}
+  mpilot4: {name: Male pilot 4, wave33: ["original:MPilot433.wav"], wave34: ["original:MPilot434.wav"], wave35: ["original:MPilot435.wav"], wave36: ["original:MPilot436.wav"]}
+  mpilot5: {name: Male pilot 5, wave33: ["original:MPilot533.wav"], wave34: ["original:MPilot534.wav"], wave35: ["original:MPilot535.wav"], wave36: ["original:MPilot536.wav"]}
+  fpilot1: {name: Female pilot 1, wave33: ["original:FPilot133.wav"], wave34: ["original:FPilot134.wav"], wave35: ["original:FPilot135.wav"], wave36: ["original:FPilot136.wav"]}
+  fpilot2: {name: Female pilot 2, wave33: ["original:FPilot233.wav"], wave34: ["original:FPilot234.wav"], wave35: ["original:FPilot235.wav"], wave36: ["original:FPilot236.wav"]}
+  fpilot3: {name: Female pilot 3, wave33: ["original:FPilot333.wav"], wave34: ["original:FPilot334.wav"], wave35: ["original:FPilot335.wav"], wave36: ["original:FPilot336.wav"]}
+  fpilot4: {name: Female pilot 4, wave33: ["original:FPilot433.wav"], wave34: ["original:FPilot434.wav"], wave35: ["original:FPilot435.wav"], wave36: ["original:FPilot436.wav"]}
+  fpilot5: {name: Female pilot 5, wave33: ["original:FPilot533.wav"], wave34: ["original:FPilot534.wav"], wave35: ["original:FPilot535.wav"], wave36: ["original:FPilot536.wav"]}

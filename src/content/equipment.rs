@@ -219,6 +219,13 @@ pub struct SystemDef {
     pub lock_angle: f32,
     /// Sensors only: lock range, metres; 0 = the missile's own reach.
     pub lock_range: f32,
+    /// Cloak only: energy per second it drains while on, instead of the shields recharging;
+    /// it drops when the energy is gone (`drain: 50`; 0 = no drain).
+    pub drain: f32,
+    /// Cloak only: while on, hits skip the ship's shields (`shields_off: true`).
+    pub shields_off: bool,
+    /// Cloak only: no missiles can be fired while it is on (`no_missiles: true`).
+    pub no_missiles: bool,
     /// How it works when damaged (`efficiency:`).
     pub efficiency: Efficiency,
     /// Hits never take it below this many hit points, so it is never destroyed
@@ -262,6 +269,9 @@ impl SystemDef {
             lock_time: 0.0,
             lock_angle: 0.0,
             lock_range: 0.0,
+            drain: 0.0,
+            shields_off: false,
+            no_missiles: false,
             efficiency: Efficiency::Standard,
             min_hit_points: 0.0,
             disables_below: 0.0,
@@ -289,6 +299,9 @@ impl SystemDef {
             lock_time: g.qty("lock_time", Unit::Time).unwrap_or(0.0).max(0.0),
             lock_angle: g.qty("lock_angle", Unit::Angle).unwrap_or(0.0).clamp(0.0, 180.0),
             lock_range: g.qty("lock_range", Unit::Distance).unwrap_or(0.0).max(0.0),
+            drain: g.num("drain").unwrap_or(0.0).max(0.0),
+            shields_off: g.bool("shields_off").unwrap_or(false),
+            no_missiles: g.bool("no_missiles").unwrap_or(false),
             efficiency: match g.node("efficiency") {
                 Some(n) => Efficiency::parse(n)?,
                 None => Efficiency::Standard,

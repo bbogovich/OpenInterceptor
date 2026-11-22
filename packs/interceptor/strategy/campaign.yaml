@@ -70,17 +70,18 @@ hulls:
   firestar: {inherit: original:GameSettings.ini/Ship_IntType2, speed: 3600, slots: {shield: 1, armor: 1}}
   avenger: {inherit: original:GameSettings.ini/Ship_IntType3, speed: 4200, slots: {shield: 1, armor: 1}}
 
-# Missile racks: rounds per missile slot (DERIVED until the launchers' Rounds are read).
+# Missile racks: rounds per missile slot, the launchers' Rounds (VERIFIED,
+# GameSettings.ini *Launcher; flight README §5.2: Rounds fills the mount).
 items:
-  xwinder: {rounds: 4}
-  permeator: {rounds: 4}
+  xwinder: {rounds: 5}
+  permeator: {rounds: 3}
   sidestep: {rounds: 4}
-  fusion: {rounds: 3}
-  elerium_torpedo: {rounds: 2}
-  enveloping_torpedo: {rounds: 2}
-  parallax_torpedo: {rounds: 2}
+  fusion: {rounds: 2}
+  elerium_torpedo: {rounds: 4}
+  enveloping_torpedo: {rounds: 3}
+  parallax_torpedo: {rounds: 3}
   cloaking_torpedo: {rounds: 2}
-  doppelganger: {rounds: 3}
+  doppelganger: {rounds: 1}
   nova_bomb: {rounds: 1}
 
 # Module groups (for the base type's limits) and what each does while working. DERIVED

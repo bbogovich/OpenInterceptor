@@ -37,6 +37,11 @@ pub const LURE_CHANCE: f32 = 0.8;
 /// Puts a launched missile into the world, doing what its guidance needs at launch.
 pub fn launch(w: &mut World, mut m: Missile) {
     let class = w.rules.missile(m.class).clone();
+    m.hp = class.hit_points;
+    // `max_life`: the original's PassiveCloaking expires after min(Duration, 10 s).
+    if class.max_life > 0.0 {
+        m.life = m.life.min(class.max_life);
+    }
     match class.guidance {
         Guidance::CloakedWait => {
             // Dropped, not fired: it keeps only a little of the launcher's way.
@@ -62,13 +67,20 @@ pub fn launch(w: &mut World, mut m: Missile) {
             }
             w.missiles.push(m);
         }
-        Guidance::Doppelganger => launch_doppelganger(w, &m, class.duration),
+        Guidance::Doppelganger => {
+            if let Some(decoy) = launch_doppelganger(w, &m, class.duration) {
+                if let Some(band) = class.retarget_every {
+                    let next = w.time + (band[0] + (band[1] - band[0]) * w.random()) as f64;
+                    w.decoy_pulls.push((m.owner, decoy, next, band));
+                }
+            }
+        }
         _ if class.fuse > 0.0 => {
             // A Nova bomb: its life is its fuse, and its warnings are scheduled now.
             m.life = class.fuse;
             let now = w.time;
-            for (at, text) in &class.warnings {
-                w.timed_lines.push((now + *at as f64, m.owner, text.clone()));
+            for (at, line, text) in &class.warnings {
+                w.timed_lines.push((now + *at as f64, m.owner, line.clone(), text.clone()));
             }
             w.missiles.push(m);
         }
@@ -78,8 +90,8 @@ pub fn launch(w: &mut World, mut m: Missile) {
 
 /// A decoy copy of the launcher's ship: flies straight on, steals some of the enemies'
 /// attention, and vanishes after `life` seconds.
-fn launch_doppelganger(w: &mut World, m: &Missile, life: f32) {
-    let Some(owner) = w.get(m.owner) else { return };
+fn launch_doppelganger(w: &mut World, m: &Missile, life: f32) -> Option<ShipId> {
+    let owner = w.get(m.owner)?;
     let (class, faction, rotation) = (owner.class, owner.faction, owner.rotation);
     let decoy = w.spawn(
         class,
@@ -110,6 +122,44 @@ fn launch_doppelganger(w: &mut World, m: &Missile, life: f32) {
             w.missiles[k].target = Some(decoy);
         }
     }
+    Some(decoy)
+}
+
+/// Doppelganger decoys with `retarget_every` (the original's `0x5965b0`, flight README
+/// §12): while the launcher and its decoy both live, every interval the hostile AI pilots
+/// chasing the launcher switch to the decoy (derived: what `0x586691` does); when either
+/// is gone, the decoy goes too.
+fn decoy_pulls(w: &mut World) {
+    let pulls = std::mem::take(&mut w.decoy_pulls);
+    for (launcher, decoy, next, band) in pulls {
+        match (w.get(launcher).map(|s| s.faction), w.get(decoy).is_some()) {
+            (Some(faction), true) => {
+                let mut next = next;
+                if w.time >= next {
+                    for i in 0..w.ships.len() {
+                        let s = &w.ships[i];
+                        if s.alive
+                            && s.target == Some(launcher)
+                            && matches!(s.pilot, Pilot::Ai(_))
+                            && w.rules.hostile(s.faction, faction)
+                        {
+                            w.ships[i].target = Some(decoy);
+                            w.ships[i].lock = Default::default();
+                        }
+                    }
+                    next = w.time + (band[0] + (band[1] - band[0]) * w.random()) as f64;
+                }
+                w.decoy_pulls.push((launcher, decoy, next, band));
+            }
+            (_, true) => {
+                // The launcher is gone: so is its decoy.
+                if let Some(d) = w.get_mut(decoy) {
+                    d.expires = Some(0.0);
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 /// A warhead going off: `(ship hit, if any; where; damage; how it lands; its effect)`.
@@ -128,15 +178,57 @@ pub fn lead_aim(target: Vec3, target_velocity: Vec3, distance: f32, lead_speed: 
 
 /// Moves, steers and detonates every missile for one tick (see the module docs).
 pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
+    if !w.decoy_pulls.is_empty() {
+        decoy_pulls(w);
+    }
     let mut keep: Vec<Missile> = Vec::with_capacity(w.missiles.len());
     let mut spawned: Vec<Missile> = Vec::new();
     let mut blasts: Vec<Blast> = Vec::new();
+    // Warheads with `blast:`: (where, impact radius, radius, impact damage, proximity
+    // damage, how it lands, its effect).
+    #[allow(clippy::type_complexity)]
+    let mut areas: Vec<(Vec3, f32, f32, f32, f32, DamageMode, Option<crate::content::looks::EffectId>)> = Vec::new();
     // The decoys in flight, for luring: (launcher, position).
     let decoys: Vec<(ShipId, Vec3)> = w.missiles.iter().filter(|m| m.decoy).map(|m| (m.owner, m.position)).collect();
     // `take` the list so the loop can use `w` (for targets and its random numbers) freely.
     for mut m in std::mem::take(&mut w.missiles) {
         let class = rules.missile(m.class);
         m.life -= dt;
+        m.age += dt;
+        // A harmless owner's missile explodes but does no damage.
+        let scale = if w.harmless.contains(&m.owner) { 0.0 } else { 1.0 };
+        // Shot down by a beam bolt (`beams_hit_missiles`): it goes off where it is.
+        if m.hp <= 0.0 && !m.decoy {
+            match class.blast {
+                Some((ri, r)) => areas.push((
+                    m.position,
+                    ri,
+                    r,
+                    class.impact_damage * scale,
+                    class.proximity_damage * scale,
+                    class.damage_mode,
+                    class.explosion,
+                )),
+                None => blasts.push((None, m.position, 0.0, DamageMode::Normal, class.explosion)),
+            }
+            continue;
+        }
+        // Decoy images (`images`, the original's Parallax): put out once, beside it.
+        if let (Some((count, offset, after)), false) = (class.images, m.images_done) {
+            if m.age >= after && !m.decoy {
+                m.images_done = true;
+                let fwd = m.velocity.normalize_or(Vec3::NEG_Z);
+                let side = fwd.any_orthonormal_vector();
+                for k in 0..count {
+                    let mut d = m.clone();
+                    let sign = if k % 2 == 0 { 1.0 } else { -1.0 };
+                    d.position = m.position + side * offset * sign * (1 + k / 2) as f32;
+                    d.decoy = true;
+                    d.target = None;
+                    spawned.push(d);
+                }
+            }
+        }
         if m.decoy {
             m.position += m.velocity * dt;
             if m.life > 0.0 {
@@ -233,11 +325,49 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
                 }
             }
         }
+        // How far the aim point is off the nose, degrees.
+        let off = aim.map(|p| dir.angle_between((p - m.position).normalize_or(dir)).to_degrees()).unwrap_or(0.0);
+        // `lose_lock_beyond`: a target this far behind the nose is lost (the original: 170°).
+        if class.lose_lock_beyond > 0.0 && off > class.lose_lock_beyond && lure.is_none() {
+            m.target = None;
+            aim = None;
+        }
+        // The original's flight: straight for 250 ms.
+        let steer = !(class.original_flight && m.age < 0.25);
         let new_dir = match (class.guidance, aim) {
             (Guidance::Dumbfire, _) | (_, None) => dir,
+            _ if !steer => dir,
             (_, Some(p)) => rotate_towards(dir, (p - m.position).normalize_or(dir), turn * dt),
         };
-        let speed = (m.velocity.length() + class.speed * dt).min(class.speed);
+        let speed = if class.original_flight {
+            // The throttle falls in hard turns (within 7.5 km) and recovers on target
+            // (flight README §5.2, verified per frame; here per tick at the same 60 Hz).
+            let d = target_pos.map_or(f32::MAX, |p| p.distance(m.position));
+            if off > 5.0 && d < 7500.0 && m.throttle > 0.2 {
+                m.throttle -= if off > 15.0 {
+                    0.1
+                } else if off > 10.0 {
+                    0.05
+                } else {
+                    0.025
+                };
+            } else if off <= 2.0 && m.throttle <= 0.9 {
+                m.throttle += 0.05;
+            }
+            m.throttle = m.throttle.clamp(0.0, 1.0);
+            // It pushes at max(throttle × Speed, 250) m/s² towards throttle × Speed
+            // (derived: whether drag applies to missiles is not traced).
+            let want = m.throttle * class.speed;
+            let push = (m.throttle * class.speed).max(250.0) * dt;
+            let v = m.velocity.length();
+            if v < want {
+                (v + push).min(want)
+            } else {
+                (v - push).max(want)
+            }
+        } else {
+            (m.velocity.length() + class.speed * dt).min(class.speed)
+        };
         m.velocity = new_dir * speed;
         let next = m.position + m.velocity * dt;
         // A Nova bomb (`fuse`) ignores contact and its proximity fuse: it flies on until
@@ -259,9 +389,20 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
             }
             continue;
         }
-        // A harmless owner's missile explodes but does no damage.
-        let scale = if w.harmless.contains(&m.owner) { 0.0 } else { 1.0 };
         if let Some((j, t)) = first_hit(w, m.position, next, m.owner) {
+            if let Some((ri, r)) = class.blast {
+                let at = m.position.lerp(next, t);
+                areas.push((
+                    at,
+                    ri,
+                    r,
+                    class.impact_damage * scale,
+                    class.proximity_damage * scale,
+                    class.damage_mode,
+                    class.explosion,
+                ));
+                continue;
+            }
             blasts.push((
                 Some(j),
                 m.position.lerp(next, t),
@@ -271,9 +412,35 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
             ));
             continue;
         }
+        // The original's passing fuse: within `pass_fuse` of the target and more than 45°
+        // off it (flight README §5.2, verified).
+        if class.pass_fuse > 0.0 {
+            if let Some(tp) = target_pos.filter(|p| p.distance(m.position) < class.pass_fuse && off > 45.0) {
+                match class.blast {
+                    Some((ri, r)) => areas.push((
+                        m.position,
+                        ri,
+                        r,
+                        class.impact_damage * scale,
+                        class.proximity_damage * scale,
+                        class.damage_mode,
+                        class.explosion,
+                    )),
+                    None => blasts.push((
+                        m.target.map(|t| t.index as usize),
+                        m.position,
+                        class.proximity_damage * scale,
+                        class.damage_mode,
+                        class.explosion,
+                    )),
+                }
+                let _ = tp;
+                continue;
+            }
+        }
         // Proximity fuse: detonate on a near *miss* — inside the fuse radius and starting
         // to move away from the target (a direct hit was handled just above).
-        if let (Some(tid), Some(tp)) = (m.target.filter(|_| lure.is_none()), target_pos) {
+        if let (Some(tid), Some(tp), true) = (m.target.filter(|_| lure.is_none()), target_pos, class.pass_fuse <= 0.0) {
             let (now, then) = (m.position.distance(tp), next.distance(tp));
             if now < class.proximity_radius && then > now {
                 blasts.push((
@@ -289,12 +456,37 @@ pub fn step(w: &mut World, dt: f32, rules: &Ruleset) {
         m.position = next;
         if m.life > 0.0 {
             keep.push(m);
-        } else {
+        } else if !class.dud_on_expiry {
             blasts.push((None, m.position, 0.0, DamageMode::Normal, class.explosion));
         }
+        // (`dud_on_expiry`: out of fuel it simply vanishes, the original's dud.)
     }
     keep.extend(spawned);
     w.missiles = keep;
+    // `blast:` warheads (the original's `0x455dfa`, verified): impact damage to every
+    // object within the impact radius, proximity damage out to the radius, no falloff and
+    // no side filter; a station's modules take no proximity damage.
+    for (at, ri, r, impact, prox, mode, effect) in areas {
+        w.events.push(SimEvent::MissileExploded { position: at, effect });
+        let hits: Vec<(ShipId, f32)> = (0..w.ships.len())
+            .filter(|&i| w.ships[i].alive)
+            .filter_map(|i| {
+                let s = &w.ships[i];
+                let d = (s.position.distance(at) - w.shapes[s.class.0 as usize].radius).max(0.0);
+                if d < ri {
+                    Some((w.id_of(i), impact))
+                } else if d < r && s.mount.is_none() {
+                    Some((w.id_of(i), prox))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        for (id, dmg) in hits {
+            let dmg = roll_damage(w, dmg);
+            apply_damage_mode(w, id, dmg, at, mode);
+        }
+    }
     for (slot, pos, dmg, mode, effect) in blasts {
         w.events.push(SimEvent::MissileExploded { position: pos, effect });
         if let Some(j) = slot {
@@ -467,7 +659,7 @@ mod tests {
         let mut r = (*w.rules).clone();
         let mut nova = r.missiles[0].clone();
         (nova.id, nova.fuse, nova.ends_battle_after, nova.speed) = ("nova".into(), 60.0, 60.0, 175.0);
-        nova.warnings = vec![(30.0, "ARMED".into()), (88.0, "32 S".into())];
+        nova.warnings = vec![(30.0, Some("wave33".into()), "ARMED".into()), (88.0, None, "32 S".into())];
         r.missiles.push(nova);
         w.rules = std::sync::Arc::new(r);
         let class = MissileId(w.rules.missiles.len() as u16 - 1);
@@ -485,7 +677,7 @@ mod tests {
             0.0,
         );
         launch(&mut w, m);
-        let (mut went, mut lines) = (None, Vec::new());
+        let (mut went, mut lines, mut voices) = (None, Vec::new(), Vec::new());
         for k in 1..=(125 * 60) {
             w.step();
             let t = k as f32 / 60.0;
@@ -493,6 +685,7 @@ mod tests {
                 match e {
                     SimEvent::NovaDetonated { .. } => went = Some(t),
                     SimEvent::Radio { text, .. } => lines.push((t, text.clone())),
+                    SimEvent::RadioLine { line, wingmen: true, .. } => voices.push((t, line.clone())),
                     _ => {}
                 }
             }
@@ -506,5 +699,147 @@ mod tests {
         assert!((w.battle_over_at.unwrap() - w.nova_at.unwrap() - 60.0).abs() < 1e-6);
         assert_eq!(lines.iter().map(|l| l.1.as_str()).collect::<Vec<_>>(), ["ARMED", "32 S"]);
         assert!((lines[0].0 - 30.0).abs() < 0.05 && (lines[1].0 - 88.0).abs() < 0.05);
+        assert_eq!(voices.iter().map(|v| v.1.as_str()).collect::<Vec<_>>(), ["wave33"], "a wingman's voice line");
+    }
+
+    /// The test world with the original's missile keys on the test missile (`dart`).
+    fn original_missile(change: impl Fn(&mut crate::content::rules::MissileClass)) -> (World, ShipId, ShipId) {
+        let (mut w, me, foe) = setup(Guidance::Homing);
+        let mut r = (*w.rules).clone();
+        let m = &mut r.missiles[0];
+        (m.original_flight, m.pass_fuse, m.blast, m.dud_on_expiry, m.lose_lock_beyond) =
+            (true, 25.0, Some((15.0, 200.0)), true, 170.0);
+        change(m);
+        w.rules = std::sync::Arc::new(r);
+        (w, me, foe)
+    }
+
+    #[test]
+    fn original_missiles_fly_straight_first_and_slow_in_hard_turns() {
+        // The foe is 11° off the nose: for 250 ms the missile does not turn at all.
+        let (mut w, me, foe) = original_missile(|_| {});
+        fire(&mut w, me, foe);
+        for _ in 0..14 {
+            w.step();
+        }
+        let m = &w.missiles[0];
+        assert!((m.velocity.normalize() - Vec3::NEG_Z).length() < 1e-4, "straight for 250 ms");
+        // Then the error (> 10°) costs throttle: it slows as it turns.
+        for _ in 0..6 {
+            w.step();
+        }
+        let m = &w.missiles[0];
+        assert!(m.throttle < 1.0 && m.velocity.length() < 800.0, "{} {}", m.throttle, m.velocity.length());
+    }
+
+    #[test]
+    fn original_blasts_hit_everything_round_them_without_falloff() {
+        // Impact 300 within 15 m, proximity 100 out to 200 m, every ship, either side.
+        let (mut w, me, foe) = original_missile(|_| {});
+        // The target straight ahead; a friend 100 m beside it, another 400 m away.
+        w.get_mut(foe).unwrap().position = Vec3::new(0.0, 0.0, -1500.0);
+        let f = w.rules.ship_id("fighter").unwrap();
+        let near = w.spawn(f, FactionId(0), "near", Vec3::new(100.0, 0.0, -1500.0), Quat::IDENTITY, Pilot::External);
+        let far = w.spawn(f, FactionId(0), "far", Vec3::new(400.0, 0.0, -1500.0), Quat::IDENTITY, Pilot::External);
+        let mut r = (*w.rules).clone();
+        r.damage.spread = 1.0;
+        w.rules = std::sync::Arc::new(r);
+        let total = |w: &World, id: ShipId| {
+            let s = w.get(id).unwrap();
+            s.shield_fore + s.shield_aft + s.armor + s.hull
+        };
+        let (n0, f0, foe0) = (total(&w, near), total(&w, far), total(&w, foe));
+        fire(&mut w, me, foe);
+        // Stop at the blast (the shields would start recharging afterwards).
+        for _ in 0..(6.0 / TICK) as usize {
+            w.step();
+            if w.events.iter().any(|e| matches!(e, SimEvent::MissileExploded { .. })) {
+                break;
+            }
+        }
+        assert!(foe0 - total(&w, foe) >= 299.0, "the target took the impact damage");
+        assert!((n0 - total(&w, near) - 100.0).abs() < 0.5, "a friend 100 m off took the full proximity damage");
+        assert_eq!(total(&w, far), f0, "beyond 200 m: nothing");
+    }
+
+    #[test]
+    fn original_fuses_duds_and_lost_locks() {
+        // Expiry: a dud, no explosion.
+        let (mut w, me, foe) = original_missile(|_| {});
+        let m = Missile::new(
+            MissileId(0),
+            me,
+            FactionId(0),
+            None,
+            Vec3::new(0.0, 0.0, -10.0),
+            Vec3::new(0.0, 0.0, 400.0),
+            0.5,
+        );
+        launch(&mut w, m);
+        let mut exploded = false;
+        for _ in 0..60 {
+            w.step();
+            exploded |= w.events.iter().any(|e| matches!(e, SimEvent::MissileExploded { .. }));
+        }
+        assert!(w.missiles.is_empty() && !exploded, "gone without a blast");
+        // A target behind it (180°): the lock is lost.
+        let m = Missile::new(
+            MissileId(0),
+            me,
+            FactionId(0),
+            Some(foe),
+            Vec3::new(300.0, 0.0, -1600.0),
+            Vec3::new(0.0, 0.0, -400.0),
+            5.0,
+        );
+        launch(&mut w, m);
+        for _ in 0..20 {
+            w.step();
+        }
+        assert_eq!(w.missiles[0].target, None);
+        // Passing within 25 m more than 45° off: it goes off.
+        let (mut w, me, foe) = original_missile(|_| {});
+        let at = w.get(foe).unwrap().position + Vec3::new(20.0, 0.0, 0.0);
+        let mut m = Missile::new(MissileId(0), me, FactionId(0), Some(foe), at, Vec3::new(0.0, 0.0, -400.0), 5.0);
+        m.age = 1.0;
+        launch(&mut w, m);
+        w.step();
+        assert!(w.missiles.is_empty() && w.events.iter().any(|e| matches!(e, SimEvent::MissileExploded { .. })));
+    }
+
+    #[test]
+    fn decoy_images_life_caps_and_doppelganger_pulls() {
+        // Parallax: two images 1 s out, 40 m apart.
+        let (mut w, me, foe) = original_missile(|m| m.images = Some((2, 20.0, 1.0)));
+        fire(&mut w, me, foe);
+        for _ in 0..61 {
+            w.step();
+        }
+        let imgs: Vec<Vec3> = w.missiles.iter().filter(|m| m.decoy).map(|m| m.position).collect();
+        assert_eq!(imgs.len(), 2);
+        assert!((imgs[0].distance(imgs[1]) - 40.0).abs() < 0.5, "{}", imgs[0].distance(imgs[1]));
+        // PassiveCloaking: Duration 30 s, held to 10 s.
+        let (mut w, me, foe) = original_missile(|m| m.max_life = 10.0);
+        let m = Missile::new(MissileId(0), me, FactionId(0), Some(foe), Vec3::ZERO, Vec3::NEG_Z, 30.0);
+        launch(&mut w, m);
+        assert_eq!(w.missiles[0].life, 10.0);
+        // Doppelganger: the foe's AI chasing the launcher switches to the decoy within 6 s.
+        let (mut w, me, foe) = setup(Guidance::Doppelganger);
+        let mut r = (*w.rules).clone();
+        r.missiles[0].retarget_every = Some([5.0, 6.0]);
+        r.missiles[0].duration = 30.0;
+        w.rules = std::sync::Arc::new(r);
+        w.get_mut(foe).unwrap().pilot =
+            Pilot::Ai(crate::sim::ai::AiState::new(crate::sim::ai::Behaviour::Idle, None, Vec3::ZERO));
+        fire(&mut w, me, foe);
+        assert_eq!(w.decoy_pulls.len(), 1);
+        let decoy = w.decoy_pulls[0].1;
+        w.get_mut(foe).unwrap().target = Some(me);
+        for _ in 0..(6.1 / TICK) as usize {
+            let rules = w.rules.clone();
+            step(&mut w, TICK, &rules);
+            w.time += TICK as f64;
+        }
+        assert_eq!(w.get(foe).unwrap().target, Some(decoy));
     }
 }

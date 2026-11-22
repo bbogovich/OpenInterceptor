@@ -54,7 +54,7 @@
 use super::behaviour::{BehaviourDef, BehaviourId};
 use super::equipment::{DamageRules, PowerRules, SystemDef, SystemId, SystemKind};
 use super::looks::{DebrisId, DebrisSet, EffectDef, EffectId, ModelSet, ModelSetId};
-use super::schema::{Get, Unit};
+use super::schema::{quantity, Get, Unit};
 use crate::formats::ini::Section;
 use crate::formats::yaml::{Node, Value};
 use std::collections::HashMap;
@@ -458,11 +458,39 @@ pub struct MissileClass {
     /// A Nova bomb (`fuse: 60s`): it does not go off on contact; it detonates this many
     /// seconds after launch (0 = an ordinary missile).
     pub fuse: f32,
+    /// Shots per second from its launcher (`launcher_rate`; the original's launcher
+    /// `RateOfFire`); 0 = the engine's fixed refire.
+    pub launcher_rate: f32,
+    /// The original's missile flight (`flight: original`, flight README §5.2): straight for
+    /// 250 ms, then a throttle that falls in hard turns and recovers on target.
+    pub original_flight: bool,
+    /// Also detonate when this close to the target while more than 45° off it, passing
+    /// (`pass_fuse: 25m`); 0 = the engine's proximity fuse.
+    pub pass_fuse: f32,
+    /// `blast: {impact, radius}`: the warhead hits every object within `impact` with its
+    /// impact damage and every one out to `radius` with its proximity damage, with no
+    /// falloff (the original); `None` = the struck ship (or the target) alone.
+    pub blast: Option<(f32, f32)>,
+    /// Running out of fuel leaves a dud: no explosion (`dud_on_expiry: true`).
+    pub dud_on_expiry: bool,
+    /// The lock is lost when the target is more than this many degrees off the nose
+    /// (`lose_lock_beyond: 170`; 0 = never).
+    pub lose_lock_beyond: f32,
+    /// Hit points a beam bolt must beat to destroy it (`hit_points`, held to 10–500).
+    pub hit_points: f32,
+    /// Its flight time is held to this (`max_life: 10s`; 0 = its duration).
+    pub max_life: f32,
+    /// `images: {count, offset, after}`: decoy images beside it, `after` seconds out.
+    pub images: Option<(u32, f32, f32)>,
+    /// `retarget_every: [5s, 6s]`: while its decoy lives, hostile pilots chasing the
+    /// launcher switch to the decoy at this interval (a Doppelganger).
+    pub retarget_every: Option<[f32; 2]>,
     /// With `fuse`: the battle is over this many seconds after the detonation (the
     /// `battle_over` mission query; 0 = never).
     pub ends_battle_after: f32,
-    /// With `fuse`: radio lines at these seconds after launch (`warnings: [{at, text}]`).
-    pub warnings: Vec<(f32, String)>,
+    /// With `fuse`: radio lines at these seconds after launch (`warnings: [{at, line,
+    /// text}]`): a voice line of the launcher's wingmen and/or a text.
+    pub warnings: Vec<(f32, Option<String>, String)>,
     /// Turn rate while homing, degrees per second.
     pub turn_rate: f32,
     /// Seconds the target must stay in the lock cone before launch locks on.
@@ -578,6 +606,12 @@ pub struct FlightRules {
     pub radar_range: f32,
     /// Seconds of hyperdrive countdown before a ship jumps out of the battle.
     pub hyperspace_time: f32,
+    /// The throttle every ship starts at (`start_throttle: 50%`; the original's power
+    /// block starts at 50 %, flight README §2). Default 0.
+    pub start_throttle: f32,
+    /// Beam bolts can strike missiles (`beams_hit_missiles: {chance, radius}`; the
+    /// original, flight README §4.4): `None` = bolts pass through them.
+    pub beams_hit_missiles: Option<(f32, f32)>,
     /// Radar and target-marker colours by relation to the player:
     /// `flight: {radar_colors: {friendly: […], hostile: […], neutral: […]}}`.
     pub radar_colors: RadarColors,
@@ -1550,6 +1584,34 @@ pub fn build_with(
                 lead_speed: g.num("lead_speed").unwrap_or(0.0).max(0.0),
                 launcher_hit_points: g.num("launcher_hit_points").unwrap_or(0.0).max(0.0),
                 fuse: g.qty("fuse", Unit::Time).unwrap_or(0.0).max(0.0),
+                launcher_rate: g.num("launcher_rate").unwrap_or(0.0).max(0.0),
+                original_flight: g.str("flight") == Some("original"),
+                pass_fuse: g.qty("pass_fuse", Unit::Distance).unwrap_or(0.0).max(0.0),
+                blast: g.node("blast").map(|n| {
+                    let b = Get(n);
+                    (
+                        b.qty("impact", Unit::Distance).unwrap_or(15.0).max(0.0),
+                        b.qty("radius", Unit::Distance).unwrap_or(200.0).max(0.0),
+                    )
+                }),
+                dud_on_expiry: g.bool("dud_on_expiry").unwrap_or(false),
+                lose_lock_beyond: g.num("lose_lock_beyond").unwrap_or(0.0).clamp(0.0, 180.0),
+                hit_points: g.num("hit_points").unwrap_or(10.0).clamp(10.0, 500.0),
+                max_life: g.qty("max_life", Unit::Time).unwrap_or(0.0).max(0.0),
+                images: g.node("images").map(|n| {
+                    let i = Get(n);
+                    (
+                        i.num("count").unwrap_or(2.0).max(0.0) as u32,
+                        i.qty("offset", Unit::Distance).unwrap_or(20.0),
+                        i.qty("after", Unit::Time).unwrap_or(1.0).max(0.0),
+                    )
+                }),
+                retarget_every: {
+                    // `[5s, 6s]`: each entry a time with its unit.
+                    let v: Vec<f32> =
+                        g.list("retarget_every").iter().filter_map(|t| quantity(t, Unit::Time).ok()).collect();
+                    (v.len() == 2).then(|| [v[0].max(0.1), v[1].max(v[0].max(0.1))])
+                },
                 ends_battle_after: g.qty("ends_battle_after", Unit::Time).unwrap_or(0.0).max(0.0),
                 warnings: g
                     .node("warnings")
@@ -1558,7 +1620,11 @@ pub fn build_with(
                     .iter()
                     .filter_map(|item| {
                         let w = Get(item);
-                        Some((w.qty("at", Unit::Time)?.max(0.0), w.str("text")?.to_string()))
+                        let (line, text) = (w.str("line").map(str::to_string), w.str("text").unwrap_or("").to_string());
+                        if line.is_none() && text.is_empty() {
+                            return None;
+                        }
+                        Some((w.qty("at", Unit::Time)?.max(0.0), line, text))
                     })
                     .collect(),
                 turn_rate: g.num("turn_rate").unwrap_or(90.0),
@@ -1846,6 +1912,14 @@ pub fn build_with(
         lock_angle: fl.and_then(|g| g.qty("lock_angle", Unit::Angle)).unwrap_or(10.0),
         radar_range: fl.and_then(|g| g.qty("radar_range", Unit::Distance)).unwrap_or(6000.0),
         hyperspace_time: fl.and_then(|g| g.qty("hyperspace_time", Unit::Time)).unwrap_or(10.0).max(0.0),
+        start_throttle: fl.and_then(|g| g.qty("start_throttle", Unit::Fraction)).unwrap_or(0.0).clamp(0.0, 1.0),
+        beams_hit_missiles: fl.and_then(|g| g.node("beams_hit_missiles")).map(|n| {
+            let b = Get(n);
+            (
+                b.qty("chance", Unit::Fraction).unwrap_or(0.9).clamp(0.0, 1.0),
+                b.qty("radius", Unit::Distance).unwrap_or(3.0).max(0.0),
+            )
+        }),
         radar_colors: {
             let d = RadarColors::default();
             match fl.and_then(|g| g.node("radar_colors")).map(Get) {
@@ -2922,6 +2996,40 @@ objects:
             rules.ship(rules.ship_id("s").unwrap()).shield_pool,
             Some(ShieldPool { recharge: 2.0, on_generator_lost: GeneratorLost::Drop })
         );
+    }
+
+    #[test]
+    fn original_missile_flight_cloak_and_flight_keys_parse() {
+        let text = "\
+flight:
+  start_throttle: 50%
+  beams_hit_missiles: {chance: 90%}
+missiles:
+  dart:
+    launcher_rate: 4
+    flight: original
+    pass_fuse: 25m
+    blast: {impact: 15m, radius: 200m}
+    dud_on_expiry: true
+    lose_lock_beyond: 170
+    hit_points: 600
+    max_life: 10s
+    images: {count: 2, offset: 20m, after: 1s}
+    retarget_every: [5s, 6s]
+  plain: {}
+";
+        let (rules, errors) = build(&[source(0, text)], &original_lookup());
+        assert!(errors.is_empty(), "{errors:?}");
+        assert_eq!((rules.flight.start_throttle, rules.flight.beams_hit_missiles), (0.5, Some((0.9, 3.0))));
+        let m = rules.missiles.iter().find(|m| m.id == "dart").unwrap();
+        assert_eq!((m.launcher_rate, m.original_flight, m.pass_fuse, m.blast), (4.0, true, 25.0, Some((15.0, 200.0))));
+        assert_eq!((m.dud_on_expiry, m.lose_lock_beyond, m.max_life), (true, 170.0, 10.0));
+        assert_eq!(m.hit_points, 500.0, "held to the original's [10, 500]");
+        assert_eq!((m.images, m.retarget_every), (Some((2, 20.0, 1.0)), Some([5.0, 6.0])));
+        // Absent keys keep the engine's behaviour.
+        let p = rules.missiles.iter().find(|m| m.id == "plain").unwrap();
+        assert_eq!((p.launcher_rate, p.original_flight, p.blast, p.dud_on_expiry), (0.0, false, None, false));
+        assert_eq!((p.hit_points, p.images, p.retarget_every), (10.0, None, None));
     }
 
     #[test]

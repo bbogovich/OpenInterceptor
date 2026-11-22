@@ -572,6 +572,13 @@ pub struct Missile {
     pub lured_by: Option<ShipId>,
     /// Cloaked-wait torpedoes: woken by a nearby hostile.
     pub armed: bool,
+    /// Hit points left against beam bolts (`beams_hit_missiles`); set at launch.
+    pub hp: f32,
+    /// The original's flight (`flight: original`): its throttle (0..1) and its age, s.
+    pub throttle: f32,
+    pub age: f32,
+    /// Its decoy images (`images`) have been put out.
+    pub images_done: bool,
 }
 
 impl Missile {
@@ -585,7 +592,22 @@ impl Missile {
         velocity: Vec3,
         life: f32,
     ) -> Missile {
-        Missile { class, owner, faction, target, position, velocity, life, decoy: false, lured_by: None, armed: true }
+        Missile {
+            class,
+            owner,
+            faction,
+            target,
+            position,
+            velocity,
+            life,
+            decoy: false,
+            lured_by: None,
+            armed: true,
+            hp: 10.0,
+            throttle: 1.0,
+            age: 0.0,
+            images_done: false,
+        }
     }
 }
 
@@ -678,6 +700,13 @@ pub enum SimEvent {
     ScriptStopped {
         ship: ShipId,
         call: String,
+    },
+    /// A voice line on the radio: `ship`'s own voice set says `line` — or, with `wingmen`,
+    /// one of the player's wingmen does (the original's wingman radio messages).
+    RadioLine {
+        ship: ShipId,
+        line: String,
+        wingmen: bool,
     },
     /// A Nova bomb (`fuse`) launched by `ship` went off at `position`.
     NovaDetonated {
@@ -785,8 +814,12 @@ pub struct World {
     /// When the battle is over (a Nova's `ends_battle_after`); the `battle_over` mission
     /// query turns true then.
     pub battle_over_at: Option<f64>,
-    /// Radio lines due at a world time (a Nova's `warnings`): `(time, speaker, text)`.
-    pub timed_lines: Vec<(f64, ShipId, String)>,
+    /// Radio lines due at a world time (a Nova's `warnings`): `(time, speaker, voice line,
+    /// text)`.
+    pub timed_lines: Vec<(f64, ShipId, Option<String>, String)>,
+    /// Doppelganger decoys that keep drawing hostile pilots (`retarget_every`):
+    /// `(launcher, decoy, next retarget time, interval band)`.
+    pub decoy_pulls: Vec<(ShipId, ShipId, f64, [f32; 2])>,
 }
 
 impl World {
@@ -799,6 +832,7 @@ impl World {
             nova_at: None,
             battle_over_at: None,
             timed_lines: Vec::new(),
+            decoy_pulls: Vec::new(),
             ships: Vec::new(),
             generations: Vec::new(),
             bolts: Vec::new(),
@@ -858,7 +892,8 @@ impl World {
                 let v = self.rules.ship(class).voice.as_deref();
                 v.and_then(|v| self.rules.voices.iter().position(|s| s.id == v)).map(|i| i as u16)
             },
-            throttle: 0.0,
+            // The original's power block starts at half throttle (`flight.start_throttle`).
+            throttle: self.rules.flight.start_throttle,
             reverse: false,
             afterburning: false,
             braking: false,
@@ -1157,7 +1192,14 @@ impl World {
             let (due, later): (Vec<_>, Vec<_>) =
                 std::mem::take(&mut self.timed_lines).into_iter().partition(|l| l.0 <= now);
             self.timed_lines = later;
-            self.events.extend(due.into_iter().map(|(_, ship, text)| SimEvent::Radio { ship, text }));
+            for (_, ship, line, text) in due {
+                if let Some(line) = line {
+                    self.events.push(SimEvent::RadioLine { ship, line, wingmen: true });
+                }
+                if !text.is_empty() {
+                    self.events.push(SimEvent::Radio { ship, text });
+                }
+            }
         }
         // Decoys that have run their time vanish in a puff.
         for i in 0..self.ships.len() {

@@ -138,11 +138,70 @@ pub struct Params {
     /// With `lock_cone`: the chance per tick that a ready missile is fired (the original's
     /// 5 + 2 × level %).
     pub missile_chance: f32,
-    /// Attack: seconds a break-off lasts before the pilot comes round again (2; the
-    /// original's 5,000 − 500 × level ms, derived).
+    /// Attack: seconds a break-off lasts before the pilot comes round again (2). With
+    /// `reengage_beyond`, the time after which a 25 % roll may end it at any range (the
+    /// original's 5,000 − 500 × level ms).
     pub break_time: f32,
+    /// Attack, the original's break-off (flight README §10, verified): it ends only when its
+    /// manoeuvre (`break_manoeuvre` seconds) ends — then the pilot comes round if the target
+    /// is farther than this, or after `break_time` with `reengage_chance`, else flies
+    /// another break-off. 0 = the engine's fixed `break_time`.
+    pub reengage_beyond: f32,
+    pub reengage_chance: f32,
+    pub break_manoeuvre: f32,
+    /// Attack: a radio call on breaking off (`break_call: {chance, from_level, line, text}`):
+    /// with `chance`, from difficulty level `from_level`, and only when the target is not
+    /// the player's craft.
+    pub break_call: Option<RadioCall>,
     /// Turret: the original's turret fire control (`aim:`), or the engine's.
     pub turret: TurretParams,
+}
+
+/// A radio call (`{chance, from_level, line, text}`): a voice line (`line`, from the
+/// speaker's voice set) and/or a text for the message display, said with `chance` from
+/// difficulty level `from_level` on. `Copy` with a fixed-size line name keeps `Params`
+/// `Copy`; names are short ids.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RadioCall {
+    pub chance: f32,
+    pub from_level: usize,
+    pub line: Option<ShortName>,
+    pub text: Option<ShortName>,
+}
+
+/// A short id or text stored inline (at most 32 bytes), so the structs holding it stay
+/// `Copy`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ShortName {
+    bytes: [u8; 32],
+    len: u8,
+}
+
+impl ShortName {
+    pub fn new(s: &str) -> ShortName {
+        let mut bytes = [0u8; 32];
+        // Cut at a character boundary so the stored bytes stay valid UTF-8.
+        let mut n = s.len().min(32);
+        while !s.is_char_boundary(n) {
+            n -= 1;
+        }
+        bytes[..n].copy_from_slice(&s.as_bytes()[..n]);
+        ShortName { bytes, len: n as u8 }
+    }
+    pub fn as_str(&self) -> &str {
+        std::str::from_utf8(&self.bytes[..self.len as usize]).unwrap_or("")
+    }
+}
+
+impl RadioCall {
+    fn parse(g: Get) -> RadioCall {
+        RadioCall {
+            chance: g.qty("chance", Unit::Fraction).unwrap_or(1.0).clamp(0.0, 1.0),
+            from_level: g.num("from_level").unwrap_or(0.0).max(0.0) as usize,
+            line: g.str("line").map(ShortName::new),
+            text: g.str("text").map(ShortName::new),
+        }
+    }
 }
 
 /// How a `turret` state aims and fires (`aim:` and the keys beside it). The original's
@@ -220,6 +279,10 @@ impl Default for Params {
             lock_cone: 0.0,
             missile_chance: 1.0,
             break_time: 2.0,
+            reengage_beyond: 0.0,
+            reengage_chance: 0.25,
+            break_manoeuvre: 2.0,
+            break_call: None,
             turret: TurretParams {
                 lead_speed: 2000.0,
                 accuracy: [50.0, 50.0],
@@ -639,6 +702,10 @@ impl BehaviourDef {
                 lock_cone: sg.qty("lock_cone", Unit::Angle).unwrap_or(d.lock_cone).clamp(0.0, 180.0),
                 missile_chance: sg.qty("missile_chance", Unit::Fraction).unwrap_or(d.missile_chance).clamp(0.0, 1.0),
                 break_time: sg.qty("break_time", Unit::Time).unwrap_or(d.break_time).max(0.0),
+                reengage_beyond: sg.qty("reengage_beyond", Unit::Distance).unwrap_or(0.0).max(0.0),
+                reengage_chance: sg.qty("reengage_chance", Unit::Fraction).unwrap_or(d.reengage_chance).clamp(0.0, 1.0),
+                break_manoeuvre: sg.qty("break_manoeuvre", Unit::Time).unwrap_or(d.break_manoeuvre).max(0.1),
+                break_call: sg.node("break_call").map(|n| RadioCall::parse(Get(n))),
                 turret: {
                     let t = d.turret;
                     let band = sg.nums("accuracy").filter(|v| v.len() == 2).map(|v| [v[0], v[1]]);
