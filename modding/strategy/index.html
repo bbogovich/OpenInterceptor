@@ -8030,9 +8030,21 @@ yet.</p>
 </tr>
 <tr>
 <td><code>requires_item</code></td>
-<td>item id</td>
+<td>item id or list</td>
 <td>none</td>
-<td>App NEXT: an <strong>artefact-gated</strong> topic (the original's Prereq 127, RQ-S-03): offered only once that item has been <em>recovered</em> by salvage (raids' <a href="#raids"><code>salvage_items</code></a>) and only while one stays in some base's stores. When it is gone (sold, lost) the topic closes, and stays closed until another is recovered. Unknown item: load error.</td>
+<td>App 0.22.25: an <strong>artefact-gated</strong> topic (the original's Prereq 127, RQ-S-03): offered only once one of these items has been <em>recovered</em> by salvage (the destroyed ships' <a href="#research-and-research_model"><code>salvage_fits</code></a>, raids' <a href="#raids"><code>salvage_items</code></a>) and only while one stays in some base's stores. A list (app 0.22.27) accepts any of them — the original takes a launcher or its torpedoes. When none is left (sold, lost) the topic closes, and stays closed until another is recovered. Unknown item: load error.</td>
+</tr>
+<tr>
+<td><code>unlock_on</code></td>
+<td>list of events</td>
+<td>none</td>
+<td>App NEXT: an <strong>event-gated</strong> special topic, offered once any of these battle events has happened: <code>destroyed(&lt;class&gt;)</code> (an enemy of that class destroyed), <code>captured(&lt;class&gt;)</code> (captured or disabled), <code>won(&lt;raid&gt;)</code> or <code>won(&lt;raid&gt;#&lt;n&gt;)</code> (that raid's n-th won battle). It stays open.</td>
+</tr>
+<tr>
+<td><code>complete_on</code></td>
+<td>list of events</td>
+<td>none</td>
+<td>App NEXT: the same events finish the topic outright (the original's topics 74 / 75 for captured freighters and AlienType5).</td>
 </tr>
 <tr>
 <td><code>lab</code>, <code>site</code>, <code>start_cost</code></td>
@@ -8106,13 +8118,20 @@ says so, and its <code>score_by_level</code> score is added to the month's.</p>
 </tr>
 </tbody>
 </table>
-<p><code>interceptor</code> (app 0.22.25) gates its alien topics on artefacts: the alien weapons on their own items
-(Phase Cannon, Plasma Cannon, Psi Blaster, Elerium, Enveloping and Parallax torpedoes), the five
-alien races on corpse items, the three saucer examinations on wreckage items, and the alien
-probes and drone on their own artefacts. Which item a topic needs (the exe's table at
-0x66f768 is not extracted), which raid yields which artefact, and the probe and saucer tables are
-<em>derived</em>. The mines, the Doomsday component pieces (#135), Poltergeist and Shade stay open as
-before, having no source yet.</p>
+<p><code>interceptor</code> (app 0.22.27, <code>unknowns-2026-11.md</code> §15, <strong>verified</strong> unless marked) follows the exe's
+table at 0x66f768: eleven special topics need an item — the five corpses, the three torpedoes (the
+launcher or its torpedoes) and the Phase, Plasma and Psi beams. The others open on an event: the
+saucer examinations on <code>captured(wraith | spectre | phantasm)</code>, Shade on <code>captured(shade)</code>, the
+three probes on <code>destroyed(drone)</code> (this pack's one probe class opening all three: <em>derived</em>),
+the Doomsday pieces on <code>won(doomsday_convoy#1 | #2 | #3)</code> (the n-th convoy carrying piece n:
+<em>derived</em>). Still open as before: the mines (the flight layer does not report destroyed mines
+yet), Poltergeist and the Drone (no source known). Topics 74 and 75 are not in this pack's tree.</p>
+<p><code>salvage_fits: {&lt;ship class&gt;: [{item, goodies}]}</code> (app 0.22.27) — what a destroyed enemy of that
+class may yield: after a <strong>won</strong> battle each enemy destroyed (reported by the battle as
+<code>destroyed(&lt;class&gt;)</code>) rolls each item of its class with the goodies chance, into the home base
+of the first craft in the battle. <code>interceptor</code>: the special topics' weapons each alien class
+carries (§15.2, <strong>verified</strong> fits; tech levels are not modelled, so each class lists every such
+weapon it carries at any level: <em>derived</em>).</p>
 <h3 id="items-and-hulls"><code>items</code> and <code>hulls</code><a class="headerlink" href="#items-and-hulls" title="Permanent link">&para;</a></h3>
 <p><code>items: {&lt;id&gt;: …}</code> — equipment, ammunition and goods.</p>
 <table>
@@ -8492,7 +8511,7 @@ its <code>cargo</code> modules limit nothing: the original hub's own cargo room 
 <td><code>salvage_items</code></td>
 <td>list of <code>{item, goodies}</code></td>
 <td>none</td>
-<td>App NEXT: artefacts a <strong>won</strong> battle with this raid may recover: each is rolled once with its <a href="#research-and-research_model"><code>goodies</code></a> table's chance at the campaign's difficulty and goes to the home base of the first craft in the battle (base 0 if none), opening the topics whose <code>requires_item</code> it is. Unknown item or table: load error.</td>
+<td>App 0.22.25: artefacts a <strong>won</strong> battle with this raid may recover besides the destroyed ships' <code>salvage_fits</code> (<code>interceptor</code>: the alien corpses, which raid yields which race <em>derived</em>): each is rolled once with its <a href="#research-and-research_model"><code>goodies</code></a> table's chance at the campaign's difficulty and goes to the home base of the first craft in the battle (base 0 if none), opening the topics whose <code>requires_item</code> it is. Unknown item or table: load error.</td>
 </tr>
 <tr>
 <td><code>react_on_detect</code></td>

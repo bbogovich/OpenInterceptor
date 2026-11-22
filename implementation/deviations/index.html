@@ -7011,8 +7011,8 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-097</td>
-<td><strong>Artefacts come from raid tables, not from what the destroyed ships carried.</strong> The original makes an artefact topic available when a mission salvages that item, by what the destroyed alien ships carried, with the <code>*Goodies</code> chance (§11.2, <strong>verified</strong> tables), and keeps it only while the item is in stores (§4.2, <strong>verified</strong>). The engine rolls each of the raid's <code>salvage_items</code> on a win. Derived: which item each topic needs (the exe's table at 0x66f768 is not extracted), which raid yields which artefact, the probe and saucer tables, and Level 0's score. The mines, the Doomsday pieces, Poltergeist and Shade are not gated yet.</td>
-<td>The flight layer does not report the destroyed ships' fits to the campaign.</td>
+<td><strong>Special topics and salvage, with a few engine choices.</strong> Verified (strategy README §4.2, unknowns §11.2, §15): which eleven topics need an item and which item (0x66f768; a launcher or its torpedoes), that the item must stay in stores, the <code>*Goodies</code> chances, the alien fits by class, and the events that open the other topics (captures of AlienType1 – 4, destroyed probes, Doomsday pieces carried). Derived: tech levels are not modelled (each class's <code>salvage_fits</code> lists every special weapon it carries at any level); the corpses come from per-raid lists; this pack's one probe class opens all three probe topics; the n-th won Doomsday convoy carries piece n; Level 0's score. Not gated yet: the mines (the flight layer does not report destroyed mines), Poltergeist and the Drone (no source known).</td>
+<td>The flight layer reports destroyed classes, not their fits, mines or the convoys' cargo piece.</td>
 <td>M3 (#129)</td>
 </tr>
 <tr>
