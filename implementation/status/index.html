@@ -7506,6 +7506,17 @@ control computer, hull second; nothing at 0 is repaired). <code>default</code>: 
 16 s — the Wraiths lose beam mounts to system hits (to re-measure in #121); passive runs
 are unchanged (about 10 s). Manual case MT-4-67; <strong>482</strong> <code>#[test]</code> functions. Not yet: pilot
 injury (D-08, with the pilots of #133), the flight-control wobble.</p>
+<p><strong>Parity M1, #118</strong> (app 0.22.8; D-19 – D-23, RQ-C-10 and RQ-C-23, facts from <code>notes/re/flight</code>
+§5, §5.1, §9 and <code>notes/re/unknowns-2026-11.md</code> §5): AI speed requests are m/s against the drive
+factor (<code>ai::top_speed</code>; throttle <code>v × drag ÷ S</code>), no AI afterburner under the drive; behaviour
+keys <code>break_off</code>, <code>lock_cone</code>, <code>missile_chance</code>; skill keys <code>accuracy: pilot</code>, <code>pilot_clamp</code>,
+<code>steer: original</code>, <code>fire_mode: pilot</code>; ship <code>pilot_grade</code>; <code>flight.pilot_grades</code> (look-ahead
+and sprint); a scenario object's <code>pilot:</code> record. <code>interceptor</code>'s <code>original_attack</code> uses all of
+them. Soak (veteran, <code>--seconds 180</code>) against 0.22.6: <code>duel-wraith</code> passive 9.7 → 22.1 s, ai 8.4
+→ 14.0 s (the Wraiths' missiles now need their own lock window); <code>duel-pirate-lightning</code> passive
+32.4 → 9.9 s, ai 36.9 → 9.1 s (the original steering tracks far better); to re-measure in #121.
+<code>default</code>: unchanged. Manual case MT-4-68; <strong>505</strong> <code>#[test]</code> functions. Not yet: weapon choice,
+campaign pilots in battle (#133), the miss axis.</p>
 <h2 id="stage-5-progress">Stage 5 progress<a class="headerlink" href="#stage-5-progress" title="Permanent link">&para;</a></h2>
 <p>App <strong>0.10.0</strong> (<code>485d01e</code>, the story core), <strong>0.10.1</strong> (<code>66d0b5a</code>, the default campaign's serial),
 <strong>0.10.2</strong> (<code>8926d11</code>, the X-COM Doomsday arc) and <strong>0.10.3</strong> (<code>76bda5c</code>, relations in battle and

@@ -6593,12 +6593,12 @@ and <a href="../../../modding/rulesets/">Rulesets</a> pages for every new key; t
 <tr>
 <td>A7</td>
 <td><strong>AI lethality</strong>: accuracy, fire cones, missile timing, point defence.</td>
-<td><strong>Largely done — app 0.22.0</strong>: <code>skill.accuracy</code> (lead-time error, 15 – 25 m misses below 50 %, sluggish turning frames) and <code>skill.lead_range</code>, the state's <code>missile_range</code>; <code>interceptor</code>'s fighters inherit one <code>original_attack</code> (cone 1.5° – 2.5° and range 2 – 2.5 km by level, missiles within half that and 5 s apart, lead within 1,750 m; Wraith, Spectre and drone trigger intervals). DEV-032 and DEV-038 revised. Open: the AI's own lock timer (DEV-075), the miss axis (DEV-076), pilot Accuracy (DEV-077, with A8), the per-frame missile chance (DEV-078), weapon choice (DEV-080), point defence as the original's (no turret; beams hit missiles at 90 %, DEV-038).</td>
+<td><strong>Largely done — app 0.22.0</strong>: <code>skill.accuracy</code> (lead-time error, 15 – 25 m misses below 50 %, sluggish turning frames) and <code>skill.lead_range</code>, the state's <code>missile_range</code>; <code>interceptor</code>'s fighters inherit one <code>original_attack</code> (cone 1.5° – 2.5° and range 2 – 2.5 km by level, missiles within half that and 5 s apart, lead within 1,750 m; Wraith, Spectre and drone trigger intervals). DEV-032 and DEV-038 revised. Open: the AI's own lock timer (DEV-075), the miss axis (DEV-076), pilot Accuracy (DEV-077, with A8), the per-frame missile chance (DEV-078), weapon choice (DEV-080), point defence as the original's (no turret; beams hit missiles at 90 %, DEV-038). App NEXT (#118): the AI's speed requests in m/s (DEV-069 resolved), no AI afterburner under the drive, the original's steering law (<code>skill.steer</code>), its own missile lock (<code>lock_cone</code>, DEV-075) and per-tick chance (DEV-078), the 250 m break-off, pilot Accuracy and fire mode (DEV-077, DEV-080 in part), grades: look-ahead and sprint. Still open: weapon choice (DEV-080), the miss axis (DEV-076).</td>
 </tr>
 <tr>
 <td>A8</td>
 <td><strong>Pilot stats in battle</strong> (#28).</td>
-<td>Facts found (which pilot values the AI reads; pilot injury) — not started.</td>
+<td><strong>Partly done — app 0.22.8</strong> (#118): AI pilots carry a record (<code>pilot:</code> on a scenario object) and a grade (<code>pilot_grade</code>); Accuracy, Intelligence and the grade are read in battle. Open: campaign pilots handed to battle (#133), the Nova and disarmed retreat rolls (#119), pilot injury (DEV-065).</td>
 </tr>
 <tr>
 <td>A9</td>

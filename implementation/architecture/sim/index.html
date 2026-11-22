@@ -7278,6 +7278,23 @@ engine's <code>builtin_attack</code>.</p>
   holding; guns fire only inside <code>fire_cone</code> and inside <code>range</code> (and 95 % of the first beam's
   reach). Missiles every <code>missiles</code> seconds (± 25 %) when locked and within <code>missile_range</code>
   (default 2.5 × <code>range</code>, at least 2 km; 0 = never).</li>
+<li><strong>The original's AI (app 0.22.8, #118).</strong> <code>top_speed(w, ship)</code> is S ÷ drag under
+  <code>flight.drive</code> (else <code>max_speed</code>), and every manoeuvre's <code>hold_speed</code> is m/s against it;
+  <code>flight::driven</code> turns it into the throttle <code>v × drag ÷ S</code> (−0.25 … 1.25) and refuses the
+  afterburner to AI ships under the drive. <code>pilot_skill</code> swaps in the pilot's Accuracy for
+  <code>accuracy: pilot</code> (<code>AiState::pilot: Option&lt;PilotStats&gt;</code>, from a scenario's <code>pilot:</code>; 50 % with
+  none; <code>PilotClamp::apply</code> on the easy levels, own side = the player's faction).
+  <code>steer_original</code> gives each axis the stick <code>error° × k ÷ max_rate</code> (k = 1, or <code>SLUGGISH</code> on a
+  failed roll), so the AI turn rate is the error in degrees as rad/s. <code>aim_errors</code> measures
+  pitch and yaw in their own planes, used for the 5° fire-mode test (<code>Controls::link</code>, applied
+  in <code>combat::fire_beams</code>) and the <code>lock_cone</code> timer (<code>AiState::lock_start</code>, the window from
+  <code>lock_time</code>: the sensor's, else the selected missile's, 0 with no sensor; <code>last_missile</code>,
+  <code>missile_chance</code>; <code>Controls::guide_missile</code> makes the launch home without a sensor lock).
+  <code>break_off</code> replaces the engine's break-off distance. <code>grade_of</code> is the record's grade or the
+  class's <code>pilot_grade</code>; <code>PilotGrades::of(grade, level)</code> gives its look-ahead and whether it
+  sprints (<code>hold_speed</code> = top × <code>sprint_throttle</code> beyond <code>sprint_beyond</code>); <code>avoid</code> picks
+  <code>avoid_ahead</code> (a ray along the velocity, <code>lookahead</code> long, against each object's sphere;
+  ½ or ¾ of top speed) over <code>avoid_collision</code> when the campaign has <code>pilot_grades</code>.</li>
 <li><strong>Systems use.</strong> At each transition check, <code>systems:</code> conditions of the behaviour are evaluated
   (<code>ObjectContext</code>) and turned into ordinary <code>Requests</code>: <code>cloak</code> / <code>ecm</code> switched to match their
   condition, <code>power_to_shields</code> while <code>shields_first</code> holds and shields are below the top level,

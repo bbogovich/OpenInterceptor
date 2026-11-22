@@ -6843,9 +6843,9 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-069</td>
-<td><strong>AI speed requests are read as a share of <code>max_speed</code>.</strong> Under <code>flight.drive</code> an AI ship's behaviour asks for a speed in m/s; the drive turns it into a throttle <code>request / max_speed</code> (clamped to −0.25 … 1) and pushes with <code>S × throttle</code>. The original's agents set the throttle directly, and their speed-keeping uses <code>request / S</code> (<strong>verified</strong>).</td>
-<td>Engine behaviours speak in m/s for every campaign; reading them against <code>max_speed</code> keeps them meaningful with or without the drive (<strong>derived</strong> mapping).</td>
-<td>4 (A6)</td>
+<td><strong>AI speed requests</strong> were read as a share of <code>max_speed</code> under <code>flight.drive</code> until app 0.22.8. Since then (#118, D-19) they are m/s against the AI's top speed S ÷ drag and become the throttle <code>v × drag ÷ S</code>, as the original's <code>SetSpeed</code> (<strong>verified</strong>); the throttle is held to −0.25 … 1.25 (the original clamps its setter to 1 and scales it by up to 1.25). <strong>No longer a deviation.</strong></td>
+<td>—</td>
+<td>4 (A6; resolved, #118)</td>
 </tr>
 <tr>
 <td>DEV-070</td>
@@ -6879,9 +6879,9 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-075</td>
-<td><strong>AI ships fire missiles on the ship's own lock.</strong> An AI ship builds the same lock as the player (the sensor's time, cone and range) and launches when it is locked. The original's AI keeps a separate timer that starts when the aim is within ±5° in yaw and pitch and resets when it leaves, and fires while that timer is younger than the sensor's lock time (the comparison may be inverted in the original; <strong>verified</strong> as read, <strong>unknown</strong> as meant).</td>
-<td>One lock model for every pilot keeps the HUD, the AI and the sensor data consistent; the original's AI test reads as a bug until it is confirmed in play.</td>
-<td>4 (A7)</td>
+<td><strong>AI missile lock.</strong> Since app 0.22.8 a behaviour's <code>lock_cone</code> gives the original's own AI timer, and <strong><code>interceptor</code> uses it</strong>: the timer starts when the aim is within ±5° in yaw and pitch, resets when it leaves, and missiles fire while it is younger than the sensor's lock time, homing (<strong>verified</strong> as the code reads; the comparison may be inverted in the original, <strong>unknown</strong> as meant — the engine follows the reading). The default campaign keeps firing on the ship's sensor lock.</td>
+<td>The reading is kept until play shows otherwise; flipping it is one comparison in <code>ai::attack</code>.</td>
+<td>4 (A7; #118)</td>
 </tr>
 <tr>
 <td>DEV-076</td>
@@ -6891,15 +6891,15 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-077</td>
-<td><strong>AI accuracy is fixed at 50 %.</strong> <code>interceptor</code>'s <code>original_attack</code> sets <code>skill: {accuracy: 50%}</code> for every pilot and level. The original uses the pilot's Accuracy (on Beginner and Experienced clamped to 25 + 10 d … 50 + 10 d for enemies and to 50 … 100 for X-COM; a ship without a pilot uses 50) and, for the fire mode, Intelligence (<strong>verified</strong>). Whether alien ships carry pilot records is <strong>unknown</strong> (derived: they do not).</td>
-<td>Pilots carry no records into battle yet (Track A, A8, #28); 50 % is the original's value for a ship without a pilot.</td>
-<td>4 (A7/A8)</td>
+<td><strong>AI accuracy comes from the pilot's record</strong> since app 0.22.8 (<code>skill: {accuracy: pilot, pilot_clamp}</code>, <code>interceptor</code>): its Accuracy, held below level 2 to 50 – 100 for the player's side and 25 + 10 d … 50 + 10 d for others; 50 with no record (<strong>verified</strong>). <strong>Still different:</strong> campaign pilots are not handed to battle yet, so every <code>interceptor</code> ship flies with no record (50 %); a scenario can give one (<code>pilot:</code>).</td>
+<td>The hand-off needs the campaign's craft as wingmen (#133).</td>
+<td>4 (A7/A8; #118)</td>
 </tr>
 <tr>
 <td>DEV-078</td>
-<td><strong>AI missiles fire on an interval, not a per-frame chance.</strong> The engine fires when locked, within <code>missile_range</code>, at least <code>missiles</code> seconds (± 25 %) after the last launch. The original, inside the same cone and range block, needs at least 5 s since the last missile and then fires with a <code>5 + 2 d</code> % chance each frame (<strong>verified</strong>).</td>
-<td>A per-frame chance depends on the frame rate; at the fixed 60 Hz tick the original's chance would fire within a fraction of a second, so an interval is a close and rate-independent stand-in (<strong>derived</strong>).</td>
-<td>4 (A7)</td>
+<td><strong>AI missiles fire on an interval</strong> with the engine's sensor-lock rule (± 25 %). With <code>lock_cone</code> (app 0.22.8; <code>interceptor</code>) the original's rule applies instead: at least <code>missiles</code> seconds since the last, then <code>missile_chance</code> per tick (5 + 2 d %, <strong>verified</strong>).</td>
+<td>At the fixed 60 Hz tick the original's per-frame chance is exact.</td>
+<td>4 (A7; #118)</td>
 </tr>
 <tr>
 <td>DEV-079</td>
@@ -6909,8 +6909,8 @@ one looks like a bug.</p>
 </tr>
 <tr>
 <td>DEV-080</td>
-<td><strong>The AI's weapon choice is not modelled.</strong> An AI ship fires its beams in the ship's link mode and aims with the speed and reach of its class's first beam type. The original re-picks the beam type at most every 3 s by range (≤ 1,500 m: Gatling Laser or Phase Cannon preferred; beyond: Heavy Laser or Phase Cannon), with chances from the pilot's Intelligence and Flying, and sets all mounts of a type to fire together by a roll on Intelligence and Accuracy (<strong>verified</strong>).</td>
-<td>Needs pilot records in battle (A8) and a per-ship selected beam type for the AI; not built yet (Track A, A7).</td>
+<td><strong>The AI's weapon choice is not modelled.</strong> An AI ship aims with the speed and reach of its class's first beam type. The original re-picks the beam type at most every 3 s by range (≤ 1,500 m: Gatling Laser or Phase Cannon preferred; beyond: Heavy Laser or Phase Cannon), with chances from the pilot's Intelligence and Flying (<strong>verified</strong>). The fire mode (all mounts together on a roll of (Intelligence + Accuracy) / 2) <strong>is</strong> modelled since app 0.22.8 (<code>skill.fire_mode: pilot</code>).</td>
+<td>Needs a per-ship selected beam type for the AI (Track A, A7).</td>
 <td>4 (A7)</td>
 </tr>
 <tr>
@@ -6936,6 +6936,12 @@ one looks like a bug.</p>
 <td><strong>Lists show the selected row's text and actions, and prompts are sized to their text.</strong> The original's screens have their own controls (spinners, radio buttons, sprite buttons) where the engine has a row's actions; the engine puts the row's full text and its actions as text buttons in black boxes of the art (<strong>derived</strong> placement). Its prompts use the original's message-box rules (caption, stacked text buttons), but the width, caption offset and button spacing are <strong>derived</strong> until the frame art (#127).</td>
 <td>The engine's strategy layer has one generic list per screen; the original's per-screen controls come with M2 #124 – #128.</td>
 <td>M2 (#123)</td>
+</tr>
+<tr>
+<td>DEV-085</td>
+<td><strong>Where the original's AI flying applies.</strong> Since app 0.22.8 (#118) <code>skill.steer: original</code> steers the <code>attack</code> manoeuvre only; formation flying, evading, retreating, towing and the other engine manoeuvres keep the engine's smooth steering, and the original's roll request is not traced (the engine's bank is kept). The look-ahead (<code>flight.pilot_grades</code>) replaces collision avoidance for every AI pilot; which way the original steers on a hit is not traced — here away from the object, across the line of flight (<em>derived</em>). The pilot's grade bonus to generated stats and the alien grades that rise with the campaign month are not modelled (strategy, #133).</td>
+<td>The original's agents fly only its own manoeuvres; the engine's manoeuvres have no original counterpart to copy.</td>
+<td>4 (A7; #118)</td>
 </tr>
 </tbody>
 </table>

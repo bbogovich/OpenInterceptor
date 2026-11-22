@@ -6184,6 +6184,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-4-68-interceptor-ai-flying-and-missiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-68 — interceptor: AI flying and missiles
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11734,6 +11745,17 @@
     <span class="md-ellipsis">
       
         MT-4-67 — interceptor: system damage, mounts and repair
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-4-68-interceptor-ai-flying-and-missiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-4-68 — interceptor: AI flying and missiles
       
     </span>
   </a>
@@ -17404,6 +17426,15 @@ pairing from the launcher on the sixth digit (0.4.7, main <code>c42d773</code>);
 <td></td>
 <td>App NEXT; #116, <code>system_table</code>, <code>repair_order</code>, <code>efficiency</code>, <code>disables_below</code></td>
 </tr>
+<tr>
+<td>MT-4-68</td>
+<td><code>interceptor</code>: AI flying and missiles</td>
+<td><code>duel-wraith</code>, <code>duel-pirate-lightning</code>, a scenario with wingmen (<code>interceptor</code>), Lightning</td>
+<td>not run</td>
+<td></td>
+<td></td>
+<td>App NEXT; #118, <code>steer</code>, <code>lock_cone</code>, <code>pilot_grades</code>, speed requests</td>
+</tr>
 </tbody>
 </table>
 <h2 id="stage-4-cases">Stage 4 cases<a class="headerlink" href="#stage-4-cases" title="Permanent link">&para;</a></h2>
@@ -18906,6 +18937,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: messages name beam mounts and launchers as well as systems. 2: the <strong>hull climbs about 2 points a second</strong> first if the engine is whole (the engine is repaired first when damaged); then the shield generator, flight control and so on; a system shown destroyed never comes back. 3: a destroyed mount no longer fires (one of two guns fires); a destroyed launcher's missiles are gone and the rack is skipped. 4: thrust falls to half, then a quarter; below 15 % the craft is <strong>disabled</strong> — no thrust, afterburner off — and the hull is repaired before the engine. Turning gets sluggish as flight control is hit but never stops. Missile lock and the hyperdrive work as usual however damaged the sensor and hyperdrive are. 5: a Wraith that lost its guns stops hurting you.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-4-68-interceptor-ai-flying-and-missiles">MT-4-68 — <code>interceptor</code>: AI flying and missiles<a class="headerlink" href="#mt-4-68-interceptor-ai-flying-and-missiles" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's data. <code>openinterceptor --campaign interceptor --scenario duel-pirate-lightning --ship lightning</code>, then <code>duel-wraith</code>, then a scenario with wingmen (<code>mixed-dogfight</code> or <code>escort</code>).</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Fly straight and level, then jink, while the pirates attack; watch how they hold their aim. 2. Let a pirate close head-on. 3. In <code>duel-wraith</code>, count missile launches over a minute; note whether one comes while the Wraith's nose points well away from you. 4. Run away from the Wraiths, more than 3 km. 5. With wingmen, fly at about 200 m/s and watch them hold formation.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: pirates track you tightly (their aim corrects within a frame or two), but half the time lead too little or too much. 2: they break off at about 250 m. 3: Wraiths fire missiles only just after swinging onto you (within about 2.5 s of the aim settling), never with the nose away; launches are at least 5 s apart. 4: pirates and Wraiths sprint after you (slightly faster than their normal top speed); they never light an afterburner. 5: wingmen hold their slots at your speed instead of falling behind; an AI ship never runs out of energy from burning.</td>
 </tr>
 </tbody>
 </table>

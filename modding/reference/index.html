@@ -4999,6 +4999,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#pilot-records-and-grades" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pilot records and grades
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-speed-and-the-afterburner-under-flightdrive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI speed and the afterburner under flight.drive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-accuracy-aim-model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6952,6 +6974,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#pilot-records-and-grades" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pilot records and grades
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-speed-and-the-afterburner-under-flightdrive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI speed and the afterburner under flight.drive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#the-accuracy-aim-model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7917,6 +7961,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>AI behaviour (<a href="../behaviours/">Behaviours</a>).</td>
 </tr>
 <tr>
+<td><code>pilot_grade</code></td>
+<td>number</td>
+<td>none</td>
+<td>The grade of the pilot AI ships of this class carry (app 0.22.8; <a href="#pilot-records-and-grades"><code>flight.pilot_grades</code></a>); a scenario's <code>pilot: {grade}</code> overrides it. <code>interceptor</code>: X-COM 0, pirates 1, Wraith and Spectre 1, Phantasm 3, Shade 4 (<strong>verified</strong>; the alien grades that rise with the months are not modelled), corporate 0 (<em>derived</em>).</td>
+</tr>
+<tr>
 <td><code>turret_arc</code></td>
 <td>angle</td>
 <td>0</td>
@@ -8224,9 +8274,9 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 </tr>
 <tr>
 <td><code>skill</code></td>
-<td><code>{aim, reaction, accuracy, lead_range}</code></td>
+<td><code>{aim, reaction, accuracy, lead_range, pilot_clamp, steer, fire_mode}</code></td>
 <td>aim 0.5, reaction 0.7 s</td>
-<td><code>aim</code>: fraction, 0 wild … 1 perfect; <code>reaction</code>: time between looks at the target. <code>accuracy</code> (fraction, app 0.22.0): use the original's aim model instead of <code>aim</code> (<a href="#the-accuracy-aim-model">below</a>). <code>lead_range</code> (distance, app 0.22.0, with <code>accuracy</code>): beyond it the pilot aims straight at the target, without lead; 0 = always leads.</td>
+<td><code>aim</code>: fraction, 0 wild … 1 perfect; <code>reaction</code>: time between looks at the target. <code>accuracy</code> (fraction, app 0.22.0): use the original's aim model instead of <code>aim</code> (<a href="#the-accuracy-aim-model">below</a>); <strong><code>pilot</code></strong> (app 0.22.8): the same model at the pilot's own Accuracy (<a href="#pilot-records-and-grades">pilot records</a>). <code>lead_range</code> (distance, app 0.22.0, with <code>accuracy</code>): beyond it the pilot aims straight at the target, without lead; 0 = always leads. <code>pilot_clamp: {below_level, own, others, per_level}</code> (app 0.22.8): below difficulty level index <code>below_level</code> (2) a pilot's Accuracy is held to <code>own</code> (pilots of the player's faction, [50, 100]) or <code>others</code> + <code>per_level</code> × level ([25, 50], 10). <code>steer</code> (app 0.22.8): <code>smooth</code> (default) or <code>original</code> — each axis turns at its angle error in degrees read as rad/s, up to the AI turn rate, closing a small error within about a tick; a sluggish frame turns at 6 % of it. <code>fire_mode: pilot</code> (app 0.22.8): within 5° of the aim in yaw, every mount fires together with the chance (Intelligence + Accuracy) / 2, otherwise one mount at a time.</td>
 </tr>
 <tr>
 <td><code>vars</code></td>
@@ -8331,8 +8381,58 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td>2.5 km</td>
 <td>Tow: haul the prize this far from where it was taken before jumping out (app 0.9.2).</td>
 </tr>
+<tr>
+<td><code>break_off</code></td>
+<td>distance</td>
+<td>0</td>
+<td>Attack (app 0.22.8): break off when closer than this; 0 = the engine's 120 m + 0.15 × <code>max_speed</code> with the target ahead. <code>interceptor</code>: 250 m (<strong>verified</strong>).</td>
+</tr>
+<tr>
+<td><code>lock_cone</code></td>
+<td>angle</td>
+<td>0</td>
+<td>Attack (app 0.22.8): the pilot's <strong>own missile lock</strong>, as the original's AI keeps it: a timer starts while the aim point is within this angle on both axes and is dropped when it leaves; a missile may go during the sensor's <code>lock_time</code> (or the missile's) after it started, <code>missiles</code> seconds apart exactly, with <code>missile_chance</code> per tick, and it homes without a sensor lock. A ship with no sensor cannot fire this way. 0 = fire on a full sensor lock (± 25 % on the interval). <code>interceptor</code>: 5° (<strong>verified</strong> as the code reads; the window may be inverted in the original, <em>derived</em>).</td>
+</tr>
+<tr>
+<td><code>missile_chance</code></td>
+<td>fraction</td>
+<td>100 %</td>
+<td>With <code>lock_cone</code>: the chance per tick that a ready missile fires. <code>interceptor</code>: 5 + 2 × level % (<strong>verified</strong>).</td>
+</tr>
 </tbody>
 </table>
+<h4 id="pilot-records-and-grades">Pilot records and grades<a class="headerlink" href="#pilot-records-and-grades" title="Permanent link">&para;</a></h4>
+<p>Since app 0.22.8 (issue #118) an AI pilot may carry a <strong>record</strong>, as the original's do (flight notes
+§5.1, §9, <strong>verified</strong>): a scenario object's <code>pilot: {accuracy, intelligence, flying, bravery,
+stamina, grade}</code>, or none. What reads it:</p>
+<ul>
+<li><code>skill: {accuracy: pilot}</code> — the aim model below at the pilot's Accuracy (50 % with no
+  record), held to <code>pilot_clamp</code> on the easy levels.</li>
+<li><code>skill: {fire_mode: pilot}</code> — all mounts together with the chance (Intelligence +
+  Accuracy) / 2 when the aim is within 5° in yaw.</li>
+<li><code>flight.pilot_grades</code> — the pilot's <strong>grade</strong> (its record's, else its class's <code>pilot_grade</code>):</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="nt">flight</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">pilot_grades</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">lookahead</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">250m</span><span class="w">                      </span><span class="c1"># no grade, or one not listed</span>
+<span class="w">    </span><span class="nt">grades</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[{</span><span class="nt">lookahead</span><span class="p">:</span><span class="w"> </span><span class="nv">225m</span><span class="p p-Indicator">,</span><span class="nt"> sprint</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lookahead</span><span class="p">:</span><span class="w"> </span><span class="nv">250m</span><span class="p p-Indicator">},</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lookahead</span><span class="p">:</span><span class="w"> </span><span class="nv">100m</span><span class="p p-Indicator">}]</span>
+<span class="w">    </span><span class="nt">sprint</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">beyond</span><span class="p">:</span><span class="w"> </span><span class="nv">3km</span><span class="p p-Indicator">,</span><span class="nt"> throttle</span><span class="p">:</span><span class="w"> </span><span class="nv">106.25%</span><span class="p p-Indicator">,</span><span class="nt"> from_level</span><span class="p">:</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+<p><code>lookahead</code>: the pilot watches a line along its course this long; an object on it makes the
+  pilot turn away and slow to ½ of its top speed (nearer than half the look-ahead) or ¾. This
+  replaces the engine's predictive avoidance for every AI pilot of the campaign. <code>sprint</code>: a
+  pilot whose grade sprints (<code>sprint</code>, default true) flies at <code>throttle</code> × its full throttle
+  while its target is farther than <code>beyond</code>; from difficulty level index <code>from_level</code> every
+  pilot does.</p>
+<p><code>interceptor</code> uses all of it; campaign pilots are not yet handed to battle (#133), so its
+ships fly with no record — 50 % — and their class's grade. The default campaign sets none of
+these keys.</p>
+<h4 id="ai-speed-and-the-afterburner-under-flightdrive">AI speed and the afterburner under <code>flight.drive</code><a class="headerlink" href="#ai-speed-and-the-afterburner-under-flightdrive" title="Permanent link">&para;</a></h4>
+<p>Since app 0.22.8 the speeds AI manoeuvres ask for are metres per second against the ship's top
+speed under the drive — its drive factor S ÷ <code>drag</code> — and the drive turns a request into the
+throttle <code>v × drag ÷ S</code> (held to −0.25 … 1.25; before, the request was divided by <code>max_speed</code>,
+so formation and towing speeds came out 2 – 3 times too slow). An AI ship under the drive never
+burns its afterburner (the original's agents never do; it only drained their energy).</p>
 <h4 id="the-accuracy-aim-model">The accuracy aim model<a class="headerlink" href="#the-accuracy-aim-model" title="Permanent link">&para;</a></h4>
 <p>With <code>skill.accuracy</code> set (app 0.22.0) the pilot aims as the original's fighters do (verified),
 instead of with an angle error from <code>aim</code>:</p>
@@ -8364,7 +8464,16 @@ velocity relative to the shooter otherwise.</p>
 <span class="w">        </span><span class="nt">pause</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0s</span>
 <span class="w">        </span><span class="nt">missiles</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
 <span class="w">        </span><span class="nt">missile_range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.0625km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.125km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.1875km</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.25km</span><span class="p p-Indicator">]}</span>
-<span class="w">    </span><span class="nt">skill</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">accuracy</span><span class="p">:</span><span class="w"> </span><span class="nv">50%</span><span class="p p-Indicator">,</span><span class="nt"> lead_range</span><span class="p">:</span><span class="w"> </span><span class="nv">1750m</span><span class="p p-Indicator">,</span><span class="nt"> reaction</span><span class="p">:</span><span class="w"> </span><span class="nv">0.1s</span><span class="p p-Indicator">}</span>
+<span class="w">        </span><span class="nt">break_off</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">250m</span>
+<span class="w">        </span><span class="nt">lock_cone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">        </span><span class="nt">missile_chance</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">per_level</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">7%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">11%</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">13%</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="nt">skill</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">accuracy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pilot</span>
+<span class="w">      </span><span class="nt">pilot_clamp</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">below_level</span><span class="p">:</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="nt"> own</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100</span><span class="p p-Indicator">],</span><span class="nt"> others</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">50</span><span class="p p-Indicator">],</span><span class="nt"> per_level</span><span class="p">:</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">steer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original</span>
+<span class="w">      </span><span class="nt">fire_mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pilot</span>
+<span class="w">      </span><span class="nt">lead_range</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1750m</span>
+<span class="w">      </span><span class="nt">reaction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1s</span>
 
 <span class="w">  </span><span class="nt">drone</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">inherit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original_attack</span>
@@ -8654,6 +8763,12 @@ When a class breaks off, jinks or flees is still the pack's own (derived).</p>
 <td>map</td>
 <td>none</td>
 <td>The original's turn model (app 0.21.0): hull turn rates in its own units with its damping, AI pilots at fixed rates (<a href="#flightturning">below</a>).</td>
+</tr>
+<tr>
+<td><code>pilot_grades</code></td>
+<td><code>{lookahead, grades, sprint}</code></td>
+<td>none</td>
+<td>AI pilot grades (app 0.22.8): obstacle look-ahead and the long-range sprint by grade (<a href="#pilot-records-and-grades">Pilot records and grades</a>). Without it AI pilots use the engine's predictive collision avoidance and never sprint.</td>
 </tr>
 </tbody>
 </table>
@@ -10153,6 +10268,12 @@ its type and default is on <a href="../cutscenes/#the-file">Cutscenes › The fi
 <td>id</td>
 <td>the class's</td>
 <td>Behaviour to fly instead of the class's.</td>
+</tr>
+<tr>
+<td><code>pilot</code></td>
+<td><code>{accuracy, intelligence, flying, bravery, stamina, grade}</code></td>
+<td>none</td>
+<td>The AI pilot's record (app 0.22.8): stats 0 – 100 (50 each when left out) and a grade (the class's <code>pilot_grade</code> when left out). Without it the ship has no record: 50 wherever a stat is read. See <a href="#pilot-records-and-grades">Pilot records and grades</a>.</td>
 </tr>
 <tr>
 <td><code>state</code></td>
