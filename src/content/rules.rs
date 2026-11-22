@@ -113,7 +113,57 @@ pub struct ProbeDef {
     pub jamming: f32,
 }
 
-/// What sort of object a ship class is. Affects defaults and how the HUD lists it.
+/// A station's single shield pool (`shield_pool:`), instead of a ship's fore and aft banks.
+///
+/// The original X-COM: Interceptor gives a station **one** pool with no facings, sized by
+/// the generator module in its shield slot and recharged at 2 points per second
+/// (flight README §8.2, verified). Both of the engine's banks then hold the same value,
+/// so the HUD and the AI, which read `shield_fore` and `shield_aft`, keep working.
+///
+/// ```yaml
+/// shield_pool: {recharge: 2, on_generator_lost: keep}
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ShieldPool {
+    /// Points per second added while a generator stands, up to the pool's maximum.
+    pub recharge: f32,
+    /// What happens to the pool's points when the last generator is destroyed.
+    pub on_generator_lost: GeneratorLost,
+}
+
+impl ShieldPool {
+    fn parse(g: Get) -> Result<ShieldPool, String> {
+        let on_generator_lost = match g.str("on_generator_lost") {
+            None | Some("drop") => GeneratorLost::Drop,
+            Some("keep") => GeneratorLost::Keep,
+            Some(other) => return Err(format!("shield_pool.on_generator_lost: '{other}' is not keep or drop")),
+        };
+        Ok(ShieldPool { recharge: g.num("recharge").unwrap_or(2.0).max(0.0), on_generator_lost })
+    }
+}
+
+/// What a station's shield pool does when its last generator is destroyed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GeneratorLost {
+    /// The pool keeps its points but no longer recharges (the original, derived:
+    /// its maximum becomes 0, flight README §8.5).
+    Keep,
+    /// The pool empties at once ("STATION SHIELDS DOWN"; the engine's banks always did).
+    Drop,
+}
+
+/// How a hit is taken once it gets past the shields (`damage_model:`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum DamageModel {
+    /// Armour, then hull; system hits; the difficulty factors on beam hits.
+    #[default]
+    Ship,
+    /// Straight to the hull: no armour, no difficulty factor and no system hits
+    /// (the original's station hub, `0x4205d9`; flight README §8.3, verified).
+    Station,
+}
+
+/// What sort of object a ship class is. Affects defaults and how the HUD lists it./// What sort of object a ship class is. Affects defaults and how the HUD lists it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShipKind {
     Fighter,
@@ -250,6 +300,16 @@ pub struct ShipClass {
     pub modules: Vec<(String, ShipClassId)>,
     /// Modules: keeps its station's shields working while it survives.
     pub shield_generator: bool,
+    /// Generator modules: the hub's pool maximum while this is its first standing
+    /// generator (`shield_capacity:`; 0 = the hub's own `shields`). Generators do not add up.
+    pub shield_capacity: f32,
+    /// Stations: one shield pool instead of fore and aft banks (`shield_pool:`).
+    pub shield_pool: Option<ShieldPool>,
+    /// Modules: while the hub's pool holds points, hits on this module drain the pool
+    /// instead, and what gets through strikes the hub's hull (`shielded_by_hub: true`).
+    pub shielded_by_hub: bool,
+    /// How hits past the shields are taken (`damage_model: ship | station`).
+    pub damage_model: DamageModel,
     /// Guns that shoot down hostile missiles, if fitted.
     pub point_defence: Option<PointDefence>,
     /// Probes: what this object does for its side's sensors and to its enemies'.
@@ -891,6 +951,18 @@ impl Ruleset {
     pub fn ship(&self, id: ShipClassId) -> &ShipClass {
         &self.ships[id.0 as usize]
     }
+
+    /// The shield pool maximum that generator module `generator` gives station `hub`:
+    /// the module's `shield_capacity`, or the hub's own `shields` when it has none.
+    pub fn pool_capacity(&self, hub: ShipClassId, generator: ShipClassId) -> f32 {
+        let cap = self.ship(generator).shield_capacity;
+        if cap > 0.0 {
+            cap
+        } else {
+            self.ship(hub).shields
+        }
+    }
+
     pub fn beam(&self, id: BeamId) -> &BeamClass {
         &self.beams[id.0 as usize]
     }
@@ -2329,16 +2401,10 @@ fn ship_class(
         cockpit: g.str("cockpit").map(str::to_string),
         voice: g.str("voice").map(str::to_string),
         // A station inheriting the original's hit-point chart (`*HP` sections: HP1–HP4)
-        // has no HitPoints key: its hull is the chart's sections summed (DERIVED: what
-        // each section protects in the original is not known).
-        hull: g.num("hit_points").unwrap_or_else(|| {
-            let chart: f32 = ["hp1", "hp2", "hp3", "hp4"].iter().filter_map(|k| g.num(k)).sum();
-            if chart > 0.0 {
-                chart
-            } else {
-                100.0
-            }
-        }),
+        // has no HitPoints key: its hull is the chart's HP1. The original reads only HP1
+        // (`0x41f9fe`); HP2–HP4 and SD are loaded and never used (flight README §8.1,
+        // verified; RQ-C-01).
+        hull: g.num("hit_points").or_else(|| g.num("hp1")).filter(|h| *h > 0.0).unwrap_or(100.0),
         armor: g.num("armor").unwrap_or(0.0),
         shields,
         shield_recharge: g.num("shield_recharge").unwrap_or(5.0),
@@ -2379,7 +2445,19 @@ fn ship_class(
         behaviour,
         turret_arc: g.qty("turret_arc", Unit::Angle).unwrap_or(0.0).clamp(0.0, 180.0),
         modules: Vec::new(), // resolved once every class is known
-        shield_generator: g.bool("shield_generator").unwrap_or(false),
+        // A capacity makes the module a generator without also writing `shield_generator`.
+        shield_generator: g.bool("shield_generator").unwrap_or(false) || g.num("shield_capacity").unwrap_or(0.0) > 0.0,
+        shield_capacity: g.num("shield_capacity").unwrap_or(0.0).max(0.0),
+        shield_pool: match g.node("shield_pool") {
+            None => None,
+            Some(n) => Some(ShieldPool::parse(Get(n))?),
+        },
+        shielded_by_hub: g.bool("shielded_by_hub").unwrap_or(false),
+        damage_model: match g.str("damage_model") {
+            None | Some("ship") => DamageModel::Ship,
+            Some("station") => DamageModel::Station,
+            Some(other) => return Err(format!("damage_model: '{other}' is not ship or station")),
+        },
         point_defence: g.node("point_defence").map(|n| PointDefence::parse(Get(n))),
         probe: g.node("probe").map(|n| {
             let p = Get(n);
@@ -2485,7 +2563,8 @@ objects:
         assert_eq!((get("craft").shields, get("craft").armor), (321.0, 77.0));
         assert_eq!(get("own").shields, 5.0, "the class's own value wins");
         assert_eq!(get("copy").shields, 321.0, "inherited with the class");
-        assert_eq!(get("station").hull, 60.0, "hull = HP1 + HP2 + HP3 + HP4");
+        // RQ-C-01: the original reads only HP1 of a station's chart (flight README §8.1).
+        assert_eq!(get("station").hull, 10.0, "hull = HP1; HP2-HP4 are never read");
         let bad = "factions: {xcom: {}}\nships:\n  c: {faction: xcom, model: m, fitted: {wings: x}}\n";
         let (_, errors) = build(&[source(0, bad)], &original_lookup());
         assert!(errors.iter().any(|e| e.contains("fitted.wings")), "{errors:?}");
@@ -2494,6 +2573,53 @@ objects:
         let (rules, errors) = build(&[source(0, engine)], &original_lookup());
         assert!(errors.is_empty(), "{errors:?}");
         assert_eq!(rules.ship(rules.ship_id("c").unwrap()).thrust, 321.0);
+    }
+
+    #[test]
+    fn station_shield_pool_and_damage_model_keys() {
+        let text = "\
+factions: {xcom: {}}
+objects:
+  hub:
+    faction: xcom
+    model: m
+    shields: 700
+    damage_model: station
+    shield_pool: {recharge: 2, on_generator_lost: keep}
+    modules: [{slot: '0', class: gen}, {slot: '1', class: gun}]
+  gen: {faction: xcom, model: m, shield_capacity: 3000, shielded_by_hub: true}
+  gun: {faction: xcom, model: m, shield_generator: true}
+  plain: {faction: xcom, model: m}
+  bad: {faction: xcom, model: m, shield_pool: {on_generator_lost: melt}}
+";
+        let (rules, errors) = build(&[source(0, text)], &original_lookup());
+        assert!(!errors.is_empty() && errors.iter().all(|e| e.contains("objects.bad")), "only `bad` fails: {errors:?}");
+        assert!(errors.iter().any(|e| e.contains("on_generator_lost")), "{errors:?}");
+        let get = |id: &str| rules.ship(rules.ship_id(id).unwrap()).clone();
+        let hub = get("hub");
+        assert_eq!(hub.damage_model, DamageModel::Station);
+        assert_eq!(hub.shield_pool, Some(ShieldPool { recharge: 2.0, on_generator_lost: GeneratorLost::Keep }));
+        // A capacity makes a module a generator; a generator without one feeds the
+        // hub's own `shields`.
+        assert_eq!(
+            (get("gen").shield_generator, get("gen").shield_capacity, get("gen").shielded_by_hub),
+            (true, 3000.0, true)
+        );
+        assert_eq!((get("gun").shield_generator, get("gun").shield_capacity), (true, 0.0));
+        assert_eq!(rules.pool_capacity(rules.ship_id("hub").unwrap(), rules.ship_id("gen").unwrap()), 3000.0);
+        assert_eq!(rules.pool_capacity(rules.ship_id("hub").unwrap(), rules.ship_id("gun").unwrap()), 700.0);
+        // Absent keys keep today's model: two banks, ship damage.
+        let plain = get("plain");
+        assert_eq!((plain.shield_pool, plain.damage_model, plain.shielded_by_hub), (None, DamageModel::Ship, false));
+        // The pool's defaults: 2 points per second, dropped when the generators are gone.
+        let (rules, _) = build(
+            &[source(0, "factions: {xcom: {}}\nobjects:\n  s: {faction: xcom, model: m, shield_pool: {}}\n")],
+            &original_lookup(),
+        );
+        assert_eq!(
+            rules.ship(rules.ship_id("s").unwrap()).shield_pool,
+            Some(ShieldPool { recharge: 2.0, on_generator_lost: GeneratorLost::Drop })
+        );
     }
 
     #[test]

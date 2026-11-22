@@ -25,7 +25,7 @@ use super::collision::segment_shape;
 use super::{Bolt, LinkMode, Missile, ShipId, SimEvent, World};
 use crate::content::equipment::ArmorMode;
 use crate::content::equipment::SystemKind;
-use crate::content::rules::DamageMode;
+use crate::content::rules::{DamageMode, DamageModel};
 use glam::Vec3;
 
 /// Seconds between missile launches.
@@ -397,6 +397,12 @@ pub fn roll_damage(w: &mut World, base: f32) -> f32 {
 /// player's craft is the one flown from outside the sim ([`super::Pilot::External`]).
 pub fn beam_factor(w: &World, owner: ShipId, target: ShipId) -> f32 {
     let Some(f) = &w.rules.damage.difficulty else { return 1.0 };
+    // A station hub (`damage_model: station`) takes no difficulty factor (RQ-C-04),
+    // including hits on a module that its pool takes for it.
+    let taker = super::stations::hit_target(w, target);
+    if w.get(taker).is_some_and(|s| w.rules.ship(s.class).damage_model == DamageModel::Station) {
+        return 1.0;
+    }
     use crate::content::equipment::DifficultyFactors;
     let level = w.rules.difficulty;
     let player = |id: ShipId| w.get(id).is_some_and(|s| s.pilot == super::Pilot::External);
@@ -415,6 +421,8 @@ pub fn beam_factor(w: &World, owner: ShipId, target: ShipId) -> f32 {
 /// `amount × shield_factor` stops the hit, and one that does not stops
 /// `bank / shield_factor` of it before it falls.
 pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageMode, shield_factor: f32) {
+    // A module covered by its hub's shield pool passes the hit to the hub (RQ-C-03).
+    let id = super::stations::hit_target(w, id);
     let radius = match w.get(id) {
         Some(s) => w.shapes[s.class.0 as usize].radius,
         None => return,
@@ -440,8 +448,17 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     };
     let mut absorbed = 0.0;
     let mut downed: Vec<&str> = Vec::new();
+    let class = rules.ship(s.class);
     match mode {
         DamageMode::BypassShields => {}
+        // A station's one pool takes the whole hit, from any side and in either mode.
+        DamageMode::Normal | DamageMode::Enveloping if class.shield_pool.is_some() => {
+            let was_up = super::stations::pool_points(s) > 0.0;
+            absorbed = super::stations::absorb(s, amount, m);
+            if was_up && s.shield_fore <= 0.0 {
+                downed.push("STATION SHIELDS DOWN");
+            }
+        }
         DamageMode::Normal => {
             let shield = if from_front { &mut s.shield_fore } else { &mut s.shield_aft };
             let was_up = *shield > 0.0;
@@ -466,18 +483,21 @@ pub fn apply_hit(w: &mut World, id: ShipId, amount: f32, at: Vec3, mode: DamageM
     }
     let Some(s) = w.get_mut(id) else { return };
     let mut rest = amount - absorbed;
+    // A station hub (`damage_model: station`) takes what gets through straight on its
+    // hull: no armour and no system hits (the original's `0x4205d9`; RQ-C-04).
+    let station = rules.ship(s.class).damage_model == DamageModel::Station;
     // Armour: the one pool, or the bank on the side that was hit.
     let armor = match rules.damage.armor {
         ArmorMode::PerSide if !from_front => &mut s.armor_aft,
         _ => &mut s.armor,
     };
-    let to_armor = rest.min(*armor);
+    let to_armor = if station { 0.0 } else { rest.min(*armor) };
     *armor -= to_armor;
     rest -= to_armor;
     // Systems: while the hull is below `system_below`, `system_share` of what reaches it
     // strikes a system, instead of the hull (`system_divert`) or as well.
     let d = &rules.damage;
-    let struck = rest > 0.0 && (d.system_below >= 1.0 || s.hull < d.system_below * hull_max);
+    let struck = !station && rest > 0.0 && (d.system_below >= 1.0 || s.hull < d.system_below * hull_max);
     let to_system = if struck { rest * d.system_share } else { 0.0 };
     if d.system_divert {
         rest -= to_system.min(rest);

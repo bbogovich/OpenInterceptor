@@ -37,7 +37,10 @@ objects:
     model_set: dominion_outpost
     faction: dominion
     hit_points: 18000
-    shields: 3600
+    # One shield pool (no fore and aft banks), powered by the shield pod: its pods are
+    # covered by it, and it empties when the pod is destroyed.
+    shields: 3600   # the pool's size: the shield pod has no shield_capacity of its own
+    shield_pool: {recharge: 5, on_generator_lost: drop}
     armor: 4500
   cosmium_asteroid:
     name: "@object.cosmium_asteroid.name"
@@ -81,6 +84,7 @@ objects:
     beams: [death_ray]
     turret_arc: 180
     behaviour: station_turret
+    shielded_by_hub: true
   dominion_shield_pod:
     name: "@object.dominion_shield_pod.name"
     model_set: dominion_shield_pod
@@ -88,3 +92,4 @@ objects:
     hit_points: 1350
     armor: 360
     shield_generator: true
+    shielded_by_hub: true

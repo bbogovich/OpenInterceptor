@@ -32,6 +32,7 @@ pub mod env;
 pub mod flight;
 pub mod guidance;
 pub mod hazards;
+pub mod stations;
 pub mod systems;
 pub mod targeting;
 
@@ -340,6 +341,9 @@ pub struct Ship {
     pub shield_max: f32,
     /// The most one armour bank holds.
     pub armor_max: f32,
+    /// Stations with a `shield_pool`: false once no shield generator stands, so the pool
+    /// no longer recharges (see [`stations`]). Always true for everything else.
+    pub pool_powered: bool,
     /// Mass in kg and the share of engine power left after the power settings
     /// (`flight.drive`; refreshed every tick by [`flight::update_drive`]).
     pub mass: f32,
@@ -632,9 +636,16 @@ pub fn protection_max(rules: &Ruleset, class: ShipClassId, faction: FactionId) -
 }
 
 /// Sets a ship's bank maxima from its class and side and fills every bank (both shields;
-/// one armour pool, or both armour banks with `damage.armor: per_side`).
+/// one armour pool, or both armour banks with `damage.armor: per_side`). A station with a
+/// `shield_pool` gets its pool, held in both shield banks (see [`stations`]).
 pub fn fill_protection(ship: &mut Ship, rules: &Ruleset) {
-    let (shields, armor) = protection_max(rules, ship.class, ship.faction);
+    let (mut shields, armor) = protection_max(rules, ship.class, ship.faction);
+    // A station's single pool is sized by its generator, with no scale or difficulty
+    // factor (the original hard-codes it by generator type; flight README §8.2).
+    if rules.ship(ship.class).shield_pool.is_some() {
+        shields = stations::initial_capacity(rules, ship.class);
+        ship.pool_powered = true;
+    }
     ship.shield_max = shields;
     ship.armor_max = armor;
     (ship.shield_fore, ship.shield_aft) = (shields, shields);
@@ -771,6 +782,7 @@ impl World {
             shield_aft: 0.0,
             shield_max: 0.0,
             armor_max: 0.0,
+            pool_powered: true,
             drive_factor: 0.0,
             mass: c.mass,
             engine_power: 1.0,
@@ -880,8 +892,8 @@ impl World {
         Ok(())
     }
 
-    /// Keeps modules on their hubs, destroys the modules of destroyed hubs, and drops a
-    /// station's shields when its last shield generator is gone.
+    /// Keeps modules on their hubs, destroys the modules of destroyed hubs, and matches
+    /// each station's shields to its standing shield generators ([`stations`]).
     fn update_modules(&mut self) {
         for i in 0..self.ships.len() {
             let Some((hub, at, local)) = self.ships[i].mount.filter(|_| self.ships[i].alive) else { continue };
@@ -905,31 +917,8 @@ impl World {
         // Wrecks of modules go with their hub.
         let alive: Vec<ShipId> = self.wrecks.iter().map(|w| w.hub).filter(|h| self.get(*h).is_some()).collect();
         self.wrecks.retain(|w| alive.contains(&w.hub));
-        // Shield generators.
-        for i in 0..self.ships.len() {
-            if !self.ships[i].alive
-                || !self
-                    .rules
-                    .ship(self.ships[i].class)
-                    .modules
-                    .iter()
-                    .any(|(_, m)| self.rules.ship(*m).shield_generator)
-            {
-                continue;
-            }
-            let hub = self.id_of(i);
-            let powered = self.ships.iter().any(|s| {
-                s.alive && s.mount.is_some_and(|(h, _, _)| h == hub) && self.rules.ship(s.class).shield_generator
-            });
-            if !powered {
-                let s = &mut self.ships[i];
-                if s.shield_fore > 0.0 || s.shield_aft > 0.0 {
-                    s.shield_fore = 0.0;
-                    s.shield_aft = 0.0;
-                    self.events.push(SimEvent::Message { ship: hub, text: "STATION SHIELDS DOWN".into() });
-                }
-            }
-        }
+        // Shield generators: a station's banks or pool follow its standing generators.
+        stations::update_shields(self);
     }
 
     /// Resolves a handle to a live ship.
