@@ -619,11 +619,13 @@ px wide. Rows of 3 or more buttons are indeed not positioned (`0x51a51b` handles
 Not list arrows: three 42 × 32 two-state buttons on the base panel, all with callback `0x47f1d9`:
 **400 close panel** (`S_BASE_CLOSEPANEL`) at (484, 247), rows 1381 / 1382 (idle / pressed; the
 check-mark look); **401 next** (`S_NEXT`) at (580, 247), rows 1379 / 1380; **402 previous**
-(`S_PREV`) at (387, 247), rows 1377 / 1378. No disabled row is set for them.
+(`S_PREV`) at (387, 247), rows 1377 / 1378. No disabled row is set for them. **400** calls `0x48078e(0)` in every mode: the side panel is
+closed (its three buttons hidden, `sndSlideSide`, panel state −1, placement mode cleared) and the base
+view redrawn (`0x48305e`).
 
 ### 14.3 Item icons (catalogue 0x65f880 → icon table 0x690990)
 
-Equipment: ArmorType1-3 1413-1415, ShieldType1-3 1442-1444, damage control 1454, EngineType1-3
+Equipment (probes by INI section, loader `0x5f1a90`: 19 CommunicationsProbe, 20 CommunicationsJammerProbe, 21 ECMProbe, 22 IntelProbe, 23 IntelJammerProbe, 24 HunterProbe, 25 SensorProbe): ArmorType1-3 1413-1415, ShieldType1-3 1442-1444, damage control 1454, EngineType1-3
 1422-1424, VCT 1450, DimJump 1419, STS1-3 1439-1441, Cloak 1416, ECM1-2 1452-1453, Tractor 1449, probes
 19/20 → 1418/1417, 24 → 1429, 25 → 1438 (21-23 and accumulator shields: none). Beams: Laser 1430,
 Heavy 1428, Gatling 1427, Tracer 1447, TrackingTracer 1448, Phase 1435, Plasma 1436, Psi 1437,
@@ -644,8 +646,9 @@ click only re-centres). Bases: **566-585** (20 frames, 80 × 71) for X-COM and o
 At **(13, 25)**, top-left anchored, image 96 × 91 (rows 978-990: 13 frames, the knob turning); hit
 rect = image + 10 px on each side from (3, 15). It has **three click positions** (not dragged):
 (9, 99) → level 0, (29, 45) → level 1, (90, 22) → level 2; a click within ±14 px of one selects it
-(sound 4, RotarySwitch). Position lamps: rows 992/994/996 off, 993/995/997 on; row 991 marks the
-level-2 position as unavailable. The CSD sets it to 2 when a system is opened (`0x4cdd20`).
+(sound 4, RotarySwitch). Position lamps: rows 992/994/996 off, 993/995/997 on, each drawn **centred on its click point**
+(9, 99), (29, 45), (90, 22) (`0x4cda2d`); row 991 is drawn on the third point when level 2 is
+unavailable; then the knob frame at (widget left + 10, top + 10) = (13, 25). The CSD sets it to 2 when a system is opened (`0x4cdd20`).
 
 ### 14.6 Black holes (`0x5da74e`)
 
@@ -653,12 +656,19 @@ After the systems are placed, **rand[4, 6) = 4 or 5** existing systems are turne
 (class 8, planets cleared), each chosen at random among non-black-hole systems at least **7,500 map
 units (1.25 ly)** from every black hole already placed.
 
-### 14.7 Activity reports
+### 14.7 Activity reports (verified)
 
-The history list (`gHistory`, 0x38-byte entries keyed by month) holds types 0 (outpost income),
-2 expenses, 3 maintenance, 4 sell income, 7 new outpost and 8 outpost lost (`0x413cb6`, `0x413eab`,
-`0x413db4`). The alien / X-COM activity graphs (`0x495187`) read arrays inside the report object
-whose source was **not traced**; what counts as an "incursion" or "mission" is still unknown.
+The history list (`gHistory`, 0x38-byte entries keyed by month) holds types 0 outpost income,
+1 score update, 2 expenses, 3 maintenance, 4 sell income, **5 alien incursion**, **6 X-COM
+incursion**, 7 new outpost, 8 outpost lost. Types 5 and 6 are written by `0x413f93`: the event's map
+position is binned into a **16 × 16 grid over the galaxy (3,750 map units per cell)** and that cell's
+count for the month is incremented.
+* **Alien incursion (5):** recorded by `0x448a76` at the alien flight plan's position — called from
+  the CSD alien-sighting handler (`0x448b75`) and the alien-sighting alert dialogs (`0x5e1637`,
+  `0x5e402e`, `0x5e8500`); i.e. each alien fleet sighting the player is alerted to.
+* **X-COM incursion (6):** recorded by `0x44ab3e`, the CSD's launch of an X-COM mission (flight
+  plan), at the plan's position.
+The activity reports (`0x495187`, `0x494807`) read these type-5 / type-6 entries per month and cell.
 
 ### 14.8 Report graph axes (income report `0x490d4b`, verified)
 
