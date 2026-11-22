@@ -130,7 +130,8 @@ ProdTime), so ProdTime is in technician-hours. Progress then carries to the next
   AlienFreighter for alien ones) idle in a flight plan; the rebuild queue (§3.4) replaces a lost one.
   Delivery reports (`0x4baf90`, `0x4bb654`) check cargo (CSU), personnel and hangar space at the receiving
   base: cargo without room is returned, pilots without quarters are sent back, ships without a bay are
-  returned **with a refund**. Delivery travel time and per-seller stock were **not traced**.
+  returned **with a refund**. Travel, loading and stock: `../unknowns-2026-11.md` §2 (shipment queue, 100-unit
+  freighter holds, no stock limits, speed by mass; freighters ≈ 1.85 days per light year).
 
 ## 3. Bases
 
@@ -296,14 +297,15 @@ The MacArthur, once requested, arrives **rand[24, 48) hours** later (`0x562bd9`)
 
 Three files per slot in `Saved Games\`: `Header.NNN`, `General.NNN`, `GameState.NNN` (`0x466cc7`,
 LoadSave.cpp). The header is a 168-byte record: a check dword 0xef62e at +4, a 9-character magic at +8,
-the version `%d.%d.%d`, and the save's name (25 characters) at +0x1c. The other two files were not traced.
+the version `%d.%d.%d`, and the save's name (25 characters) at +0x1c. `General` is written empty; `GameState`
+is a sequence of tagged chunks (`../unknowns-2026-11.md` §7).
 
 ## 8. Still open
 
-* Which `MissionScores` index is which event (the counter writers in `0x4da000–0x4e6000`).
-* Delivery travel time, interception of deliveries, per-seller stock and restock, sell rules.
-* Strategic ship speed between systems; launch/return rules; the alien tactical planner (`TacticalAI`,
-  base attacks, raids), alien base growth (Think.ini module priorities), the Doomsday piece costs.
+* Settled 2026-11-22 in `../unknowns-2026-11.md`: deliveries and strategic speed (§2), the alien raid
+  planner and base growth (§3), the mission rating and hull-class counters (§4), the save layout (§7).
+* Still open: `MissionScores` counters 36–90 and 95–104; raid fleet sizes per target type; sell rules;
+  launch/return rules; the Doomsday piece costs.
 * Recruiting, rank promotion, pilot death outside combat; the `*Goodies` salvage use.
 * Module limits per base, dismantling, the Communications and ProbeLaunch effects, outpost rebuild delays.
 * The other two save files.

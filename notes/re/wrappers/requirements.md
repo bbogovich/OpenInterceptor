@@ -193,12 +193,50 @@ Build order is the order below: assets → text → widgets → lists/dialogs �
 
 ## F. CSD star map
 
-### RQ-UI-17 CSD map details (partly unknown)
-- **Original:** icon group 434-563 (per-kind icons, kind mapping unknown), labels in
-  23006-23008 (derived), zoom levels with a "removed zoom level" message, recentre via the
-  minimap; status line = hovered object name.
+### RQ-UI-17 CSD map details (settled 2026-11-22, see RQ-UI-18…22)
+- **Original:** `../unknowns-2026-11.md` §1; status line = hovered object name.
 - **Engine now:** generic map drawing.
-- **Gap/next RE:** read CSD.cpp 0x4431ad, 0x447a14, 0x44c240 and the icon selection.
 - **Pack key:** `map: {icons: {<kind>: original:sprite#N}, label_font, zoom_levels}`.
 - **Default:** generated icons.
 - **Test:** U — world↔map transforms once known; M — CSD hover names.
+
+### RQ-UI-18 Map transform and zoom levels
+- **Original:** the galaxy is a 60,000-unit square projected into a view rect; world→screen
+  `left + width·x/60000` (`0x44c1e0`). The map window is a round 333 px viewport. Zoom 0 shows
+  2.5 ly, zoom 1 shows 1.67 ly (view = 4× / 6× the window), zoom 2 the selected object's picture,
+  zoom 3 a "removed" message; zoom keeps the centre; panning clamps to the galaxy (§1.1).
+- **Pack key:** `map: {extent: 60000, window: [cx, cy, size], round: true, zoom_views: [4, 6]}`.
+- **Default:** same numbers for the generated map.
+- **Test:** U — transform round trip, zoom keeps the centre, clamping at the edges.
+
+### RQ-UI-19 Map icons by object kind and state
+- **Original:** stars by class (9 classes; static 9×9 at zoom 0, 40×30 20-frame animations at
+  zoom 1, phase = counter + index), outpost markers (static, blinking for alien), side-mission
+  marker, base icons by owner (static / animated), construction bar, 2-frame fleet icons by owner
+  and state, battle squares (§1.2).
+- **Pack key:** `map.icons: {star.<class>: {zoom0, zoom1}, base.<owner>: …, fleet.<owner>.<state>: …}`
+  (`original:sprite#N` references for `interceptor`).
+- **Default:** generated icon set with the same kinds.
+- **Test:** U — icon id chosen for each kind/state/zoom; M — CSD look.
+
+### RQ-UI-20 Hover-only map labels
+- **Original:** a label appears only for objects within a 30×30 box around the cursor inside the
+  round window; upper-case name, 6 px built-in font, centred, y − 20 (stars) / − 8·zoom-step
+  (bases), kept 3 px inside the circle; several labels cycle one per second; colours per kind (§1.3).
+- **Pack key:** `map.labels: {mode: hover, font, offset_y: {star: -20, base: [-8, -16]}, cycle_ms: 1000, colours}`.
+- **Default:** same behaviour with the default font.
+- **Test:** U — label queue for a cursor position (inside/outside circle, overlap cycling).
+
+### RQ-UI-21 Map animation clocks
+- **Original:** map counter every 4 ticks (67 ms); fleet flip every 7 ticks; blinks 3-of-6 and
+  5-of-10 counter steps; corner lamps 10 frames every 4 ticks (§1.4).
+- **Pack key:** `map.timing: {counter_ticks: 4, fleet_ticks: 7}`, `lamps.<id>.interval_ticks`.
+- **Default:** same.
+- **Test:** U — frame index after N ticks.
+
+### RQ-UI-22 Sensor range circles toggle
+- **Original:** with the map toggle on, bases and outposts draw their sensor radius (scaled by the
+  view); an outpost's radius halves while its hull is at 0.
+- **Pack key:** `map.sensor_circles: true`.
+- **Default:** same.
+- **Test:** U — radius in pixels for a range and zoom.
