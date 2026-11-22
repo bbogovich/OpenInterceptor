@@ -633,3 +633,12 @@ report lists them; `default`: one colony beside the stipend. DEV-098.
 (`unlock_on`, `complete_on`: `destroyed(<class>)`, `captured(<class>)`, `won(<raid>#<n>)`), salvage
 follows the destroyed ships' fits (`salvage_fits`; battles now report `destroyed(<class>)`); the
 saucer, probe and drone artefact items are gone. DEV-097 rewritten.
+
+**#133** (app NEXT; RQ-S-10, RQ-S-11, RQ-C-10's campaign link, RQ-C-23, D-08; strategy README §5,
+flight README §4.2, with the generator, salary and bracket tables read from the exe): `pilots.generate`,
+`pilots.health`, the periodic `pilots.training`, the salary table and `stat_max`; `damage.pilot_injury`
+in battle; the campaign hands the flying pilot's record and health into a battle and takes the health
+back; `grade_rise` with `World::campaign_month`. DEV-099. Note for RQ-C-23: the generator's stat
+bonuses are indexed by the pilot's **rank**, not its grade (tables 0x65f0a8…0x65f0c0 are read with the
+rank just rolled); the grade only picks the Psionics range (0 – 100, 0 – 9, 0, 50 – 79, 45 – 69,
+75 – 99 for grades 0 – 5).

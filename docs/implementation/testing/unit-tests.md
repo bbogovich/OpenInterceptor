@@ -8,6 +8,12 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#133 (app NEXT)** four more: `sim::combat::tests::hull_hits_and_collisions_hurt_the_pilot_until_out_cold_or_dead`,
+`content::behaviour::tests::health_rolls_follow_the_original_generator`,
+`campaign::tests::pilots_heal_train_and_are_paid_as_the_original` (health 4 → 8 in two days in the
+bay; a 75-Int pilot's Accuracy 60 → 61 in 5 days; a commander with 96 Accuracy and a kill earns
+4,000 + 2,350 / 12; below 0 dead) and `sim::ai::tests::alien_grades_rise_with_the_campaign_month`.
+
 **#130 (app 0.22.24)** two more: `campaign::tests::a_seen_contact_may_turn_on_the_base_that_saw_it`
 (unseen beyond 3,000 map units, seen inside, then heading for the base) and
 `campaign::tests::generated_systems_draw_planets_from_their_class`.
