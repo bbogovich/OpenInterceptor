@@ -39,6 +39,7 @@ pub mod launcher;
 pub mod menu;
 pub mod simulator;
 pub mod strategy;
+pub mod text;
 pub mod ui;
 pub mod video;
 pub mod viewer;

@@ -12,3 +12,19 @@ skins:
       dim: [0.42, 0.55, 0.45]
       accent: [0.95, 0.80, 0.30]
       highlight: [0.14, 0.28, 0.18]
+    # The original's nine bitmap sheet fonts (RQ-UI-03), read at run time from the
+    # player's SpritesDLL.dll - nothing is copied. Facts: notes/re/wrappers/ui-framework.md
+    # §3 and fonts.yaml (VERIFIED from Interceptor.exe: the font list 0x5ff91c, the sheet
+    # loader 0x5fd750, DrawText 0x5fe4ad: glyph top = y - 5, y - 7 for 23010/23011/23013/
+    # 23015; DrawTextRect 0x5fed2b: those four drop wrapped text a further 4 px). Roles are
+    # the exe's call sites; the colour is painted into each sheet.
+    fonts:
+      topic: {sheet: original:SpritesDLL.dll#23000, top: 5}                       # cream: Research topic texts
+      map: {sheet: original:SpritesDLL.dll#23006, top: 5}                         # CSD map labels (DERIVED)
+      map_small: {sheet: original:SpritesDLL.dll#23007, top: 5}                   # CSD map labels (DERIVED)
+      map_large: {sheet: original:SpritesDLL.dll#23008, top: 5}                   # CSD map labels (DERIVED)
+      readout: {sheet: original:SpritesDLL.dll#23010, top: 7, wrap_offset: 4}     # white/green: CSD readouts, headers, captions
+      body: {sheet: original:SpritesDLL.dll#23011, top: 7, wrap_offset: 4}        # white/grey: lists, tooltips, dialogs
+      value: {sheet: original:SpritesDLL.dll#23013, top: 7, wrap_offset: 4}       # yellow: Research values, E&P
+      highlight: {sheet: original:SpritesDLL.dll#23015, top: 7, wrap_offset: 4}   # yellow: Equip Ships, Production
+      title: {sheet: original:SpritesDLL.dll#23014, top: 5}                       # large yellow: Base Stats titles

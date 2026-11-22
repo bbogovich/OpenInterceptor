@@ -17,12 +17,13 @@ screens:
     widgets:
       map: {kind: map, shape: round, rect: [66, 61, 333, 333]}
       minimap: {kind: map, source: minimap, shape: round, rect: [502, 43, 94, 94]}
-      # The four green readouts (DERIVED: measured from the art; their order from the
-      # original running: time, weekday, date, funds).
-      time: {kind: value, value: time, rect: [495, 365, 133, 15], size: 11, colour: [0.2, 0.0, 0.0], align: centre}
-      weekday: {kind: value, value: weekday, rect: [495, 385, 133, 16], size: 11, colour: [0.2, 0.0, 0.0], align: centre}
-      date: {kind: value, value: date_long, rect: [495, 406, 133, 15], size: 11, colour: [0.2, 0.0, 0.0], align: centre}
-      funds: {kind: value, value: money, rect: [495, 426, 133, 15], size: 11, colour: [0.2, 0.0, 0.0], align: centre}
+      # The four green readouts (VERIFIED, Interceptor.exe 0x43fb0f): font 23010, centred
+      # on x 561 at y 370/390/410/430 (glyph tops 363/383/403/423); the time monospaced.
+      # Order: time, weekday, date, funds. `rect` is the bar (DERIVED, the art).
+      time: {kind: value, value: time, rect: [495, 365, 133, 15], font: readout, at: [561, 370], align: centre, monospace: true}
+      weekday: {kind: value, value: weekday, rect: [495, 385, 133, 16], font: readout, at: [561, 390], align: centre}
+      date: {kind: value, value: date_long, rect: [495, 406, 133, 15], font: readout, at: [561, 410], align: centre}
+      funds: {kind: value, value: money, rect: [495, 426, 133, 15], font: readout, at: [561, 430], align: centre}
       # The six screen buttons (centres verified; their 40x28 size DERIVED from the art).
       bases: {kind: button, rect: [496, 180, 40, 28], action: open(bases)}
       equip_ships: {kind: button, rect: [543, 180, 40, 28], action: open(equip_ships)}
@@ -38,15 +39,17 @@ screens:
       speed3: {kind: button, rect: [567, 337, 14, 14], action: speed(3)}
       speed4: {kind: button, rect: [585, 328, 14, 14], action: speed(4)}
       speed5: {kind: button, rect: [598, 315, 14, 14], action: speed(5)}
-      # The help line along the bottom bar: what is selected.
-      status: {kind: value, value: selection, rect: [344, 457, 276, 15], size: 10, colour: [0.6, 1.0, 0.6]}
+      # The status bar [344,457,620,472] (VERIFIED, 0x447921: font 23010, centred,
+      # DrawTextRect). The original shows the map object under the cursor; here: what is
+      # selected.
+      status: {kind: value, value: selection, rect: [344, 457, 276, 15], font: readout, align: centre}
 
   # 6: Bases - the base, its modules and the module list.
   bases:
     design: [640, 480]
     background: original:WrappersDLL.dll#6105
     widgets:
-      base: {kind: value, value: base, rect: [475, 13, 150, 16], size: 11, colour: [0.6, 1.0, 0.6]}
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body}   # font DERIVED (23011, the body font)
       modules: {kind: list, source: build, rect: [347, 39, 292, 227]}
       purchase: {kind: button, rect: [492, 349, 24, 24], action: open(purchase)}
       equip_ships: {kind: button, rect: [492, 386, 24, 24], action: open(equip_ships)}
@@ -58,7 +61,7 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#6100
     widgets:
-      base: {kind: value, value: base, rect: [475, 13, 150, 16], size: 11, colour: [0.6, 1.0, 0.6]}
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body}   # font DERIVED (23011, the body font)
       ships: {kind: list, source: hangar, rect: [17, 397, 500, 60]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 
@@ -67,8 +70,8 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#6110
     widgets:
-      base: {kind: value, value: base, rect: [475, 13, 150, 16], size: 11, colour: [0.6, 1.0, 0.6]}
-      funds: {kind: value, value: money, rect: [290, 210, 140, 18], size: 12, colour: [1.0, 1.0, 0.6], align: centre}
+      base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body}   # font DERIVED (23011, the body font)
+      funds: {kind: value, value: money, rect: [299, 229, 145, 22], font: value, align: centre}   # the readout slot (rect VERIFIED, wrappers/screens.yaml); font: E&P values (23013, DERIVED)
       items: {kind: list, source: market, rect: [18, 272, 538, 188]}
       manufacture: {kind: button, rect: [575, 314, 24, 24], action: open(manufacture)}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
@@ -78,7 +81,7 @@ screens:
     design: [640, 480]
     background: original:WrappersDLL.dll#6110
     widgets:
-      funds: {kind: value, value: money, rect: [290, 210, 140, 18], size: 12, colour: [1.0, 1.0, 0.6], align: centre}
+      funds: {kind: value, value: money, rect: [299, 229, 145, 22], font: value, align: centre}   # the readout slot (rect VERIFIED, wrappers/screens.yaml); font: E&P values (23013, DERIVED)
       jobs: {kind: list, source: factory, rect: [18, 272, 538, 188]}
       back: {kind: button, rect: [596, 440, 30, 30], action: back}            # DERIVED
 

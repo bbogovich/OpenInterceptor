@@ -18,7 +18,16 @@
 //!       highlight: [0.30, 0.22, 0.10]
 //!     panel: {image: textures/ui/deco_panel.png, slice: 24}
 //!     font: fonts/serial.ttf
+//!     fonts:                          # grid sheet bitmap fonts, by name (RQ-UI-03)
+//!       body: {sheet: textures/fonts/body.png, top: 7, wrap_offset: 4}
 //! ```
+//!
+//! **Sheet fonts** are images in the grid layout of [`crate::formats::sheetfont`] (the
+//! original's SpritesDLL fonts are such sheets: `sheet: original:SpritesDLL.dll#23010`).
+//! A screen widget names one with `font: <name>` and is then placed by the original's
+//! anchor rules ([`crate::app::text`]): `top` is how far above the anchor y the glyph
+//! tops sit, `wrap_offset` the extra drop of wrapped text, `spacing` extra pixels after
+//! each character.
 //!
 //! The campaign's skin is the one named by `campaign.skin`, else the first defined; a
 //! campaign with none gets [`Skin::fallback`].
@@ -38,7 +47,45 @@ pub struct Skin {
     pub panel: Option<(String, f32)>,
     /// A TrueType font file.
     pub font: Option<String>,
+    /// Grid sheet fonts by name (`fonts.<name>`).
+    pub fonts: Vec<SheetFontDef>,
     pub pack: usize,
+}
+
+/// A named grid sheet font of a skin (`fonts.<name>`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SheetFontDef {
+    pub name: String,
+    /// The sheet image (an asset reference).
+    pub sheet: String,
+    /// Glyph top = anchor y − `top`. Default: half the line height (so an anchor is the
+    /// line's middle, as with the original's 14 px fonts and their 7).
+    pub top: Option<i32>,
+    /// Extra drop of wrapped text's first line (the original: 4 for its four small fonts).
+    pub wrap_offset: i32,
+    /// Extra pixels after every character.
+    pub spacing: i32,
+}
+
+impl SheetFontDef {
+    /// Parses `fonts.<name>`: `{sheet, top, wrap_offset, spacing}` or just the sheet.
+    pub fn parse(name: &str, g: Get) -> Result<SheetFontDef, String> {
+        let sheet = g.0.as_str().or_else(|| g.str("sheet")).ok_or("sheet: expected the font sheet image")?;
+        let int = |k: &str| -> Result<Option<i32>, String> {
+            match g.num(k) {
+                Some(v) if v.fract() == 0.0 && v.abs() < 1000.0 => Ok(Some(v as i32)),
+                Some(v) => Err(format!("{k}: {v} is not a whole number of pixels")),
+                None => Ok(None),
+            }
+        };
+        Ok(SheetFontDef {
+            name: name.to_string(),
+            sheet: sheet.to_string(),
+            top: int("top")?,
+            wrap_offset: int("wrap_offset")?.unwrap_or(0),
+            spacing: int("spacing")?.unwrap_or(0),
+        })
+    }
 }
 
 impl Skin {
@@ -57,6 +104,7 @@ impl Skin {
             ],
             panel: None,
             font: None,
+            fonts: Vec::new(),
             pack: 0,
         }
     }
@@ -84,8 +132,25 @@ impl Skin {
             .map(Get)
             .and_then(|p| Some((p.str("image")?.to_string(), p.num("slice").unwrap_or(16.0).max(1.0))));
         s.font = g.str("font").map(str::to_string);
+        for (name, n) in g.map("fonts") {
+            s.fonts.push(SheetFontDef::parse(name, Get(n)).map_err(|e| format!("fonts.{name}: {e}"))?);
+        }
         Ok(s)
     }
+}
+
+/// Reads a sheet font's image (from the player's data or a pack) and its metrics. The
+/// image comes back with its grid and key colours made transparent, ready to upload.
+pub fn load_sheet(
+    content: &super::Content,
+    def: &SheetFontDef,
+    pack: usize,
+) -> Result<(crate::formats::sheetfont::SheetFont, crate::formats::tga::Image), String> {
+    let mut img = content.load_image(&def.sheet, pack, false)?;
+    let font = crate::formats::sheetfont::SheetFont::parse(img.width, img.height, &img.rgba)
+        .map_err(|e| format!("{}: {e}", def.sheet))?;
+    font.clear_background(&mut img.rgba);
+    Ok((font, img))
 }
 
 /// The schema of `skins.<id>`.
@@ -105,6 +170,19 @@ pub fn schema() -> Ty {
             "panel frame",
         ),
         f("font", Ty::Asset, "a TrueType font for the screens"),
+        f(
+            "fonts",
+            Ty::Dict(Box::new(Ty::Either(
+                Box::new(Ty::Asset),
+                Box::new(Ty::Struct(vec![
+                    f("sheet", Ty::Asset, "the grid sheet image (e.g. original:SpritesDLL.dll#23010)"),
+                    f("top", Ty::Num, "glyph top = anchor y - top, pixels (default: half the line height)"),
+                    f("wrap_offset", Ty::Num, "extra drop of wrapped text's first line, pixels"),
+                    f("spacing", Ty::Num, "extra pixels after each character"),
+                ])),
+            ))),
+            "grid sheet bitmap fonts by name, for screen widgets' font:",
+        ),
     ])
 }
 
@@ -124,5 +202,34 @@ mod tests {
         assert_eq!(s.panel, Some(("p.png".into(), 20.0)));
         let bad = yaml::parse("colours: {glow: [1, 1, 1]}").unwrap();
         assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("glow"));
+    }
+
+    #[test]
+    fn sheet_fonts_parse_with_their_anchor_rules() {
+        let n = yaml::parse("fonts:\n  body: {sheet: a.png, top: 7, wrap_offset: 4}\n  big: b.png").unwrap();
+        let s = Skin::parse("x", Get(&n), 0).unwrap();
+        assert_eq!(
+            s.fonts[0],
+            SheetFontDef { name: "body".into(), sheet: "a.png".into(), top: Some(7), wrap_offset: 4, spacing: 0 }
+        );
+        assert_eq!((s.fonts[1].sheet.as_str(), s.fonts[1].top), ("b.png", None));
+        let bad = yaml::parse("fonts: {x: {sheet: a.png, top: 2.5}}").unwrap();
+        assert!(Skin::parse("x", Get(&bad), 0).unwrap_err().contains("fonts.x: top"));
+        let none = yaml::parse("fonts: {x: {top: 2}}").unwrap();
+        assert!(Skin::parse("x", Get(&none), 0).is_err());
+    }
+
+    #[test]
+    fn the_default_campaigns_generated_fonts_are_grid_sheets() {
+        use crate::formats::sheetfont::SheetFont;
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/default/textures");
+        for (file, pitch, line_height) in [("font_body.png", 13, 10), ("font_title.png", 23, 20)] {
+            let bytes = std::fs::read(dir.join(file)).unwrap();
+            let img = super::super::decode_image_file(file, &bytes, None).unwrap();
+            let f = SheetFont::parse(img.width, img.height, &img.rgba).unwrap();
+            assert_eq!((f.pitch, f.line_height), (pitch, line_height), "{file}");
+            assert!(f.advance('A') > 0 && f.advance(' ') == f.advance('e'), "{file}");
+            assert!(f.glyph(f.glyph_of('j').unwrap()).unwrap().width > 0, "{file}: descender glyphs are drawn");
+        }
     }
 }

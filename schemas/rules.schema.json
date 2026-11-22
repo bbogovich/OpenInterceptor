@@ -462,6 +462,12 @@
               "slice": {"description": "corner size, pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
             }},
           "font": {"description": "a TrueType font for the screens", "type": "string"},
+          "fonts": {"description": "grid sheet bitmap fonts by name, for screen widgets' font:", "type": "object", "additionalProperties": {"anyOf": [{"type": "string"}, {"type": "object", "additionalProperties": false, "properties": {
+                  "sheet": {"description": "the grid sheet image (e.g. original:SpritesDLL.dll#23010)", "type": "string"},
+                  "top": {"description": "glyph top = anchor y - top, pixels (default: half the line height)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "wrap_offset": {"description": "extra drop of wrapped text's first line, pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "spacing": {"description": "extra pixels after each character", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+                }}]}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -488,6 +494,9 @@
                   "size": {"description": "text size, design pixels", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "colour": {"description": "text colour, RGB or RGBA", "type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
                   "align": {"description": "text alignment", "enum": ["left", "centre", "right"]},
+                  "font": {"description": "a sheet font of the skin (skins.<id>.fonts): placed by the original's anchor rules", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "at": {"description": "with font: the DrawText anchor [x, y] (glyph tops at y - the font's top)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                  "monospace": {"description": "with font: every character in a cell of the widest glyph", "type": "boolean"},
                   "shape": {"description": "a map's viewport", "enum": ["rect", "round"]}
                 }}]}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},

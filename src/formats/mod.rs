@@ -14,6 +14,7 @@
 //! | [`wav`] | RIFF WAVE audio, including Microsoft ADPCM |
 //! | [`ini`] | INI text files (the original rules, and our own rules and scenarios) |
 //! | [`obj`] | Wavefront OBJ meshes, the model format for mods |
+//! | [`sheetfont`] | Grid sheet bitmap fonts (the original's SpritesDLL fonts, and mods') |
 //!
 //! ## Rust idea: borrowing a byte slice
 //!
@@ -28,6 +29,7 @@ pub mod mpsrc;
 pub mod obj;
 pub mod pe;
 pub mod png;
+pub mod sheetfont;
 pub mod smacker;
 pub mod tga;
 pub mod wav;

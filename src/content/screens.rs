@@ -98,6 +98,17 @@ pub struct WidgetDef {
     pub colour: Option<[f32; 4]>,
     /// `left`, `centre` or `right`.
     pub align: String,
+    /// A sheet font of the skin (`skins.<id>.fonts.<name>`): the text is drawn with it
+    /// by the original's anchor rules (`app::text`); without one, `size` and the skin's
+    /// TrueType font are used as before.
+    pub font: Option<String>,
+    /// The DrawText anchor `[x, y]` (design space): the line's left, centre or right
+    /// (by `align`) at x, glyph tops at y − the font's `top`. Without it the text is
+    /// placed in `rect` (one line centred vertically, longer text wrapped).
+    pub at: Option<[f32; 2]>,
+    /// Every character in a cell as wide as the font's widest glyph (the original's
+    /// clock readout).
+    pub monospace: bool,
     /// A label drawn on a button without images.
     pub label: Option<String>,
     /// Map: clipped to a circle.
@@ -146,6 +157,15 @@ impl WidgetDef {
             size: g.num("size").unwrap_or(12.0).max(4.0),
             colour,
             align: g.str("align").unwrap_or("left").to_string(),
+            font: g.str("font").map(str::to_string),
+            at: match g.node("at") {
+                Some(n) => match numbers(n).as_deref() {
+                    Some([x, y]) => Some([*x, *y]),
+                    _ => return Err("at: expected [x, y]".into()),
+                },
+                None => None,
+            },
+            monospace: g.bool("monospace").unwrap_or(false),
             label: g.str("label").map(str::to_string),
             round: g.str("shape") == Some("round"),
         })
@@ -270,6 +290,9 @@ pub fn schema() -> Ty {
                     f("size", Ty::Num, "text size, design pixels"),
                     f("colour", Ty::List(Box::new(Ty::Num)), "text colour, RGB or RGBA"),
                     f("align", Ty::Enum(&["left", "centre", "right"]), "text alignment"),
+                    f("font", Ty::Name, "a sheet font of the skin (skins.<id>.fonts): placed by the original's anchor rules"),
+                    f("at", Ty::Numbers(2), "with font: the DrawText anchor [x, y] (glyph tops at y - the font's top)"),
+                    f("monospace", Ty::Bool, "with font: every character in a cell of the widest glyph"),
                     f("shape", Ty::Enum(&["rect", "round"]), "a map's viewport"),
                 ])),
             ))),
@@ -314,6 +337,13 @@ mod tests {
         assert_eq!(UiAction::parse("speed(3)"), Ok(UiAction::Speed(3)));
         assert_eq!(UiAction::parse("back"), Ok(UiAction::Back));
         assert!(UiAction::parse("fly(away)").is_err());
+        assert_eq!((l.items[2].font.as_deref(), l.items[2].at, l.items[2].monospace), (None, None, false));
+        let t = yaml::parse("widgets: {t: {kind: value, value: time, rect: [0, 0, 1, 1], font: readout, at: [561, 370], monospace: true}}").unwrap();
+        let tl = ScreenLayout::parse("csd", Get(&t), l.clone(), &[], 0).unwrap();
+        let tw = tl.items.iter().find(|w| w.name == "t").unwrap();
+        assert_eq!((tw.font.as_deref(), tw.at, tw.monospace), (Some("readout"), Some([561.0, 370.0]), true));
+        let bad_at = yaml::parse("widgets: {t: {kind: value, rect: [0, 0, 1, 1], at: [1]}}").unwrap();
+        assert!(ScreenLayout::parse("csd", Get(&bad_at), l.clone(), &[], 0).unwrap_err().contains("at:"));
         let bad = yaml::parse("widgets: {x: {kind: dial, rect: [0, 0, 1, 1]}}").unwrap();
         let base = ScreenLayout {
             id: "csd".into(),
