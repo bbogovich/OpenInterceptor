@@ -682,6 +682,66 @@ The activity reports (`0x495187`, `0x494807`) read these type-5 / type-6 entries
   (month / 12 + 2066) is printed at bottom + 25 between bracket lines drawn at bottom + 20 across each
   year's span.
 
+## 15. Artefact-gated research, alien fits and special recoveries (#129, 2026-11-22)
+
+### 15.1 The artefact table 0x66f768 (verified)
+
+One int per **tech id** (102 entries): the **store item** that must be in some X-COM base's stores
+for a "special" topic to stay researchable (`0x415ba8`; −1 = no item needed). Items are indices of
+the item catalogue at 0x65f880 (§14.3). For a launcher item (catalogue 35-44) its missile item is
+accepted too (`0x42b422`). Of the **26 Prereq-127 topics**, eleven need an item:
+
+| Topic (tech id) | Item |
+|---|---|
+| AEREON (20), ETHEREAL (31), MUTON (42), PSILORD (51), SECTOID (55) | the matching corpse (catalogue 61-65) |
+| ELERIUM_TORPEDO (28), ENVELOPING_FUSION_TORPEDO (30), PARALLAX_TORPEDO (44) | that launcher (or its torpedoes) |
+| PHASE_CANNON (47), PLASMA_PULSE_CANNON (48), PSI_BLASTER (50) | that beam weapon |
+
+The other fifteen (the three mines, the three probes, ALIEN_DRONE, the three component pieces,
+POLTERGEIST and SHADE examinations, the three saucer examinations) have −1: they need only their
+**available** flag, set by the events in §15.3. (The table also lists items for 26 ordinary topics —
+e.g. ACCUMULATOR_SHIELDS → accumulator shields, GATLING_LASERS → Gatling laser — used only if such a
+topic is made special.)
+
+### 15.2 Alien fits (`0x4094d2` → `0x5a3657`, by alien tech level; verified, chances verified,
+month term derived)
+
+Every alien ship (owner 9) is fitted at creation. Shield: ShieldType1 at d ≤ 1, ShieldType2 above (tech
+levels 1-2); armour ArmorType1 at d ≥ 2. Beams are listed per mount; missiles as type × rounds.
+
+| Class | Tech 1 | Tech 2 | Tech 3 |
+|---|---|---|---|
+| AlienType1 | Engine1, STS1; **Plasma** | same | Engine2, STS2, Shield2; **Phase** (chance rising with month) or **Plasma** |
+| AlienType2 | 75 %: Engine1/STS1, else Engine2/STS2; **Plasma × 3**; **Elerium × 3** | Engine2, STS2; **Phase or Plasma**, Plasma × 2; **Elerium × 3** (25 %) or **Parallax × 3** | 85 %: Engine3/STS3 else Engine2/STS2, Shield2, Cloak; Phase or Plasma, Plasma × 2; **Elerium × 3**, a second Elerium × 3 at 50 % |
+| AlienType3 | 75 %: Engine3/STS3, else Engine2/STS2; **Phase, Plasma, Psi, Plasma**; **Enveloping × 3** in three mounts | same at 85 % | Engine3, STS3, Shield3, Cloak; same weapons |
+| AlienType4 | Engine3, STS3, accumulator shields, Cloak; **Phase, Phase, Tracer, Tracer, Psi**; **PassiveCloaking × 3, Fusion × 3** | same | same with × 4 rounds |
+| AlienType5 | Engine1, Tractor, hull 250 if unset; **Tachyon × 2** | same | same |
+| AlienType6 | ShieldType1, ArmorType1, no weapons set here | | |
+
+So salvage that follows the destroyed fleet can use these fits: beams and missile types per class
+and tech level (the salvage roll itself is per item, §11.2).
+
+### 15.3 What recovers the special topics (verified unless marked)
+
+* **Mines** (`0x4d9141`, an object destroyed in flight): destroying an **alien mine** (side 9, rt type
+  7) makes its topic available — beam mine (mine type 0) → ALIEN_BEAM_MINE (5), explosive (1) →
+  ALIEN_EXPLOSIVE_MINE (8), missile (2) → ALIEN_MISSILE_MINE (16).
+* **Probes** (debriefing `0x4e01ef`): an alien probe in the mission → ALIEN_SENSOR_PROBE (17),
+  ALIEN_INTEL_JAMMER_PROBE (10), ALIEN_COMM_JAMMER_PROBE (6) by probe type (derived: probe destroyed).
+* **Doomsday component pieces** (debriefing `0x4e3398`): by the mission's cargo-piece value (`0x4e8e50`,
+  1/2/3, derived: a Doomsday piece carried by an alien freighter in the battle): 1 →
+  STRUCTURAL_COMPONENT_PIECE_1 (18), 2 → WEAPON_COMPONENT_PIECE_2 (19), 3 → DRIVE_COMPONENT_PIECE_3
+  (7); counters 88 / 89 / 90 count them (so 88-90 are "component piece recovered"). The Doomsday AI
+  (`0x57b967`, `0x57b9af`, d ≥ 2) also sets 18 / 19 in another path (condition not decoded).
+* **Saucer and Shade examinations** (debriefing, list B = craft captured/disabled, derived):
+  AlienType1 → TYPE_1_SAUCER_EXAMINATION (70), Type2 → 71, Type3 → 72, **AlienType4 → SHADE_EXAMINATION
+  (57)**; AlienType5 **completes** topic 75 at once and AlienType6 / AlienFreighter complete topic 74
+  (ALIEN_FREIGHTER) (`0x406584`).
+* **Corpses** (counters 82-86): recovered with the AlienCorpse goodies chance; each makes its topic
+  available and puts the corpse item in stores (the table above).
+* **Unknown:** what makes **POLTERGEIST_EXAMINATION (49)** and **ALIEN_DRONE (4/78)** available — no
+  direct writer was found (no constant push of 49 or 4 to the available-flag setter).
+
 ## 10. What remains unknown
 
 * Counter meanings 36–90 and 95–104 (objective events); the debrief field +0x30c.
