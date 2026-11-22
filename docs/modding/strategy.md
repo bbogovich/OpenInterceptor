@@ -363,6 +363,49 @@ amount (an expression) added or taken every period (`every`, default 30 days). E
 Module `maintenance`, hull `upkeep` and pilot `salary` are charged monthly on their own; use
 `expenses` for anything else.
 
+### `outposts`
+
+`outposts:` (app NEXT, RQ-S-04/05) — corporate outposts as campaign objects: they pay the
+player, and how well funded they are follows how the player does against the aliens where they
+are. Without the section there are none, and `incomes` pay as written. `interceptor` has them in
+place of its old flat corporate income; `default` has a small set beside the Senate's stipend.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `exchange_rate` | number | 250 | Money per yield point. `exchange_rate_from: original:<file>/<key>` reads it from the difficulty level's section, as `start.money_from` does (`interceptor`: `GameSettings.ini/ExchangeRate`, 250 / 250 / 225 / 225 / 200). |
+| `yield_table` | rows of numbers | none | An OPP's yield by its body class (row 1 – 3) and richness (column 0 – 4). `interceptor`: the exe's table at 0x65f860 (**verified**). |
+| `start_funding`, `max_funding` | fraction | 0.75, 0.95 | A new outpost's funding, and its ceiling. |
+| `min_age` | time | 638.4 h | An outpost pays only once this old (0.95 × 28 days). |
+| `withdraw_below`, `withdraw_cost`, `withdraw_score` | number | 0.03, 1500, 1000 | Funding under `withdraw_below` makes the outpost withdraw: `withdraw_cost` is lost and `withdraw_score` taken from the player's score. |
+| `evaluation.pool_weights` | `[w0, w1]` | `[0.1, 0.2]` | Weights of the player's and the aliens' month totals in each system's evaluation. |
+| `evaluation.steps` | list of `[threshold, step]` | the original's | The first threshold ≥ the evaluation gives the step; funding moves by 1 … \|step\| percentage points at random, with the step's sign. |
+| `growth` | `{per_level, max_per_month, max}` | none | After a month the player out-scored the aliens: `[min, max]` new outposts by difficulty level, at most `max_per_month` a month and `max` in all. |
+| `start` | `[min, max]` | `[0, 0]` | Outposts at the start. |
+| `min_opps` | number | 1 | OPPs per outpost at least; otherwise one per planet of its system (at most 20). |
+
+Each month, before the report (strategy README §2.2 – §2.3, **verified**):
+
+1. **Income.** Every outpost old enough pays round(`exchange_rate` × Σ its OPPs' yields ×
+   funding). Three class-2, richness-2 OPPs at Veteran: 225 × 2,700 × 0.75 = 455,625.
+2. **Evaluation.** With X and A the player's and the aliens' month totals (systems and pools), each
+   system with outposts gets e = X[i] + X × w0 − (A[i] + A × w1), and its outposts' funding moves
+   by the step, clamped to [0, `max_funding`].
+3. **Withdrawal** of outposts under `withdraw_below`.
+4. **Growth** when X > A: new outposts in the best-scoring systems (each picked once a month).
+5. The month's system scores start again.
+
+**Scores belong to systems** (RQ-S-06): a battle's score goes to the system nearest the contact
+when an outpost is there, else to a pool; research and story scores go to the pool. A positive
+score counts for the player, a negative one for the aliens (*derived*: the engine's score names
+carry their side in their sign). The map marks a system with an outpost (`outpost_marker`, see
+[Screens](screens.md#widget-keys)); the Outposts report lists them.
+
+**Derived** (DEV-098): the starting outposts (`interceptor`: 3, in the systems nearest the base),
+the OPPs' body classes and richness (random), where new outposts go among the candidates (best
+score, then nearest a base), and the score sign convention. Mission scores by the original's
+`MissionScores` are not read yet: which counter is which event needs the flight layer to report
+kills by type.
+
 ### `pilots` and `scores`
 
 `pilots:` — pilot rules.
