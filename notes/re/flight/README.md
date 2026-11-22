@@ -621,9 +621,8 @@ the XMSH manipulators of `al-base01` with ids 1–3 sit 120° apart at radius �
 | Alien base | Also: all hard points at 0 (§8.4) |
 
 Modules are separate rt objects. **No code was found that destroys a hub's modules with it**
-(unknown), and **none that ends the station's shields when its generator dies**. The pool keeps
-its points; only its *maximum* becomes 0 (`0x41f7c5` returns 0 once the slot's module entry is
-cleared), so the pool stops recharging (derived).
+(unknown). When the shield generator is destroyed, module removal (`0x4244ff`) clears its slot and
+sets the pool to 0 (`0x4246db`, verified; see §8.2); a newly added generator starts full.
 
 ### 8.6 Station turrets (`*DEFENSE_MODULE*` modules in flight)
 
