@@ -41,6 +41,7 @@ pub mod floater;
 pub mod history;
 pub mod launcher;
 pub mod listbox;
+pub mod maplabel;
 pub mod menu;
 pub mod msgbox;
 pub mod simulator;
@@ -446,6 +447,7 @@ pub async fn run(options: Options) {
                 if let Some(text) = &options.notice {
                     s.notice(text);
                 }
+                s.hover = options.hover;
                 Screen::Strategy(Box::new(s))
             }
             None => Screen::Launcher(launcher::Launcher::new(&ctx)),

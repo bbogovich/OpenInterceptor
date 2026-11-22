@@ -32,6 +32,7 @@ use super::caption;
 use super::floater;
 use super::history::History;
 use super::listbox;
+use super::maplabel;
 use super::text;
 use super::ui::Ui;
 use super::widgets::{self, Input, ListView};
@@ -56,7 +57,16 @@ pub enum Tab {
     Messages,
     /// The testbed's event debugger (Ctrl+D shows it).
     Debug,
+    /// The databank: known research topics and encyclopaedia entries (the UFOpedia, D-26).
+    Databank,
+    /// One of the original's six status reports (D-27): income, finance, alien activity,
+    /// X-COM activity, outposts, player status.
+    Report(u8),
 }
+
+/// The six status reports' list sources, in the original's order (screens 32-37).
+pub const REPORTS: [&str; 6] =
+    ["report_income", "report_finance", "report_alien", "report_xcom", "report_outpost", "report_player"];
 
 impl Tab {
     pub const ALL: [Tab; 12] = [
@@ -87,6 +97,13 @@ impl Tab {
             Tab::Reports => "Reports",
             Tab::Debug => "Debug",
             Tab::Messages => "Messages",
+            Tab::Databank => "Databank",
+            Tab::Report(0) => "Income",
+            Tab::Report(1) => "Finance",
+            Tab::Report(2) => "Alien activity",
+            Tab::Report(3) => "X-COM activity",
+            Tab::Report(4) => "Outposts",
+            Tab::Report(_) => "Player status",
         }
     }
 }
@@ -147,13 +164,15 @@ struct Row {
     /// The row's cells for a list with columns, in the source's documented order
     /// (empty: the text spans the row).
     cells: Vec<String>,
+    /// What the detail box shows for the row (default: its text).
+    detail: Option<String>,
 }
 
 impl Row {
     /// A row with one action (none for `Act::None`), labelled by its kind.
     fn new(text: String, act: Act) -> Row {
         let label = match act {
-            Act::None => return Row { text, acts: Vec::new(), cells: Vec::new() },
+            Act::None => return Row { text, acts: Vec::new(), cells: Vec::new(), detail: None },
             Act::SelectBase(_) => "Select",
             Act::NewBase(..) | Act::Build(_) | Act::BuildFacility(..) => "Build",
             Act::Research(_) => "Research",
@@ -176,7 +195,13 @@ impl Row {
             Act::Survey(_) => "Survey",
             Act::StationResearch(..) => "Start",
         };
-        Row { text, acts: vec![(label, act)], cells: Vec::new() }
+        Row { text, acts: vec![(label, act)], cells: Vec::new(), detail: None }
+    }
+
+    /// Gives the row a longer text for the detail box.
+    fn detail(mut self, text: String) -> Row {
+        self.detail = Some(text);
+        self
     }
 
     /// Gives the row its cells (a list with `columns`).
@@ -203,6 +228,12 @@ impl Row {
 
 /// The panel a `list` widget's `source` names.
 fn tab_of(source: &str) -> Option<Tab> {
+    if source == "databank" {
+        return Some(Tab::Databank);
+    }
+    if let Some(k) = REPORTS.iter().position(|r| *r == source) {
+        return Some(Tab::Report(k as u8));
+    }
     Tab::ALL
         .iter()
         .copied()
@@ -284,6 +315,11 @@ pub struct StrategyScreen {
     art: bool,
     /// The map is clipped to a circle.
     map_round: bool,
+    /// The map's labels the original's way (`labels:`), and the screen's layout they are
+    /// placed in; `None`: every star's name.
+    map_labels: Option<(crate::content::screens::MapLabels, crate::hud::Layout)>,
+    /// `--hover`: where the map's labels take the cursor to be (design space; testbed).
+    pub hover: Option<[f32; 2]>,
     /// The map is the small overview (no names, no legend).
     minimap: bool,
     /// The base orders apply to.
@@ -454,6 +490,8 @@ impl StrategyScreen {
             prompt_up: false,
             art: false,
             map_round: false,
+            map_labels: None,
+            hover: None,
             minimap: false,
             base: 0,
             system: None,
@@ -712,6 +750,7 @@ impl StrategyScreen {
             }
             Tab::Factory => {
                 let rate = c.effect(def, base.min(c.bases.len().saturating_sub(1)), "production_rate");
+                let rate = crate::campaign::shown(rate as f64);
                 rows.push(Row::new(format!("Production: {rate:.0} units an hour"), Act::None));
                 for (i, it) in def.items.iter().enumerate() {
                     if it.prod_time > 0.0 && c.available(def, &format!("items.{}", it.id)) {
@@ -938,33 +977,37 @@ impl StrategyScreen {
                     format!("Rival aggression x{:.2}; battles won {}", c.story.aggression, c.story.battles_won),
                     Act::None,
                 ));
+                // The databank: the topics researched, then the encyclopaedia (D-26).
+                for t in (0..def.research.len()).filter(|&t| c.known[t]) {
+                    let r = &def.research[t];
+                    rows.push(Row::new(format!("{}: {}", r.name, r.description), Act::None));
+                }
                 for (title, text) in c.encyclopaedia(def) {
                     rows.push(Row::new(format!("{title}: {text}"), Act::None));
                 }
             }
             Tab::Reports => {
-                let living = c.pilots.iter().filter(|p| p.state != PilotState::Dead).count();
-                rows.push(Row::new(
-                    format!(
-                        "Funds {}  -  score {:.0} ({:+.0} this month)  -  {} bases, {} craft, {living} pilots",
-                        money(c.money),
-                        c.score,
-                        c.month_score,
-                        c.bases.len(),
-                        c.craft.len()
-                    ),
-                    Act::None,
-                ));
-                let reports: Vec<_> =
-                    c.messages.iter().rev().filter(|m| m.text.starts_with("Monthly report")).collect();
-                if reports.is_empty() {
-                    rows.push(Row::new("No monthly report yet".into(), Act::None));
-                }
-                for m in reports {
-                    let d = def.start.date.plus_days((m.hour / 24.0) as u32);
-                    rows.push(Row::new(format!("{d}  {}", m.text.trim_start_matches("Monthly report: ")), Act::None));
+                // The six status reports one after another, each under its name (D-27).
+                for k in 0..REPORTS.len() as u8 {
+                    rows.push(Row::new(format!("-- {} --", Tab::Report(k).name()), Act::None));
+                    rows.extend(report_rows(c, def, k));
                 }
             }
+            Tab::Databank => {
+                // The databank: every topic researched (its description in the detail
+                // box), then the encyclopaedia's unlocked entries.
+                for t in (0..def.research.len()).filter(|&t| c.known[t]) {
+                    let r = &def.research[t];
+                    rows.push(Row::new(r.name.clone(), Act::None).detail(format!("{}: {}", r.name, r.description)));
+                }
+                for (title, text) in c.encyclopaedia(def) {
+                    rows.push(Row::new(title.clone(), Act::None).detail(format!("{title}: {text}")));
+                }
+                if rows.is_empty() {
+                    rows.push(Row::new("No entries yet".into(), Act::None));
+                }
+            }
+            Tab::Report(k) => rows = report_rows(c, def, k),
             Tab::Debug => {
                 // Every story event: has it fired, does its condition hold now.
                 let s = &def.story;
@@ -1831,7 +1874,18 @@ impl StrategyScreen {
             }
         }
         let (s, origin) = self.map_view(map);
-        self.draw_map(&ctx.ui, def, map, s, origin, k);
+        // The map's hover labels (`widgets.map.labels`), placed in the screen's pixels
+        // scaled by the text scale `k` (this layout stretches, so no single design space).
+        let screen_px = crate::hud::Layout { scale: k, offset: Vec2::ZERO, design: vec2(w / k, h / k) };
+        self.map_labels = layout_def
+            .items
+            .iter()
+            .find(|wd| wd.name == "map")
+            .and_then(|wd| wd.labels.clone())
+            .filter(|l| l.font.as_deref().and_then(|f| ctx.ui.sheet(f)).is_some())
+            .map(|l| (l, screen_px));
+        let icons = self.star_icons(ctx, def);
+        self.draw_map(&ctx.ui, def, map, s, origin, k, &icons);
         let next = self.draw_top(ctx, def, top, live, k);
         let ui = &ctx.ui;
         self.draw_nav(ui, nav, live, k);
@@ -2169,7 +2223,9 @@ impl StrategyScreen {
                         self.map_round = wd.round;
                         self.minimap = true;
                         let (s, origin) = self.map_view(r);
-                        self.draw_map(&ctx.ui, def, r, s, origin, layout.scale * 0.6);
+                        self.map_labels = None;
+                        let icons = self.star_icons(ctx, def);
+                        self.draw_map(&ctx.ui, def, r, s, origin, layout.scale * 0.6, &icons);
                         self.minimap = false;
                         (self.zoom, self.pan) = (zoom, pan);
                     }
@@ -2177,7 +2233,14 @@ impl StrategyScreen {
                         self.map_round = wd.round;
                         map_rect = r;
                         let (s, origin) = self.map_view(r);
-                        self.draw_map(&ctx.ui, def, r, s, origin, layout.scale);
+                        // Labels need their font; without it the map names every star.
+                        self.map_labels = wd
+                            .labels
+                            .clone()
+                            .filter(|l| l.font.as_deref().and_then(|f| ctx.ui.sheet(f)).is_some())
+                            .map(|l| (l, layout));
+                        let icons = self.star_icons(ctx, def);
+                        self.draw_map(&ctx.ui, def, r, s, origin, layout.scale, &icons);
                     }
                     WidgetKind::Info => {
                         if let Some(a) = self.draw_info(&ctx.ui, def, r, &input, layout.scale) {
@@ -2539,6 +2602,32 @@ impl StrategyScreen {
             let (n, first) = (rows.len() as f32, self.list.first as f32);
             draw_rectangle(t[0], t[1] + t[3] * first / n, t[2], t[3] * visible as f32 / n, ui.colour("border"));
         }
+        // Sockets on the art (Equip Ships' ring): the rows with cells (the craft), one per
+        // socket, name over its second cell; a click selects that row.
+        if !style.slots.is_empty() {
+            let sf = style.slot_font.as_deref().and_then(|f| ui.sheet(f)).unwrap_or(sheet);
+            let face = sf.face();
+            let craft: Vec<usize> = (0..rows.len()).filter(|i| !rows[*i].cells.is_empty()).collect();
+            for (slot, &i) in style.slots.iter().zip(&craft) {
+                let [cx, cy] = slot.map(|v| v as i32);
+                let [sw, sh] = style.slot_size;
+                let sr = layout.rect([slot[0] - sw / 2.0, slot[1] - sh / 2.0, sw, sh]);
+                if i == self.list.selected {
+                    draw_circle_lines(sr[0] + sr[2] / 2.0, sr[1] + sr[3] / 2.0, sr[3] * 0.42, 2.0, ui.colour("border"));
+                }
+                if input.clicked_in(sr) {
+                    self.list.selected = i;
+                }
+                glyphs.clear();
+                let cells = &rows[i].cells;
+                let name = cells[0].to_uppercase();
+                text::draw_text(&face, &name, cx, cy - 4, text::Align::Centre, false, &mut glyphs);
+                if let Some(second) = cells.get(1) {
+                    text::draw_text(&face, &second.to_uppercase(), cx, cy + 6, text::Align::Centre, false, &mut glyphs);
+                }
+                ui.draw_glyphs(sf, &glyphs, layout, WHITE);
+            }
+        }
         // The scroll arrows: one row per step, firing on press and repeating while held
         // (20 ticks, then every 5); disabled at the ends.
         for (k, arrow) in [&style.up, &style.down].into_iter().enumerate() {
@@ -2582,7 +2671,7 @@ impl StrategyScreen {
             let df = style.detail_font.as_deref().and_then(|f| ui.sheet(f)).unwrap_or(sheet);
             let d = d.map(|v| v as i32);
             glyphs.clear();
-            text::draw_text_top(&df.face(), &row.text, d, &mut glyphs);
+            text::draw_text_top(&df.face(), row.detail.as_deref().unwrap_or(&row.text), d, &mut glyphs);
             ui.draw_glyphs(df, &glyphs, layout, WHITE);
         }
         // Its actions as text buttons.
@@ -2686,7 +2775,80 @@ impl StrategyScreen {
 
     /// The star map: lanes, sensor ranges, systems, bases, contacts, convoys, craft,
     /// the selection, a hover label and a legend.
-    fn draw_map(&self, ui: &Ui, def: &StrategyDef, r: [f32; 4], s: f32, origin: Vec2, k: f32) {
+    /// The map's hover labels (D-39, `app::maplabel`): the systems and bases inside a
+    /// box around the cursor (and inside the round map), one at a time, upper-cased in
+    /// the labels' sheet font, centred above the object and kept inside the circle.
+    fn draw_map_labels(
+        &self,
+        ui: &Ui,
+        cfg: &crate::content::screens::MapLabels,
+        layout: &crate::hud::Layout,
+        at: &dyn Fn([f32; 2]) -> Vec2,
+        centre: Vec2,
+        radius: f32,
+    ) {
+        let Some(sheet) = cfg.font.as_deref().and_then(|f| ui.sheet(f)) else { return };
+        let face = sheet.face();
+        let to_design = |p: Vec2| [(p.x - layout.offset.x) / layout.scale, (p.y - layout.offset.y) / layout.scale];
+        // The cursor, or `--hover`'s design-space point (for screenshots).
+        let (mx, my) = match self.hover {
+            Some([x, y]) => (layout.offset.x + x * layout.scale, layout.offset.y + y * layout.scale),
+            None => mouse_position(),
+        };
+        let cursor = to_design(vec2(mx, my));
+        if self.map_round && vec2(mx, my).distance(centre) > radius {
+            return;
+        }
+        let c = &self.campaign;
+        let mut queued: Vec<(String, [f32; 2], i32, [f32; 4])> = Vec::new();
+        for sys in c.systems.iter().filter(|s| !s.hidden) {
+            let d = to_design(at(sys.pos));
+            if maplabel::in_box(d, cursor, cfg.box_size as f32) {
+                queued.push((sys.name.to_uppercase(), d, cfg.rise, cfg.colour));
+            }
+        }
+        for b in &c.bases {
+            let d = to_design(at(c.systems[b.system].pos));
+            if maplabel::in_box(d, cursor, cfg.box_size as f32) {
+                let building = if b.ready_at > c.hours { " BUILDING" } else { "" };
+                queued.push((format!("{}{building}", b.name.to_uppercase()), d, cfg.base_rise, cfg.base_colour));
+            }
+        }
+        if queued.is_empty() {
+            return;
+        }
+        let ticks = (get_time() * 60.0) as u64;
+        let (text_s, d, rise, colour) = &queued[maplabel::turn(queued.len(), ticks, cfg.cycle)];
+        let w = text::width(&face, text_s, false) as f32;
+        let y = d[1] - *rise as f32;
+        let (dc, dr) = (to_design(centre), radius / layout.scale);
+        let x = if self.map_round { maplabel::chord_x(d[0], y, w, dc, dr, cfg.margin as f32) } else { d[0] };
+        let mut buf = Vec::new();
+        text::draw_text(&face, text_s, x as i32, y as i32, text::Align::Centre, false, &mut buf);
+        ui.draw_glyphs(sheet, &buf, layout, Color::new(colour[0], colour[1], colour[2], colour[3]));
+    }
+
+    /// The star classes' map icons (`star_classes.<id>.icon`), by class index; the
+    /// original's are keyed by their corner colour.
+    fn star_icons(&mut self, ctx: &AppContext, def: &StrategyDef) -> Vec<Option<Texture2D>> {
+        let pack = ctx.content.campaign_pack().unwrap_or(0);
+        def.star_classes
+            .iter()
+            .map(|c| c.icon.as_ref().and_then(|i| self.image_keyed(ctx, i, pack, i.starts_with("original:"))))
+            .collect()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn draw_map(
+        &self,
+        ui: &Ui,
+        def: &StrategyDef,
+        r: [f32; 4],
+        s: f32,
+        origin: Vec2,
+        k: f32,
+        icons: &[Option<Texture2D>],
+    ) {
         if !self.art {
             ui.panel(r[0], r[1], r[2], r[3]);
         }
@@ -2729,12 +2891,26 @@ impl StrategyScreen {
             if sys.hidden || !inside(p) {
                 continue;
             }
-            let col = def.star_classes.iter().find(|x| x.id == sys.class).map(|x| x.color).unwrap_or([1.0, 1.0, 0.8]);
-            draw_circle(p.x, p.y, star, Color::new(col[0], col[1], col[2], 1.0));
+            let class = def.star_classes.iter().position(|x| x.id == sys.class);
+            let col = class.map(|c| def.star_classes[c].color).unwrap_or([1.0, 1.0, 0.8]);
+            match class.and_then(|c| icons.get(c)).and_then(Option::as_ref) {
+                // The class's icon at its own size (design pixels), centred on the star.
+                Some(tex) => {
+                    let (w, h) = (tex.width() * k, tex.height() * k);
+                    draw_texture_ex(
+                        tex,
+                        p.x - w / 2.0,
+                        p.y - h / 2.0,
+                        WHITE,
+                        DrawTextureParams { dest_size: Some(vec2(w, h)), ..Default::default() },
+                    );
+                }
+                None => draw_circle(p.x, p.y, star, Color::new(col[0], col[1], col[2], 1.0)),
+            }
             if self.sel == Some(Sel::System(i)) {
                 draw_circle_lines(p.x, p.y, star + 6.0, 2.0, YELLOW);
             }
-            if !self.minimap {
+            if !self.minimap && self.map_labels.is_none() {
                 ui.text_in(&sys.name, p.x + star + 4.0, p.y - 6.0, 16.0 * k, text_c);
             }
         }
@@ -2746,6 +2922,10 @@ impl StrategyScreen {
             let col = if i == self.base { Color::new(0.3, 1.0, 0.4, 1.0) } else { Color::new(0.2, 0.7, 0.3, 1.0) };
             let q = star + 4.0;
             draw_rectangle_lines(p.x - q, p.y - q, q * 2.0, q * 2.0, 2.0, col);
+        }
+        // Labels the original's way: only near the cursor, upper-cased, taking turns.
+        if let (Some((cfg, layout)), false) = (&self.map_labels, self.minimap) {
+            self.draw_map_labels(ui, cfg, layout, &at, centre, radius);
         }
         for kk in c.contacts.iter().filter(|kk| kk.detected) {
             let mut from = at(kk.pos);
@@ -2858,6 +3038,101 @@ fn ask(ctx: &AppContext, input: &Input, kind: &str, title: &str, body: &str, but
         play_ui(ctx, None, sound);
     }
     chosen
+}
+
+/// The rows of status report `k` (0 income … 5 player status) from the campaign's state.
+fn report_rows(c: &mut Campaign, def: &StrategyDef, k: u8) -> Vec<Row> {
+    use crate::campaign::shown;
+    let line = |s: String| Row::new(s, Act::None);
+    let mut rows = Vec::new();
+    match k {
+        // Income: the monthly reports, newest first.
+        0 => {
+            for m in c.messages.iter().rev().filter(|m| m.text.starts_with("Monthly report")) {
+                let d = def.start.date.plus_days((m.hour / 24.0) as u32);
+                rows.push(line(format!("{d}  {}", m.text.trim_start_matches("Monthly report: "))));
+            }
+            if rows.is_empty() {
+                rows.push(line("No monthly report yet".into()));
+            }
+        }
+        // Finance: funds, this month's costs, the score.
+        1 => {
+            let maintenance: f32 = c
+                .bases
+                .iter()
+                .flat_map(|b| &b.modules)
+                .filter(|m| !m.wrecked)
+                .map(|m| def.modules[m.module].maintenance)
+                .sum();
+            let upkeep: f32 = c.craft.iter().map(|cr| def.hulls[cr.hull].upkeep).sum();
+            let living = c.pilots.iter().filter(|p| p.state != PilotState::Dead).count() as f32;
+            let salaries = living * def.pilots.as_ref().map_or(0.0, |p| p.salary);
+            rows.push(line(format!("Funds: {}", money(shown(c.money)))));
+            rows.push(line(format!("Module maintenance a month: {}", money(shown(maintenance as f64)))));
+            rows.push(line(format!("Craft upkeep a month: {}", money(shown(upkeep as f64)))));
+            rows.push(line(format!("Salaries a month: {}", money(shown(salaries as f64)))));
+            rows.push(line(format!("Total costs a month: {}", money(shown((maintenance + upkeep + salaries) as f64)))));
+            rows.push(line(format!("Score this month: {:+.0}", shown(c.month_score as f64))));
+            rows.push(line(format!("Score in all: {:.0}", shown(c.score as f64))));
+        }
+        // Alien activity: the contacts on the sensors and the raids struck.
+        2 => {
+            for kk in c.contacts.iter().filter(|kk| kk.detected) {
+                let to = kk.target_base.map(|b| format!(" -> {}", c.bases[b].name)).unwrap_or_default();
+                rows.push(line(format!("{}{to}", def.raids[kk.raid].name)));
+            }
+            for m in c
+                .messages
+                .iter()
+                .rev()
+                .filter(|m| m.text.contains("struck") || m.text.contains("drove the raid"))
+                .take(20)
+            {
+                rows.push(line(m.text.clone()));
+            }
+            if rows.is_empty() {
+                rows.push(line("No alien activity seen".into()));
+            }
+        }
+        // X-COM activity: battles, craft and pilots.
+        3 => {
+            rows.push(line(format!("Battles won: {}", c.story.battles_won)));
+            for cr in &c.craft {
+                rows.push(line(format!("{} at {}", cr.name, c.bases[cr.base].name)));
+            }
+            for p in c.pilots.iter().filter(|p| p.state != PilotState::Dead) {
+                rows.push(line(format!("{}: {} kills, {} missions", p.name, p.kills, p.missions)));
+            }
+        }
+        // Outposts: the bases and their systems.
+        4 => {
+            for b in &c.bases {
+                let building = if b.ready_at > c.hours { " (under construction)" } else { "" };
+                rows.push(line(format!(
+                    "{} - {}{building}: {} modules",
+                    b.name,
+                    c.systems[b.system].name,
+                    b.modules.len()
+                )));
+            }
+        }
+        // Player status: score, standing, the rival.
+        _ => {
+            rows.push(line(format!(
+                "Score {:.0} ({:+.0} this month)",
+                shown(c.score as f64),
+                shown(c.month_score as f64)
+            )));
+            if let Some(r) = &def.story.relations {
+                for (f, v) in &c.story.standing {
+                    rows.push(line(format!("{f}: {} ({v:+.0})", r.stance(*v))));
+                }
+            }
+            rows.push(line(format!("Rival aggression x{:.2}", c.story.aggression)));
+        }
+    }
+    rows
 }
 
 /// A notice kind's name (`dialog.styles` and `clock.ask_for` use these).

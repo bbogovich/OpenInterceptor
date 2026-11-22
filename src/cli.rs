@@ -34,6 +34,8 @@ OPTIONS:
     --screen <ID>       With --strategy: open this strategy screen (screens.<id>)
     --notice <TEXT>     With --strategy: show TEXT in a prompt at start (to try the
                         skin's dialog look)
+    --hover <X,Y>       With --strategy: the map's labels act as if the cursor were at
+                        X,Y of the screen set's design space (for screenshots)
     --credits           Show the campaign's credits roll
     --cutscene <ID>     Play a cutscene of the campaign
     --video <REF>       Play a video (original:<file>.smk or a pack path) and quit to the launcher
@@ -90,6 +92,8 @@ pub struct Options {
     pub screen: Option<String>,
     /// `--notice <text>`: with `--strategy`, a prompt shown at start (testbed).
     pub notice: Option<String>,
+    /// `--hover <x,y>`: with `--strategy`, where the map's labels think the cursor is.
+    pub hover: Option<[f32; 2]>,
     /// `--video <ref>`: play a video first.
     pub video: Option<String>,
     /// `--cutscene <id>`: play a cutscene first.
@@ -135,6 +139,14 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--credits" => o.credits = true,
             "--screen" => o.screen = Some(value("--screen")?),
             "--notice" => o.notice = Some(value("--notice")?),
+            "--hover" => {
+                let v = value("--hover")?;
+                let p: Vec<f32> = v.split(',').filter_map(|x| x.trim().parse().ok()).collect();
+                match p.as_slice() {
+                    [x, y] => o.hover = Some([*x, *y]),
+                    _ => return Err(format!("--hover: expected X,Y, not '{v}'")),
+                }
+            }
             "--chapter" => {
                 o.chapter = Some(value("--chapter")?.parse().map_err(|_| "--chapter: expected a number".to_string())?)
             }
@@ -292,6 +304,8 @@ mod tests {
         let shot = parse(&args("--screenshot a.png --frames 30"), None).unwrap();
         assert_eq!((shot.screenshot, shot.frames), (Some(PathBuf::from("a.png")), Some(30)));
         assert_eq!(parse(&args("--strategy --notice hello"), None).unwrap().notice.as_deref(), Some("hello"));
+        assert_eq!(parse(&args("--strategy --hover 120,200"), None).unwrap().hover, Some([120.0, 200.0]));
+        assert!(parse(&args("--hover x"), None).is_err());
         assert!(parse(&args("--frames many"), None).is_err());
         assert!(parse(&args("--help"), None).unwrap().help);
         assert!(!parse(&args("--fullscreen --windowed"), None).unwrap().fullscreen);

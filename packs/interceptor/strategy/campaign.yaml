@@ -41,16 +41,20 @@ maps:
     size: [60000, 60000]      # the executable's MAX_GRIDRANGE
     systems: [30, 45]         # DERIVED (the executable allows up to 85)
     black_holes: 1            # the gateway, hidden until found
+    names: ["original:starcorp1.txt/STAR NAMES"]   # the original's star names (Text/starcorp1.txt)
     travel: free
     unit_ly: 0.000167
 
+# Icons: the CSD's level-0 star-class icons, 9 x 9 (sprite rows 893-901, VERIFIED -
+# notes/re/unknowns-2026-11.md §1.2); which of the original's nine classes stands for each
+# of these is DERIVED (red = Red Dwarf, white = White, blue = Blue).
 star_classes:
-  yellow: {color: [1.0, 0.92, 0.55], weight: 3}
-  orange: {color: [1.0, 0.7, 0.35], weight: 3}
-  red: {color: [1.0, 0.45, 0.35], weight: 4}
-  white: {color: [0.95, 0.95, 1.0], weight: 2}
-  blue: {color: [0.55, 0.7, 1.0], weight: 1}
-  black_hole: {color: [0.5, 0.2, 0.7], weight: 0}
+  yellow: {color: [1.0, 0.92, 0.55], weight: 3, icon: "original:sprite#897"}
+  orange: {color: [1.0, 0.7, 0.35], weight: 3, icon: "original:sprite#898"}
+  red: {color: [1.0, 0.45, 0.35], weight: 4, icon: "original:sprite#900"}
+  white: {color: [0.95, 0.95, 1.0], weight: 2, icon: "original:sprite#894"}
+  blue: {color: [0.55, 0.7, 1.0], weight: 1, icon: "original:sprite#895"}
+  black_hole: {color: [0.5, 0.2, 0.7], weight: 0, icon: "original:sprite#901"}
 
 # Research is downloaded from Earth through each base's downlinks (30/35/40 work units an
 # hour by type). Progress belongs to the topic, so switching away keeps it (verified:

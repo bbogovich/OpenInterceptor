@@ -48,6 +48,39 @@ pub enum WidgetKind {
     Anim,
 }
 
+/// How a map labels its objects (the original's CSD, `notes/re/unknowns-2026-11.md` §1.3):
+/// on hover only — objects inside a `box` × `box` square around the cursor, inside the
+/// round viewport — upper-cased, centred `rise` px above a star (`base_rise` above a
+/// base), kept `margin` px inside the circle, several taking turns every `cycle` ticks.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MapLabels {
+    pub font: Option<String>,
+    pub colour: [f32; 4],
+    pub base_colour: [f32; 4],
+    pub rise: i32,
+    pub base_rise: i32,
+    pub box_size: i32,
+    pub cycle: u32,
+    pub margin: i32,
+}
+
+impl Default for MapLabels {
+    /// The original's: stars RGB(160,160,0) 20 px up, bases RGB(120,120,0) 8 px up, a
+    /// 30 px box, turns every 15 map-counter steps of 4 ticks, 3 px inside the circle.
+    fn default() -> Self {
+        MapLabels {
+            font: None,
+            colour: [160.0 / 255.0, 160.0 / 255.0, 0.0, 1.0],
+            base_colour: [120.0 / 255.0, 120.0 / 255.0, 0.0, 1.0],
+            rise: 20,
+            base_rise: 8,
+            box_size: 30,
+            cycle: 60,
+            margin: 3,
+        }
+    }
+}
+
 /// Where a sprite widget is placed (the size comes from its image).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Place {
@@ -162,6 +195,9 @@ pub struct WidgetDef {
     pub interval: u32,
     /// An `anim` that only moves while the campaign clock runs.
     pub with_clock: bool,
+    /// A `map`'s labels the original's way (`labels:`): only for objects near the
+    /// cursor, upper-cased, in a sheet font, taking turns. `None`: every star's name.
+    pub labels: Option<MapLabels>,
     /// A label drawn on a button without images.
     pub label: Option<String>,
     /// Map: clipped to a circle.
@@ -200,6 +236,12 @@ pub struct ListStyle {
     /// The scroll arrows (one row per step, repeating while held).
     pub up: Option<Arrow>,
     pub down: Option<Arrow>,
+    /// Sockets on the art (centres) where the list's rows that have cells (the hangar's
+    /// craft) are also shown, name over second cell, in `slot_font` (D-30: Equip Ships'
+    /// ring of nine). Clicking one selects its row.
+    pub slots: Vec<[f32; 2]>,
+    pub slot_size: [f32; 2],
+    pub slot_font: Option<String>,
 }
 
 /// A list's scroll arrow: where it is and its images (normal, pressed, disabled; any may
@@ -322,6 +364,27 @@ impl WidgetDef {
                 Some(v) => return Err(format!("interval: {v} is not a whole number of ticks (at least 1)")),
             },
             with_clock: g.bool("with_clock").unwrap_or(false),
+            labels: match g.node("labels").map(Get) {
+                None => None,
+                Some(lg) => {
+                    let d = MapLabels::default();
+                    let rgb = |k: &str, dflt: [f32; 4]| match lg.nums(k).as_deref() {
+                        Some([r, gg, b]) => [*r, *gg, *b, 1.0],
+                        _ => dflt,
+                    };
+                    let int = |k: &str, dflt: i32| lg.num(k).map_or(dflt, |v| v as i32);
+                    Some(MapLabels {
+                        font: lg.str("font").map(str::to_string),
+                        colour: rgb("colour", d.colour),
+                        base_colour: rgb("base_colour", d.base_colour),
+                        rise: int("rise", d.rise),
+                        base_rise: int("base_rise", d.base_rise),
+                        box_size: int("box", d.box_size).max(1),
+                        cycle: int("cycle", d.cycle as i32).max(1) as u32,
+                        margin: int("margin", d.margin),
+                    })
+                }
+            },
             list: ListStyle {
                 row_height: g.num("row_height").filter(|v| *v >= 4.0),
                 row_size: g.num("row_size").filter(|v| *v >= 4.0),
@@ -342,6 +405,21 @@ impl WidgetDef {
                 }),
                 up: g.node("up").map(|n| Arrow::parse("up", n)).transpose()?,
                 down: g.node("down").map(|n| Arrow::parse("down", n)).transpose()?,
+                slots: match g.node("slots").and_then(|n| n.as_seq()) {
+                    None => Vec::new(),
+                    Some(items) => items
+                        .iter()
+                        .map(|n| match numbers(n).as_deref() {
+                            Some([x, y]) => Ok([*x, *y]),
+                            _ => Err("slots: expected a list of [x, y] centres".to_string()),
+                        })
+                        .collect::<Result<_, _>>()?,
+                },
+                slot_size: match g.nums("slot_size").as_deref() {
+                    Some([w, h]) => [*w, *h],
+                    _ => [76.0, 75.0],
+                },
+                slot_font: g.str("slot_font").map(str::to_string),
             },
             label: g.str("label").map(str::to_string),
             round: g.str("shape") == Some("round"),
@@ -537,6 +615,20 @@ pub fn schema() -> Ty {
                     f("frames", Ty::List(Box::new(Ty::Asset)), "an anim's frames, in turn"),
                     f("interval", Ty::Num, "an anim's step, ticks (1/60 s; default 6)"),
                     f("with_clock", Ty::Bool, "an anim that moves only while the campaign clock runs"),
+                    f(
+                        "labels",
+                        Ty::Struct(vec![
+                            f("font", Ty::Name, "a sheet font of the skin (the original: its 6 px font)"),
+                            f("colour", Ty::Numbers(3), "stars' labels (original: 160,160,0)"),
+                            f("base_colour", Ty::Numbers(3), "bases' labels (original: 120,120,0)"),
+                            f("rise", Ty::Num, "px above a star (original: 20)"),
+                            f("base_rise", Ty::Num, "px above a base (original: 8)"),
+                            f("box", Ty::Num, "objects within this square around the cursor are labelled (original: 30)"),
+                            f("cycle", Ty::Num, "ticks each of several labels shows (original: 60)"),
+                            f("margin", Ty::Num, "px kept inside a round map (original: 3)"),
+                        ]),
+                        "a map's labels the original's way: on hover, upper-cased, taking turns",
+                    ),
                     f("row_height", Ty::Num, "a list in a sheet font: row pitch (default line height + 2)"),
                     f("row_size", Ty::Num, "a list in a sheet font: a row's own height when less than row_height"),
                     f("header", Ty::Num, "a list in a sheet font: height of the title strip at the top of rect (0: no title)"),
@@ -547,6 +639,9 @@ pub fn schema() -> Ty {
                     f("style", Ty::Enum(&["plain", "compact"]), "a list in a sheet font: compact = the original's list box"),
                     f("columns", Ty::Text, "a list's header template (text or @key): columns split at ~, # = editable"),
                     f("bar", Ty::Numbers(3), "compact: the pulsing selection bar's colour (default green)"),
+                    f("slots", Ty::List(Box::new(Ty::Numbers(2))), "sockets (centres) where the rows with cells (craft) also show"),
+                    f("slot_size", Ty::Numbers(2), "a socket's clickable size (default 76 x 75)"),
+                    f("slot_font", Ty::Name, "the sockets' sheet font"),
                     f(
                         "up",
                         Ty::Either(
@@ -688,6 +783,11 @@ mod tests {
         assert_eq!((lamp.kind, lamp.frames.len(), lamp.interval, lamp.with_clock), (WidgetKind::Anim, 2, 4, false));
         let b = anl.items.iter().find(|w| w.name == "b").unwrap();
         assert_eq!((b.sound.as_deref(), b.tip.as_deref()), (Some("ui_click"), Some("@orig.S_CSD_BASES")));
+        let ml = yaml::parse("widgets: {m: {kind: map, rect: [66, 61, 333, 333], labels: {font: caption, rise: 18}}}")
+            .unwrap();
+        let mll = ScreenLayout::parse("p", Get(&ml), l.clone(), &[], 0).unwrap();
+        let lab = mll.items.iter().find(|w| w.name == "m").unwrap().labels.clone().unwrap();
+        assert_eq!((lab.font.as_deref(), lab.rise, lab.base_rise, lab.cycle), (Some("caption"), 18, 8, 60));
         let bad_i = yaml::parse("widgets: {a: {kind: anim, rect: [0, 0, 1, 1], interval: 0}}").unwrap();
         assert!(ScreenLayout::parse("p", Get(&bad_i), l.clone(), &[], 0).unwrap_err().contains("interval"));
         let bad_d = yaml::parse("widgets: {l: {kind: list, rect: [0, 0, 1, 1], detail: [1, 2]}}").unwrap();

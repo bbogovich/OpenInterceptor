@@ -122,6 +122,23 @@ pub struct Content {
     sprites: std::sync::OnceLock<Result<Vec<crate::formats::spritetable::SpriteRow>, String>>,
 }
 
+/// The lines of `[section]` in a plain list file (the original's `Names1.txt`,
+/// `starcorp1.txt`): non-empty lines up to the next `[header]`.
+pub fn list_section(text: &str, section: &str) -> Vec<String> {
+    let mut inside = false;
+    let mut out = Vec::new();
+    for line in text.lines().map(str::trim) {
+        if let Some(h) = line.strip_prefix('[').and_then(|l| l.strip_suffix(']')) {
+            inside = h.trim().eq_ignore_ascii_case(section);
+            continue;
+        }
+        if inside && !line.is_empty() {
+            out.push(line.to_string());
+        }
+    }
+    out
+}
+
 /// An RGBA image decoded on the CPU.
 pub type Image = tga::Image;
 
@@ -334,6 +351,9 @@ impl Content {
             errors,
             sprites: std::sync::OnceLock::new(),
         };
+        // A generated map's names may come from a list in the player's data:
+        // `names: [original:starcorp1.txt/STAR NAMES]` (D-28).
+        content.expand_map_names();
         // Terrains from heightmap images (generated ones were built with the rules).
         let mut fields = Vec::new();
         for (k, t) in content.rules.terrains.iter().enumerate() {
@@ -359,6 +379,42 @@ impl Content {
         }
         content.warnings.extend(content.errors.iter().cloned());
         Ok(content)
+    }
+
+    /// Replaces each `original:<file>/<section>` entry of a generated map's `names` by the
+    /// lines of that section of the player's text file (a missing file or section is a
+    /// warning and the entry is dropped, so the map numbers its systems).
+    fn expand_map_names(&mut self) {
+        let Some(st) = self.rules.strategy.as_mut() else { return };
+        let strategy::MapKind::Generated { names, .. } = &mut st.map.kind else { return };
+        if !names.iter().any(|n| n.starts_with("original:")) {
+            return;
+        }
+        let mut out = Vec::new();
+        for n in names.iter() {
+            let Some((file, section)) = n.strip_prefix("original:").and_then(|r| r.split_once('/')) else {
+                out.push(n.clone());
+                continue;
+            };
+            match self.original.as_ref().map(|o| o.read_file(file.trim())) {
+                Some(Ok(bytes)) => {
+                    let list = list_section(&String::from_utf8_lossy(&bytes), section.trim());
+                    if list.is_empty() {
+                        self.warnings.push(format!("maps: names {n}: no such section, or it is empty"));
+                    }
+                    out.extend(list);
+                }
+                Some(Err(e)) => self.warnings.push(format!("maps: names {n}: {e}")),
+                None => self.warnings.push(format!("maps: names {n}: needs the original data")),
+            }
+        }
+        *names = out;
+    }
+
+    /// The index of the campaign's own pack (where its strategy data's pack files live).
+    pub fn campaign_pack(&self) -> Option<usize> {
+        let id = self.campaign.as_deref()?;
+        self.packs.iter().position(|p| p.id == id)
     }
 
     /// A row of the original's sprite table by its reference part (`372`, `372+1`).
@@ -781,6 +837,15 @@ fn files_with_ext(dir: &Path, ext: &str) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn list_sections_read_lines_until_the_next_header() {
+        let t = "[A]\r\nOne\r\nTwo Words\r\n\r\n[B]\r\nThree\r\n";
+        assert_eq!(list_section(t, "a"), vec!["One".to_string(), "Two Words".into()]);
+        assert_eq!(list_section(t, "B"), vec!["Three".to_string()]);
+        assert!(list_section(t, "C").is_empty());
+    }
+
     use super::*;
 
     /// Writes a small original-free pack into a temp folder.

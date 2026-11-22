@@ -674,6 +674,16 @@
                   "frames": {"description": "an anim's frames, in turn", "type": "array", "items": {"type": "string"}},
                   "interval": {"description": "an anim's step, ticks (1/60 s; default 6)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "with_clock": {"description": "an anim that moves only while the campaign clock runs", "type": "boolean"},
+                  "labels": {"description": "a map's labels the original's way: on hover, upper-cased, taking turns", "type": "object", "additionalProperties": false, "properties": {
+                      "font": {"description": "a sheet font of the skin (the original: its 6 px font)", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                      "colour": {"description": "stars' labels (original: 160,160,0)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                      "base_colour": {"description": "bases' labels (original: 120,120,0)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                      "rise": {"description": "px above a star (original: 20)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                      "base_rise": {"description": "px above a base (original: 8)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                      "box": {"description": "objects within this square around the cursor are labelled (original: 30)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                      "cycle": {"description": "ticks each of several labels shows (original: 60)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                      "margin": {"description": "px kept inside a round map (original: 3)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+                    }},
                   "row_height": {"description": "a list in a sheet font: row pitch (default line height + 2)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "row_size": {"description": "a list in a sheet font: a row's own height when less than row_height", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
                   "header": {"description": "a list in a sheet font: height of the title strip at the top of rect (0: no title)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -684,6 +694,9 @@
                   "style": {"description": "a list in a sheet font: compact = the original's list box", "enum": ["plain", "compact"]},
                   "columns": {"description": "a list's header template (text or @key): columns split at ~, # = editable", "type": "string"},
                   "bar": {"description": "compact: the pulsing selection bar's colour (default green)", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+                  "slots": {"description": "sockets (centres) where the rows with cells (craft) also show", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
+                  "slot_size": {"description": "a socket's clickable size (default 76 x 75)", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+                  "slot_font": {"description": "the sockets' sheet font", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
                   "up": {"description": "a list's scroll-up arrow", "anyOf": [{"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, {"type": "object", "additionalProperties": false, "properties": {
                         "rect": {"description": "x, y, w, h", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
                         "images": {"description": "normal, pressed, disabled", "type": "array", "items": {"type": "string"}}
@@ -1014,6 +1027,7 @@
     "star_classes": {"description": "star classes", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "color": {"description": "star colour", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
           "weight": {"description": "relative frequency", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "icon": {"description": "an image for the star on the map instead of a dot", "type": "string"},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
