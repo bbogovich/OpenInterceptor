@@ -8,6 +8,15 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#134 (app NEXT)** six more: `campaign::autoresolve::tests::ratings_follow_the_original_formulas`,
+`rounds_come_at_five_hours_then_hourly_and_hits_go_shield_armour_hull`,
+`a_won_battle_reports_its_kills_and_outcome_actions`,
+`station_hits_take_modules_first_and_the_hull_by_quarters`,
+`campaign::tests::battle_damage_stays_on_craft_mends_by_the_day_and_saves` (a flown battle's
+damage, the save of a running battle, a day's repair, joining in real time, a craft lost with its
+pilot) and `campaign::tests::interceptions_are_fought_off_screen_by_the_hour` (the default
+campaign with the hourly model, end to end).
+
 **#133 (app 0.22.28)** four more: `sim::combat::tests::hull_hits_and_collisions_hurt_the_pilot_until_out_cold_or_dead`,
 `content::behaviour::tests::health_rolls_follow_the_original_generator`,
 `campaign::tests::pilots_heal_train_and_are_paid_as_the_original` (health 4 → 8 in two days in the

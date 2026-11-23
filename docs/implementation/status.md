@@ -659,3 +659,21 @@ back; `grade_rise` with `World::campaign_month`. DEV-099. Note for RQ-C-23: the 
 bonuses are indexed by the pilot's **rank**, not its grade (tables 0x65f0a8…0x65f0c0 are read with the
 rank just rolled); the grade only picks the Psionics range (0 – 100, 0 – 9, 0, 50 – 79, 45 – 69,
 75 – 99 for grades 0 – 5).
+
+**#134** (app NEXT; RQ-C-18/19/20/21, D-24; flight README §13 – 14): `auto_resolve:` runs an
+auto-resolved interception as the original's hourly simulation (`campaign::autoresolve`), in game
+time, with the station's part at a base; `craft_damage:` keeps battle damage on craft (flown or
+not) and on the base's hull; `Campaign::join_offscreen` stops a running battle with its damage; the
+autoplayer fights off-screen and rebuys a hull when it has none. The original's simulation has no
+system hits, so it never disables or captures a ship: the soak's story still waits for a captured
+saucer. `interceptor` `--strategy-soak` (app NEXT, seed 7):
+
+| Days | Battles | Off-screen won / lost | Craft lost | Craft at the end | Topics |
+|---|---|---|---|---|---|
+| 30 | 4 | 1 / 1 | 2 | 1 | 1 / 71 |
+| 90 | 11 | 4 / 1 | 2 | 1 | 3 / 71 |
+| 180 | 28 | 12 / 1 | 7 | 1 | 5 / 71 |
+| 365 | 52 | 21 / 2 | 12 | 1 | 13 / 71 |
+
+D-24 closed: the soak keeps a craft and fights 52 battles in a year (it lost them all by day 30
+and fought one). DEV-102.
