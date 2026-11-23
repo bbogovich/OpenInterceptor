@@ -87,9 +87,16 @@ fn headless(options: &cli::Options) -> Option<i32> {
         // At the level the content resolved its `per_level` values at (`--difficulty`, else
         // the campaign's default), so the soak's numbers are that level's.
         let mut c = openinterceptor::campaign::Campaign::new(def, content.rules.difficulty, 7);
+        // The fleet it keeps: `--soak-fleet`, else the craft the campaign starts with.
+        let start_craft = def.start.craft.iter().map(|k| k.count as usize).sum::<usize>().max(1);
+        let play = openinterceptor::campaign::Autoplay {
+            rules: Some(&content.rules),
+            fleet: options.soak_fleet.unwrap_or(start_craft),
+            capture: options.soak_capture,
+        };
         let mut over = Vec::new();
         for d in 1..=days.ceil() as u32 {
-            c = openinterceptor::campaign::autoplay_with(def, Some(&content.rules), c, (d as f64).min(days));
+            c = openinterceptor::campaign::autoplay_run(def, &play, c, (d as f64).min(days));
             if over.is_empty() {
                 over = c.over_capacity(def).into_iter().map(|o| format!("day {d}: {o}")).collect();
             }

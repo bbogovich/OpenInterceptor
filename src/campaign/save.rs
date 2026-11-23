@@ -883,6 +883,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         recruits: list("recruits").iter().map(pilot).collect(),
         contacts,
         offscreen: list("offscreen").iter().map(read_offscreen).collect(),
+        autoplay_capture: false,
         aliens: g.node("aliens").map(|n| read_aliens(n, system_count)).unwrap_or_default(),
         deliveries,
         next_flow,
