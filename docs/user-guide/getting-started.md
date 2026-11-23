@@ -138,6 +138,8 @@ scripts/check.sh
 | `--cutscene <ID>` | Play this cutscene of the campaign, then open the main menu (or the launcher, for a campaign without a strategy layer) (app 0.13.0; [Cutscenes](../modding/cutscenes.md)). |
 | `--video <REF>` | Play this video, then open the main menu (or the launcher) (app 0.12.0): `original:<file>.smk` from your data (for example `original:alientrans1.smk`) or a pack path; Smacker files only. |
 | `--strategy-soak <DAYS>` | Play the campaign's strategy layer without a window for that many days with a simple automatic player, print one line (date, funds, score, bases, craft, topics, battles, messages) and exit (app 0.8.0; [Strategy layer](../modding/strategy.md#trying-a-campaign-out)). Use with `--campaign`. |
+| `--soak-fleet <N>` | With `--strategy-soak` (app NEXT): the automatic player keeps N craft, buying a hull (one a day) while fewer are flying or on order; default the campaign's starting craft. It also researches event-opened topics (the saucer examinations) first. |
+| `--soak-capture` | With `--strategy-soak` (app NEXT, test tooling): a won battle's first destroyed ship of each class some topic needs `captured(<class>)` counts as captured, so a soak can open those topics. The game itself never does this. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
 | `--model <NAME>` | Open the model viewer on this model: a ship class id (`comet`) or an original mesh name (`XBASE7`). |
