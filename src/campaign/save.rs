@@ -505,12 +505,18 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                         ),
                         ("away", k.away.map_or(Node::null(0), |(id, p)| nums(&[id as f64, p[0] as f64, p[1] as f64]))),
                         ("route", route(&k.route)),
+                        (
+                            "condition",
+                            k.condition
+                                .map_or(Node::null(0), |v| nums(&v.iter().map(|x| *x as f64).collect::<Vec<_>>())),
+                        ),
                     ])
                 })
                 .collect()),
         ),
         ("pilots", seq(c.pilots.iter().map(pilot).collect())),
         ("recruits", seq(c.recruits.iter().map(pilot).collect())),
+        ("offscreen", seq(c.offscreen.iter().map(write_offscreen).collect())),
         (
             "contacts",
             seq(c
@@ -777,6 +783,12 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             fit,
             away,
             route: k.node("route").map(waypoints).unwrap_or_default(),
+            condition: k
+                .node("condition")
+                .filter(|n| !n.is_null())
+                .map(numbers)
+                .filter(|v| v.len() == 5)
+                .map(|v| [v[0] as f32, v[1] as f32, v[2] as f32, v[3] as f32, v[4] as f32]),
         });
     }
     let mut contacts = Vec::new();
@@ -830,6 +842,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         pilots: list("pilots").iter().map(pilot).collect(),
         recruits: list("recruits").iter().map(pilot).collect(),
         contacts,
+        offscreen: list("offscreen").iter().map(read_offscreen).collect(),
         deliveries,
         next_flow,
         next_raid,
@@ -891,6 +904,173 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             })
             .collect(),
     })
+}
+
+/// An off-screen battle under way (`Campaign::offscreen`), as a mapping: its clock, its
+/// units' numbers, the station and the outcomes still to apply.
+fn write_offscreen(o: &super::autoresolve::Offscreen) -> Node {
+    let unit = |u: &super::autoresolve::Unit| {
+        map(vec![
+            ("side", n(u.side as f64)),
+            ("craft", u.craft.map_or(Node::null(0), |k| n(k as f64))),
+            ("class", s(&u.class)),
+            (
+                "v",
+                nums(
+                    &[
+                        u.hull_max,
+                        u.hull,
+                        u.shield_max,
+                        u.shields[0],
+                        u.shields[1],
+                        u.armor_max,
+                        u.armor[0],
+                        u.armor[1],
+                        u.beam,
+                        u.missile,
+                        u.rounds as f32,
+                        u.offence,
+                        u.attack,
+                        if u.alive { 1.0 } else { 0.0 },
+                    ]
+                    .map(|x| x as f64),
+                ),
+            ),
+        ])
+    };
+    let station = o.station.as_ref().map_or(Node::null(0), |st| {
+        map(vec![
+            ("base", n(st.base as f64)),
+            (
+                "v",
+                nums(
+                    &[
+                        st.hull,
+                        st.hull_max,
+                        st.pool,
+                        st.attack,
+                        st.defence,
+                        st.offence,
+                        st.evasion,
+                        st.return_fire[0],
+                        st.return_fire[1],
+                        st.stage as f32,
+                        if st.alive { 1.0 } else { 0.0 },
+                    ]
+                    .map(|x| x as f64),
+                ),
+            ),
+            ("modules", nums(&st.modules.iter().flat_map(|(m, hp)| [*m as f64, *hp as f64]).collect::<Vec<_>>())),
+        ])
+    });
+    map(vec![
+        ("contact", n(o.contact as f64)),
+        ("began", n(o.began)),
+        ("next_round", n(o.next_round)),
+        ("last_round", n(o.last_round)),
+        ("units", seq(o.units.iter().map(unit).collect())),
+        ("station", station),
+        ("destroyed", seq(o.destroyed.iter().map(s).collect())),
+        ("wrecked", nums(&o.wrecked.iter().map(|m| *m as f64).collect::<Vec<_>>())),
+        (
+            "outcomes",
+            seq(o
+                .outcomes
+                .iter()
+                .map(|(r, a)| map(vec![("result", s(r)), ("actions", seq(a.iter().map(s).collect()))]))
+                .collect()),
+        ),
+    ])
+}
+
+/// Reads [`write_offscreen`]'s mapping back.
+fn read_offscreen(node: &Node) -> super::autoresolve::Offscreen {
+    let g = Get(node);
+    let v = |n: Option<&Node>| -> Vec<f32> {
+        n.and_then(|n| n.as_seq()).unwrap_or(&[]).iter().filter_map(|x| x.as_str()?.parse().ok()).collect()
+    };
+    let at = |v: &[f32], k: usize| v.get(k).copied().unwrap_or(0.0);
+    let units = g
+        .node("units")
+        .and_then(|n| n.as_seq())
+        .unwrap_or(&[])
+        .iter()
+        .map(|u| {
+            let u = Get(u);
+            let x = v(u.node("v"));
+            super::autoresolve::Unit {
+                side: u.num("side").unwrap_or(0.0) as u8,
+                craft: u.num("craft").map(|k| k as usize),
+                class: u.str("class").unwrap_or("").into(),
+                hull_max: at(&x, 0),
+                hull: at(&x, 1),
+                shield_max: at(&x, 2),
+                shields: [at(&x, 3), at(&x, 4)],
+                armor_max: at(&x, 5),
+                armor: [at(&x, 6), at(&x, 7)],
+                beam: at(&x, 8),
+                missile: at(&x, 9),
+                rounds: at(&x, 10) as u32,
+                offence: at(&x, 11),
+                attack: at(&x, 12),
+                alive: at(&x, 13) > 0.5,
+            }
+        })
+        .collect();
+    let station = g.node("station").filter(|n| !n.is_null()).map(|n| {
+        let st = Get(n);
+        let x = v(st.node("v"));
+        let m = v(st.node("modules"));
+        super::autoresolve::Station {
+            base: st.num("base").unwrap_or(0.0) as usize,
+            hull: at(&x, 0),
+            hull_max: at(&x, 1),
+            pool: at(&x, 2),
+            attack: at(&x, 3),
+            defence: at(&x, 4),
+            offence: at(&x, 5),
+            evasion: at(&x, 6),
+            return_fire: [at(&x, 7), at(&x, 8)],
+            stage: at(&x, 9) as u32,
+            alive: at(&x, 10) > 0.5,
+            modules: m.chunks(2).filter(|c| c.len() == 2).map(|c| (c[0] as usize, c[1])).collect(),
+        }
+    });
+    let strings = |k: &str| -> Vec<String> {
+        g.node(k)
+            .and_then(|n| n.as_seq())
+            .unwrap_or(&[])
+            .iter()
+            .filter_map(|x| x.as_str().map(str::to_string))
+            .collect()
+    };
+    super::autoresolve::Offscreen {
+        contact: g.num("contact").unwrap_or(0.0) as u32,
+        units,
+        station,
+        began: g.num("began").map_or(0.0, |x| x as f64),
+        next_round: g.num("next_round").map_or(0.0, |x| x as f64),
+        last_round: g.num("last_round").map_or(0.0, |x| x as f64),
+        destroyed: strings("destroyed"),
+        wrecked: v(g.node("wrecked")).into_iter().map(|m| m as usize).collect(),
+        outcomes: g
+            .node("outcomes")
+            .and_then(|n| n.as_seq())
+            .unwrap_or(&[])
+            .iter()
+            .map(|o| {
+                let o = Get(o);
+                let acts = o
+                    .node("actions")
+                    .and_then(|n| n.as_seq())
+                    .unwrap_or(&[])
+                    .iter()
+                    .filter_map(|x| x.as_str().map(str::to_string))
+                    .collect();
+                (o.str("result").unwrap_or("").to_string(), acts)
+            })
+            .collect(),
+    }
 }
 
 #[cfg(test)]

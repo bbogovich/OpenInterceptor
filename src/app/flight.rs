@@ -433,6 +433,39 @@ impl FlightSession {
         apply_loadout(&mut self.world, self.player, loadout);
     }
 
+    /// Starts the player's craft with its campaign battle damage (`craft_damage`):
+    /// `[hull, shield fore, aft, armour fore, aft]` as fractions of the maxima.
+    pub fn set_condition(&mut self, v: [f32; 5]) {
+        let hull = self.world.get(self.player).map(|s| self.world.rules.ship(s.class).hull).unwrap_or(0.0);
+        if let Some(s) = self.world.get_mut(self.player) {
+            s.hull = hull * v[0];
+            (s.shield_fore, s.shield_aft) = (s.shield_max * v[1], s.shield_max * v[2]);
+            // One armour pool (the aft bank empty) takes the fore fraction only.
+            let per_side = s.armor_aft > 0.0;
+            s.armor = s.armor_max * v[3];
+            if per_side {
+                s.armor_aft = s.armor_max * v[4];
+            }
+        }
+    }
+
+    /// The player's craft's state now, as [`FlightSession::set_condition`] takes it
+    /// (`None` once it is gone).
+    fn condition(&self) -> Option<[f32; 5]> {
+        let s = self.world.get(self.player)?;
+        let hull = self.world.rules.ship(s.class).hull;
+        let f = |v: f32, m: f32| if m > 0.0 { (v / m).clamp(0.0, 1.0) } else { 1.0 };
+        // With one armour pool the aft bank is empty: it reads as the fore one.
+        let aft = if s.armor_aft > 0.0 || s.armor <= 0.0 { s.armor_aft } else { s.armor };
+        Some([
+            f(s.hull, hull),
+            f(s.shield_fore, s.shield_max),
+            f(s.shield_aft, s.shield_max),
+            f(s.armor, s.armor_max),
+            f(aft, s.armor_max),
+        ])
+    }
+
     /// Seconds still to wait before the debrief (0 once it shows).
     fn debrief_wait_left(&self) -> f64 {
         match self.ended_at {
@@ -767,6 +800,7 @@ impl FlightSession {
                         kills: d.kills,
                         cargo: d.cargo,
                         pilot_health,
+                        condition: self.condition(),
                     });
                 }
                 return Next::Strategy;
@@ -816,6 +850,7 @@ impl FlightSession {
                     kills: 0,
                     cargo: None,
                     pilot_health: self.world.get(self.player).and_then(|s| s.pilot_health),
+                    condition: self.condition(),
                 });
                 return Next::Strategy;
             } else if raw.pressed.contains("l") || raw.pressed.contains("q") {

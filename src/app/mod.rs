@@ -91,6 +91,17 @@ pub struct AppContext {
     pub music: crate::audio::MusicPlayer,
 }
 
+/// What a campaign battle starts with besides its mission and craft.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CampaignCarry {
+    /// The craft's pilot record (its health with `damage.pilot_injury`).
+    pub pilot: Option<crate::content::behaviour::PilotStats>,
+    /// The campaign month (0 = the first), for classes with `grade_rise`.
+    pub month: u32,
+    /// The craft's battle damage (`craft_damage`): fractions of hull and banks.
+    pub condition: Option<[f32; 5]>,
+}
+
 /// What the app should do after a screen's frame.
 pub enum Next {
     Stay,
@@ -150,10 +161,9 @@ pub enum Next {
         /// A campaign object standing in for the mission's first protected role (a
         /// struck construction site, an attacked survey ship).
         stand_in: Option<crate::content::mission::StandIn>,
-        /// The craft's pilot record (its health with `damage.pilot_injury`).
-        pilot: Option<crate::content::behaviour::PilotStats>,
-        /// The campaign month (0 = the first), for classes with `grade_rise`.
-        month: u32,
+        /// What the campaign carries into the battle: the pilot, the month, the damage.
+        /// Boxed: it would make every `Next` as big as this variant.
+        carry: Box<CampaignCarry>,
     },
     /// Fly a simulator mission: a modified copy of a mission (see `simulator::apply`).
     Simulate {
@@ -682,7 +692,8 @@ pub async fn run(options: Options) {
                     }
                 }
             }
-            Next::CampaignBattle { mission, ship, loadout, stances, stand_in, pilot, month } => {
+            Next::CampaignBattle { mission, ship, loadout, stances, stand_in, carry } => {
+                let CampaignCarry { pilot, month, condition } = *carry;
                 // Keep the strategy screen (and its campaign) while the battle is flown.
                 let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
                 if let Screen::Strategy(s) = old {
@@ -707,6 +718,9 @@ pub async fn run(options: Options) {
                         f.apply_loadout(&loadout);
                         flight::apply_stances(&mut f.world, f.player, &stances);
                         f.world.campaign_month(month);
+                        if let Some(v) = condition {
+                            f.set_condition(v);
+                        }
                         // The campaign pilot's health in the player's seat.
                         if let (Some(h), Some(s)) = (pilot.and_then(|p| p.health), f.world.get_mut(f.player)) {
                             if s.pilot_health.is_some() {
@@ -724,6 +738,7 @@ pub async fn run(options: Options) {
                             kills: 0,
                             cargo: None,
                             pilot_health: None,
+                            condition: None,
                         });
                         if let Some(mut s) = ctx.campaign.take() {
                             if let Some(r) = ctx.battle_report.take() {

@@ -266,6 +266,9 @@ pub struct BattleReport {
     pub cargo: Option<f32>,
     /// The player's pilot's health at the end (`damage.pilot_injury`).
     pub pilot_health: Option<f32>,
+    /// The player's craft's state at the end, `[hull, shield fore, aft, armour fore, aft]`
+    /// as fractions (`craft_damage`).
+    pub condition: Option<[f32; 5]>,
 }
 
 /// The strategy screen and the campaign it shows.
@@ -571,8 +574,13 @@ impl StrategyScreen {
         // The music's good-news or bad-news stinger for the result (R-CPN-012).
         let mood = if report.result == "win" { "good" } else { "bad" };
         ctx.music.stinger(&ctx.sounds, &ctx.content.rules, mood);
-        if let (Some(k), Some(h)) = (self.flying_craft.take(), report.pilot_health) {
-            self.campaign.pilot_back(def, k, h);
+        if let Some(k) = self.flying_craft.take() {
+            if let Some(v) = report.condition {
+                self.campaign.set_condition(def, k, v);
+            }
+            if let Some(h) = report.pilot_health {
+                self.campaign.pilot_back(def, k, h);
+            }
         }
         match self.flying.take() {
             Some(PendingBattle::Contact(id)) => {
@@ -1162,8 +1170,10 @@ impl StrategyScreen {
         let loadout = self.campaign.loadout(def, k);
         // The craft's pilot record, and the campaign month (`grade_rise`).
         let pilot = self.campaign.battle_pilot(def, k);
+        let condition = self.campaign.craft[k].condition;
         let month = (self.campaign.hours / crate::campaign::MONTH).max(0.0) as u32;
-        Next::CampaignBattle { mission, ship: Some(ship), loadout, stances: self.stances(def), stand_in, pilot, month }
+        let carry = Box::new(super::CampaignCarry { pilot, month, condition });
+        Next::CampaignBattle { mission, ship: Some(ship), loadout, stances: self.stances(def), stand_in, carry }
     }
 
     /// The first ready craft with a ready pilot, anywhere.
@@ -1214,6 +1224,18 @@ impl StrategyScreen {
                         raid.and_then(|r| ctx.content.rules.missions.iter().find(|m| m.id == def.raids[r].mission));
                     let ours: Vec<&str> =
                         party.iter().map(|&k| def.hulls[self.campaign.craft[k].hull].id.as_str()).collect();
+                    // The original's hourly simulation (`auto_resolve:`): fought in game
+                    // time, the result arrives as a notice.
+                    if def.auto_resolve.is_some() {
+                        match self.campaign.start_offscreen(def, &ctx.content.rules, id) {
+                            Ok(()) => self.banner = Some("Auto-resolve: the battle is under way".into()),
+                            Err(e) => {
+                                self.campaign.battle_result(def, id, "retreat", &[], 0);
+                                self.say(format!("{e}: broke off."));
+                            }
+                        }
+                        return Some(Next::Stay);
+                    }
                     match (mission, ours.is_empty()) {
                         (Some(m), false) => {
                             let p = crate::balance::win_chance(&ctx.content.rules, m, &ours);

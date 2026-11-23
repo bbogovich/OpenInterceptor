@@ -26,6 +26,7 @@
 
 ships:
   lightning:
+    auto_resolve: {attack: 25, defence: 10}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_IntType1
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
     voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
@@ -47,6 +48,7 @@ ships:
     engine_color: [0.5, 0.7, 1.0]
     behaviour: xcom_pilot
   firestar:
+    auto_resolve: {attack: 50, defence: 35}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_IntType2
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
     voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
@@ -67,6 +69,7 @@ ships:
     engine_color: [0.5, 0.7, 1.0]
     behaviour: xcom_pilot
   avenger:
+    auto_resolve: {attack: 60, defence: 45}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_IntType3
     pilot_grade: 0   # X-COM pilots (notes/re/unknowns-2026-11.md §5, VERIFIED)
     voice: mpilot1   # DERIVED (the pilot's record picks it in the original)
@@ -91,6 +94,7 @@ ships:
   # the values here are engine estimates tuned to the documented roles.
     behaviour: xcom_pilot
   wraith:
+    auto_resolve: {attack: 50, defence: 35}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_AlienType1
     pilot_grade: 1   # AlienType1/2 early on (VERIFIED)
     # From month 2, grade 2 with 50 + 2m % (unknowns §5, VERIFIED; m = months since the
@@ -115,6 +119,7 @@ ships:
     engine_color: [0.4, 1.0, 0.4]
     behaviour: wraith
   spectre:
+    auto_resolve: {attack: 60, defence: 45}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_AlienType2
     pilot_grade: 1   # AlienType1/2 early on (VERIFIED)
     # From month 2, grade 2 with 50 + 2m % (unknowns §5, VERIFIED; m = months since the
@@ -139,6 +144,7 @@ ships:
     engine_color: [0.4, 1.0, 0.4]
     behaviour: spectre
   phantasm:
+    auto_resolve: {attack: 95, defence: 50}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_AlienType3
     pilot_grade: 3   # AlienType3 (VERIFIED)
     mass: 19000
@@ -164,6 +170,7 @@ ships:
       - {at: [0, -4.25, 0], facing: [0, -1, 0], class: phantasm_plasma_low}
       - {at: [0, 4.25, 0], facing: [0, 1, 0], class: phantasm_plasma_top}
   shade:
+    auto_resolve: {attack: 150, defence: 100}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_AlienType4
     pilot_grade: 4   # AlienType4 (VERIFIED)
     mass: 11000
@@ -190,6 +197,7 @@ ships:
     modules:
       - {at: [0, -0.41, 9.82], facing: [0, 0, 1], class: shade_phase}
   harbinger:
+    auto_resolve: {attack: 10, defence: 10}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_AlienType5
     mass: 110000
     ai_speed: {min: 200, max: 250}
@@ -215,6 +223,7 @@ ships:
       - {at: [-13.27, 7.2, -10.31], facing: [0, 0, -1], class: harbinger_tachyon}
       - {at: [0, -5, 15], facing: [0, 0, 1], class: harbinger_tachyon_tail}
   alien_container:
+    auto_resolve: {attack: 10, defence: 10}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_AlienType6
     mass: 157000
     ai_speed: {min: 175, max: 349}
@@ -228,6 +237,7 @@ ships:
     pitch_rate: 10
     yaw_rate: 10
   spirit:
+    auto_resolve: {attack: 25, defence: 10}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_AlienFreighter
     mass: 110000
     ai_speed: {min: 100, max: 174}
@@ -265,6 +275,7 @@ ships:
   # --- Pirates and corporations (same three hulls, different paint) ---------------------
     behaviour: drone
   pirate_lightning:
+    auto_resolve: {attack: 25, defence: 10}   # off-screen battles (flight README §13.2, VERIFIED)
     # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
     # no flight values: mass, ai_speed and ai_turn are IntType1's in the original's
     # agent tables (README AI; its turn is the "others" row); the player flight values
@@ -292,6 +303,7 @@ ships:
     engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   pirate_firestar:
+    auto_resolve: {attack: 50, defence: 35}   # off-screen battles (flight README §13.2, VERIFIED)
     # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
     # no flight values: mass, ai_speed and ai_turn are IntType2's in the original's
     # agent tables (README AI); the player flight values are Ship_IntType2's (DERIVED).
@@ -319,6 +331,7 @@ ships:
     engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   pirate_avenger:
+    auto_resolve: {attack: 60, defence: 45}   # off-screen battles (flight README §13.2, VERIFIED)
     # Its own hull section: hit points and mount counts (D-17, VERIFIED). The section has
     # no flight values: mass, ai_speed and ai_turn are IntType3's in the original's
     # agent tables (README AI); the player flight values are Ship_IntType3's (DERIVED).
@@ -446,6 +459,7 @@ ships:
     engine_color: [0.5, 0.7, 1.0]
     behaviour: human_pilot
   xcom_freighter:
+    auto_resolve: {attack: 10, defence: 5}   # off-screen battles (flight README §13.2, VERIFIED)
     inherit: original:GameSettings.ini/Ship_XCOMFreighter
     mass: 157000
     ai_speed: {min: 100, max: 174}

@@ -168,43 +168,46 @@ items:
 
 # Module groups (for the base type's limits) and what each does while working. DERIVED
 # from the manual's descriptions.
+# Off-screen battles at a base (flight README §13.2-13.4, VERIFIED): each module's hit
+# points (GameSettings.ini M_XCOM*), the beam and missile defences' attack C, ECM type 1's
+# +100 to the station's defence D.
 base_modules:
-  downlink_type1: {group: downlink}
-  downlink_type2: {group: downlink}
-  downlink_type3: {group: downlink}
-  hangar: {group: hangar, effects: {hangar: 3}, on_destroyed: [craft]}          # AUTH: ships in it are lost
-  personnel: {group: personnel, effects: {quarters: 5}, on_destroyed: [pilots]} # AUTH: pilots in it are killed
+  downlink_type1: {group: downlink, auto_resolve: {hit_points: 300}}
+  downlink_type2: {group: downlink, auto_resolve: {hit_points: 350}}
+  downlink_type3: {group: downlink, auto_resolve: {hit_points: 400}}
+  hangar: {group: hangar, effects: {hangar: 3}, on_destroyed: [craft], auto_resolve: {hit_points: 400}}          # AUTH: ships in it are lost
+  personnel: {group: personnel, effects: {quarters: 5}, on_destroyed: [pilots], auto_resolve: {hit_points: 200}} # AUTH: pilots in it are killed
   # The base's scan range is its sensor's: 2,000 / 4,000 / 6,000 map units (1/3, 2/3 and
   # 1 ly; strategy README §3.2, VERIFIED); a base without one sees nothing.
-  sensor_type1: {group: sensor, effects: {sensor_range: 2000}}
-  sensor_type2: {group: sensor, effects: {sensor_range: 4000}}
-  sensor_type3: {group: sensor, effects: {sensor_range: 6000}}
-  shield_generator_type1: {group: shield, effects: {defence: 1}}
-  shield_generator_type2: {group: shield, effects: {defence: 2}}
-  shield_generator_type3: {group: shield, effects: {defence: 3}}
-  communications: {group: comms}
-  cargo: {group: cargo, effects: {storage: 1000}, on_destroyed: [stock]}       # AUTH: its stock is lost
-  medical: {group: medical, effects: {medical: 5}}     # 5 pilots each (strategy README §5.1, DERIVED from the loop)
-  training: {group: training, effects: {training: 5}}  # 5 trainees each (§5.1, VERIFIED)
-  probe_launch: {group: probe}
-  tractor: {group: special}
-  ecmtype1: {group: ecm}
-  ecmtype2: {group: ecm}
-  advanced_damage_control: {group: special}
-  beam_defense_laser: {group: beam_defense}
-  beam_defense_heavy_laser: {group: beam_defense}
-  beam_defense_gatling_laser: {group: beam_defense}
-  beam_defense_tracer_cannon: {group: beam_defense}
-  beam_defense_tracking_tracer: {group: beam_defense}
-  beam_defense_phase: {group: beam_defense}
-  beam_defense_plasma_pulse: {group: beam_defense}
-  beam_defense_tachyon_pulser: {group: beam_defense}
-  missile_defense_xwinder: {group: missile_defense}
-  missile_defense_permeator: {group: missile_defense}
-  missile_defense_elerium_torp: {group: missile_defense}
-  missile_defense_enveloping_torp: {group: missile_defense}
-  missile_defense_sidestep: {group: missile_defense}
-  missile_defense_parallax: {group: missile_defense}
+  sensor_type1: {group: sensor, effects: {sensor_range: 2000}, auto_resolve: {hit_points: 400}}
+  sensor_type2: {group: sensor, effects: {sensor_range: 4000}, auto_resolve: {hit_points: 450}}
+  sensor_type3: {group: sensor, effects: {sensor_range: 6000}, auto_resolve: {hit_points: 500}}
+  shield_generator_type1: {group: shield, effects: {defence: 1}, auto_resolve: {hit_points: 400}}
+  shield_generator_type2: {group: shield, effects: {defence: 2}, auto_resolve: {hit_points: 450}}
+  shield_generator_type3: {group: shield, effects: {defence: 3}, auto_resolve: {hit_points: 500}}
+  communications: {group: comms, auto_resolve: {hit_points: 200}}
+  cargo: {group: cargo, effects: {storage: 1000}, on_destroyed: [stock], auto_resolve: {hit_points: 300}}       # AUTH: its stock is lost
+  medical: {group: medical, effects: {medical: 5}, auto_resolve: {hit_points: 300}}     # 5 pilots each (strategy README §5.1, DERIVED from the loop)
+  training: {group: training, effects: {training: 5}, auto_resolve: {hit_points: 250}}  # 5 trainees each (§5.1, VERIFIED)
+  probe_launch: {group: probe, auto_resolve: {hit_points: 75}}
+  tractor: {group: special, auto_resolve: {hit_points: 150}}
+  ecmtype1: {group: ecm, auto_resolve: {defence: 100, hit_points: 150}}
+  ecmtype2: {group: ecm, auto_resolve: {hit_points: 150}}
+  advanced_damage_control: {group: special, auto_resolve: {hit_points: 150}}
+  beam_defense_laser: {group: beam_defense, auto_resolve: {attack: 10, hit_points: 100}}
+  beam_defense_heavy_laser: {group: beam_defense, auto_resolve: {attack: 20, hit_points: 100}}
+  beam_defense_gatling_laser: {group: beam_defense, auto_resolve: {attack: 25, hit_points: 100}}
+  beam_defense_tracer_cannon: {group: beam_defense, auto_resolve: {attack: 0, hit_points: 100}}
+  beam_defense_tracking_tracer: {group: beam_defense, auto_resolve: {attack: 28, hit_points: 100}}
+  beam_defense_phase: {group: beam_defense, auto_resolve: {attack: 30, hit_points: 100}}
+  beam_defense_plasma_pulse: {group: beam_defense, auto_resolve: {attack: 35, hit_points: 100}}
+  beam_defense_tachyon_pulser: {group: beam_defense, auto_resolve: {attack: 17, hit_points: 100}}
+  missile_defense_xwinder: {group: missile_defense, auto_resolve: {attack: 5, hit_points: 100}}
+  missile_defense_permeator: {group: missile_defense, auto_resolve: {attack: 15, hit_points: 100}}
+  missile_defense_elerium_torp: {group: missile_defense, auto_resolve: {attack: 25, hit_points: 100}}
+  missile_defense_enveloping_torp: {group: missile_defense, auto_resolve: {attack: 35, hit_points: 100}}
+  missile_defense_sidestep: {group: missile_defense, auto_resolve: {attack: 15, hit_points: 100}}
+  missile_defense_parallax: {group: missile_defense, auto_resolve: {attack: 10, hit_points: 100}}
 
 base_types:
   xcom:
@@ -229,6 +232,10 @@ base_types:
     hull: 6000
     repair: {per_minute: 2, min_step: 5, boost: {advanced_damage_control: 2}}
     strike_damage: 1500             # DERIVED: an unopposed strike's hull damage
+    # Its station in an off-screen battle (flight README §13.2-13.4, VERIFIED): the hull above,
+    # D 1,000 + ECM + its pool, A and B from 0.65-0.95, return fire 25-124. The pool is the
+    # chart's SD (DERIVED; the original's is the generator's current pool).
+    auto_resolve: {shields: 500, defence: 1000, offence: [0.65, 0.95], evasion: [0.65, 0.95], return_fire: [25, 124]}
 
 # Manufacturing by the outposts' technicians (RQ-S-09, README §2.5, VERIFIED): 10 per outpost
 # and 10 per OPP; a job gains a work unit (the INI's ProdTime is in technician-hours) per
@@ -280,6 +287,26 @@ raids:
   # The Doomsday component convoys: launched by the plan (plans.doomsday), not by the roll.
   doomsday_convoy: {name: Alien Doomsday convoy, mission: ambush_alien_freighters_escorted, faction: alien, every: 30d, chance: 0%, target: system, speed: 1200}
   pirates: {name: Pirate squadron, mission: ambush_pirate_squadron, faction: pirate, every: 8d, chance: 35%, target: system, speed: 2000, requires: day >= 10}
+
+# Off-screen battles (RQ-C-18/20; flight README §13, VERIFIED): the original's hourly
+# simulation - the first round 5 h in, then hourly; a side's score rand % 50 + 50 x its share
+# of the ships; a hit with the shooter's offence A, full damage (a missile 2 % of the time,
+# else the first beam, else 25-34) through a random shield bank, armour bank, then the hull;
+# a craft destroyed is lost with its pilot. The original's sim has no system hits, so it never
+# disables or captures a ship.
+auto_resolve:
+  model: hourly
+  first_round: 5h
+  round: 1h
+  offence: {flying: 0.6, bravery: 0.7, intelligence: 0.5, stamina: 0.35, aggression: 0.75, accuracy: 0.95, divisor: 385}
+  evasion: {flying: 0.4, bravery: 0.6, intelligence: 0.75, stamina: 0.55, accuracy: 0.05, divisor: 235, aggression_penalty: [[85, 0.75], [70, 0.5]]}
+  # C: +50 for the targeting sensor (SensorTargetingSystem1; the hulls' one sensor), +25
+  # VCT; D: +50 VCT, +75 cloak, +75 damage control, +60 ECM.
+  system_attack: {sensors: 50, vct: 25}
+  system_defence: {vct: 50, cloak: 75, damage_control: 75, ecm: 60, advanced_ecm: 60}
+# Battle damage stays on the craft (flight README §14, derived); the strategy layer's
+# repair rate was not traced (10 % of each bank a day: DERIVED).
+craft_damage: {persist: true, repair_per_day: 10%}
 
 # Pilots (the original's generator 0x40e8b6, training 0x40f55c, salary 0x410297; read from
 # the player's exe, VERIFIED; strategy README §5): Intelligence and Stamina 50 + rand % 50,

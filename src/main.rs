@@ -87,7 +87,7 @@ fn headless(options: &cli::Options) -> Option<i32> {
         let mut c = openinterceptor::campaign::Campaign::new(def, 1, 7);
         let mut over = Vec::new();
         for d in 1..=days.ceil() as u32 {
-            c = openinterceptor::campaign::autoplay_from(def, c, (d as f64).min(days));
+            c = openinterceptor::campaign::autoplay_with(def, Some(&content.rules), c, (d as f64).min(days));
             if over.is_empty() {
                 over = c.over_capacity(def).into_iter().map(|o| format!("day {d}: {o}")).collect();
             }
