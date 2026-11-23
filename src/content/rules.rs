@@ -267,6 +267,13 @@ impl ShipKind {
     pub fn is_static(self) -> bool {
         matches!(self, ShipKind::Station | ShipKind::Mine | ShipKind::Ground)
     }
+
+    /// Whether a class of this kind has a pilot by default (`crewed:` overrides it): the
+    /// original injures pilots only on ship objects (rt type 1; `notes/re/flight/README.md`
+    /// §4.2, §8.3), never on stations, modules, outposts, mines or debris.
+    pub fn crewed_by_default(self) -> bool {
+        matches!(self, ShipKind::Fighter | ShipKind::Freighter | ShipKind::Capital | ShipKind::Drone)
+    }
 }
 
 /// A craft or object definition.
@@ -329,6 +336,9 @@ pub struct ShipClass {
     pub atmospheric: bool,
     /// Hull mass, kilograms, before shields, missiles and systems (`flight.drive`).
     pub mass: f32,
+    /// Has a pilot who can be hurt, knocked out or killed (`crewed:`; default by kind, see
+    /// `ShipKind::crewed_by_default`). An uncrewed class never becomes a tumbling wreck.
+    pub crewed: bool,
     /// Engine thrust, kN (`thrust:`, or `fitted: {engine: …}`; `flight.drive`).
     pub thrust: f32,
     /// The AI's drive factor S (`flight.drive`): an AI ship accelerates at
@@ -2802,6 +2812,7 @@ fn ship_class(
         energy: g.num("energy").unwrap_or(power.energy),
         energy_recharge: g.num("energy_recharge").unwrap_or(power.energy_recharge),
         mass: g.num("mass").unwrap_or(10_000.0).max(1.0),
+        crewed: g.bool("crewed").unwrap_or(kind.crewed_by_default()),
         thrust: g.num("thrust").unwrap_or(0.0).max(0.0),
         ai_speed: match g.node("ai_speed") {
             None => None,

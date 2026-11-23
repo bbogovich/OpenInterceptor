@@ -973,7 +973,9 @@ impl World {
         }
         // `damage.pilot_injury`: the pilot's record gives the health, else it is rolled as
         // the original's generator does (rank from a 1–100 roll, then the health).
-        if let Some(inj) = self.rules.damage.pilot_injury.clone() {
+        // Only crewed classes have a pilot (`crewed:`): a station has none to kill (#146).
+        let crewed = self.rules.ship(class).crewed;
+        if let Some(inj) = self.rules.damage.pilot_injury.clone().filter(|_| crewed) {
             let given = match &ship.pilot {
                 Pilot::Ai(a) => a.pilot.and_then(|p| p.health),
                 Pilot::External => None,
