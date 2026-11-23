@@ -7740,61 +7740,61 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>launcher_rate</code></td>
 <td>number</td>
 <td>0</td>
-<td>App NEXT: shots per second from its launcher; the next launch is ready after 1 / rate (twice that with the launcher at half health or less). 0 = the engine's fixed 0.6 s. <code>interceptor</code>: each <code>*Launcher</code>'s <code>RateOfFire</code> (X-Winder 4, Fusion 6, Elerium 1, …; <strong>verified</strong>); -1 in the file (Doppelganger, Nova) keeps the engine's refire.</td>
+<td>App 0.22.50: shots per second from its launcher; the next launch is ready after 1 / rate (twice that with the launcher at half health or less). 0 = the engine's fixed 0.6 s. <code>interceptor</code>: each <code>*Launcher</code>'s <code>RateOfFire</code> (X-Winder 4, Fusion 6, Elerium 1, …; <strong>verified</strong>); -1 in the file (Doppelganger, Nova) keeps the engine's refire.</td>
 </tr>
 <tr>
 <td><code>flight</code></td>
 <td><code>engine</code>, <code>original</code></td>
 <td><code>engine</code></td>
-<td>App NEXT: <code>original</code> — the original's missile flight: straight for 250 ms, then homing whose throttle falls while it is off target (−0.025 … −0.1 a frame beyond 5° / 10° / 15°) and recovers on target, pushing at least 250 m/s². <code>interceptor</code>: every missile but the Nova (<strong>verified</strong>).</td>
+<td>App 0.22.50: <code>original</code> — the original's missile flight: straight for 250 ms, then homing whose throttle falls while it is off target (−0.025 … −0.1 a frame beyond 5° / 10° / 15°) and recovers on target, pushing at least 250 m/s². <code>interceptor</code>: every missile but the Nova (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>pass_fuse</code></td>
 <td>distance</td>
 <td>0</td>
-<td>App NEXT: it also goes off this close to its target when it is more than 45° off it (passing). <code>interceptor</code>: 25 m.</td>
+<td>App 0.22.50: it also goes off this close to its target when it is more than 45° off it (passing). <code>interceptor</code>: 25 m.</td>
 </tr>
 <tr>
 <td><code>blast</code></td>
 <td><code>{impact, radius}</code></td>
 <td>none</td>
-<td>App NEXT: the warhead hits <strong>every object</strong> round it, either side, with no falloff: <code>impact_damage</code> within <code>impact</code> (15 m), <code>proximity_damage</code> out to <code>radius</code> (200 m). Without it, only the target takes the proximity damage. <code>interceptor</code>: 15 m / 200 m (<strong>verified</strong>).</td>
+<td>App 0.22.50: the warhead hits <strong>every object</strong> round it, either side, with no falloff: <code>impact_damage</code> within <code>impact</code> (15 m), <code>proximity_damage</code> out to <code>radius</code> (200 m). Without it, only the target takes the proximity damage. <code>interceptor</code>: 15 m / 200 m (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>dud_on_expiry</code></td>
 <td>bool</td>
 <td><code>false</code></td>
-<td>App NEXT: out of fuel it vanishes without a blast.</td>
+<td>App 0.22.50: out of fuel it vanishes without a blast.</td>
 </tr>
 <tr>
 <td><code>lose_lock_beyond</code></td>
 <td>number</td>
 <td>0</td>
-<td>App NEXT: degrees off the nose beyond which the lock is lost (0 = never). <code>interceptor</code>: 170, except the Enveloping and Passive Cloaking torpedoes.</td>
+<td>App 0.22.50: degrees off the nose beyond which the lock is lost (0 = never). <code>interceptor</code>: 170, except the Enveloping and Passive Cloaking torpedoes.</td>
 </tr>
 <tr>
 <td><code>hit_points</code></td>
 <td>number</td>
 <td>10</td>
-<td>App NEXT: what a beam bolt's damage must beat to destroy it, held to 10 – 500 (<a href="#flight"><code>flight.beams_hit_missiles</code></a>). <code>interceptor</code>: the missile section's <code>HitPoints</code>.</td>
+<td>App 0.22.50: what a beam bolt's damage must beat to destroy it, held to 10 – 500 (<a href="#flight"><code>flight.beams_hit_missiles</code></a>). <code>interceptor</code>: the missile section's <code>HitPoints</code>.</td>
 </tr>
 <tr>
 <td><code>max_life</code></td>
 <td>time</td>
 <td>0</td>
-<td>App NEXT: its flight time is held to this (0 = <code>duration</code>). <code>interceptor</code>: Passive Cloaking torpedo 10 s (<strong>verified</strong>).</td>
+<td>App 0.22.50: its flight time is held to this (0 = <code>duration</code>). <code>interceptor</code>: Passive Cloaking torpedo 10 s (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>images</code></td>
 <td><code>{count, offset, after}</code></td>
 <td>none</td>
-<td>App NEXT: decoy images put out <code>after</code> launch, <code>offset</code> to either side. <code>interceptor</code>: Parallax torpedo, 2 at 20 m after 1 s (<strong>verified</strong>).</td>
+<td>App 0.22.50: decoy images put out <code>after</code> launch, <code>offset</code> to either side. <code>interceptor</code>: Parallax torpedo, 2 at 20 m after 1 s (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>retarget_every</code></td>
 <td><code>[min, max]</code> (times)</td>
 <td>none</td>
-<td>App NEXT: <code>doppelganger</code> — while the launcher and its decoy live, hostile pilots turn to the decoy at a random interval in the band. <code>interceptor</code>: 5 – 6 s (the interval <strong>verified</strong>, the retarget <em>derived</em>).</td>
+<td>App 0.22.50: <code>doppelganger</code> — while the launcher and its decoy live, hostile pilots turn to the decoy at a random interval in the band. <code>interceptor</code>: 5 – 6 s (the interval <strong>verified</strong>, the retarget <em>derived</em>).</td>
 </tr>
 </tbody>
 </table>
@@ -7991,6 +7991,12 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td>Can enter an atmosphere. <code>false</code>: the Simulator refuses the craft in an environment with <code>physics: atmosphere</code> ("The … cannot enter an atmosphere", app 0.6.3); Stage 4 will also hide it from surface missions.</td>
 </tr>
 <tr>
+<td><code>silhouette</code></td>
+<td>asset</td>
+<td>none</td>
+<td>App 0.22.50 (#147): the craft from above, nose up, white on transparent (PNG or TGA), shown tinted by the hull in the middle of the cockpit's <a href="../cockpits/">ship status display</a> when the cockpit art does not paint the craft itself (<code>ship_status.craft_art</code>). <code>default</code>: <code>textures/silhouette_&lt;model&gt;.png</code>, generated from each flyable craft's model.</td>
+</tr>
+<tr>
 <td><code>crewed</code></td>
 <td>bool</td>
 <td>by <code>kind</code></td>
@@ -8060,7 +8066,7 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>accumulator_shields</code></td>
 <td>bool</td>
 <td><code>false</code></td>
-<td>App NEXT: while the struck shield bank holds points, an ordinary (direct) hit does no damage and adds a quarter of itself to that bank, up to its maximum (the original's ShieldType4, <strong>verified</strong>; the cap <em>derived</em>). <code>interceptor</code>: the Shade and the Harbinger.</td>
+<td>App 0.22.50: while the struck shield bank holds points, an ordinary (direct) hit does no damage and adds a quarter of itself to that bank, up to its maximum (the original's ShieldType4, <strong>verified</strong>; the cap <em>derived</em>). <code>interceptor</code>: the Shade and the Harbinger.</td>
 </tr>
 <tr>
 <td><code>pilot_grade</code></td>
@@ -8072,13 +8078,13 @@ schema <code>schemas/rules.schema.json</code>.</p>
 <td><code>grade_rise</code></td>
 <td><code>{from_month, chance, per_month, grade}</code></td>
 <td>none</td>
-<td>App NEXT: in a campaign battle from campaign month <code>from_month</code> (0 = the first) on, an AI pilot of the class without its own grade flies at <code>grade</code> with a chance of <code>chance + per_month × month</code>. <code>interceptor</code>: Wraith and Spectre grade 2 from month 2 with 50 + 2m % (<strong>verified</strong>; m counted from the campaign's start, <em>derived</em>; the higher grades from month 8 − d/2 are not traced).</td>
+<td>App 0.22.50: in a campaign battle from campaign month <code>from_month</code> (0 = the first) on, an AI pilot of the class without its own grade flies at <code>grade</code> with a chance of <code>chance + per_month × month</code>. <code>interceptor</code>: Wraith and Spectre grade 2 from month 2 with 50 + 2m % (<strong>verified</strong>; m counted from the campaign's start, <em>derived</em>; the higher grades from month 8 − d/2 are not traced).</td>
 </tr>
 <tr>
 <td><code>auto_resolve</code></td>
 <td><code>{attack, defence}</code></td>
 <td>none</td>
-<td>App NEXT: the class's base attack C and defence D in the campaign's <a href="../strategy/#auto_resolve-and-craft_damage">off-screen battles</a>. <code>interceptor</code>: the original's table — Lightning 25/10, Firestar 50/35, Super Avenger 60/45, Wraith 50/35, Spectre 60/45, Phantasm 95/50, Shade 150/100, the pirates as their X-COM hulls, freighters 10/5, Harbinger and container 10/10 (<strong>verified</strong>; corporate hulls and the Patton are uninitialised in the original, 0 here).</td>
+<td>App 0.22.50: the class's base attack C and defence D in the campaign's <a href="../strategy/#auto_resolve-and-craft_damage">off-screen battles</a>. <code>interceptor</code>: the original's table — Lightning 25/10, Firestar 50/35, Super Avenger 60/45, Wraith 50/35, Spectre 60/45, Phantasm 95/50, Shade 150/100, the pirates as their X-COM hulls, freighters 10/5, Harbinger and container 10/10 (<strong>verified</strong>; corporate hulls and the Patton are uninitialised in the original, 0 here).</td>
 </tr>
 <tr>
 <td><code>turret_arc</code></td>
@@ -8408,13 +8414,13 @@ original's first targeting system: 2.5 s, 2.5° and 3 km (verified). See
 <td><code>retreat_when_disarmed</code></td>
 <td><code>{to, every, settle, rows, clamp, no_pilot}</code></td>
 <td>none</td>
-<td>App NEXT: when every beam mount is gone, the pilot rolls — at most every <code>every</code> (5 s), <code>settle</code> (5 s) after its last change of state — to switch to state <code>to</code>, with the chance its record gives (<a href="../behaviours/#retreat-rolls">Retreat rolls</a>).</td>
+<td>App 0.22.50: when every beam mount is gone, the pilot rolls — at most every <code>every</code> (5 s), <code>settle</code> (5 s) after its last change of state — to switch to state <code>to</code>, with the chance its record gives (<a href="../behaviours/#retreat-rolls">Retreat rolls</a>).</td>
 </tr>
 <tr>
 <td><code>retreat_on_nova</code></td>
 <td><code>{to, rows, clamp, no_pilot}</code></td>
 <td>none</td>
-<td>App NEXT: one roll per pilot when a Nova bomb goes off.</td>
+<td>App 0.22.50: one roll per pilot when a Nova bomb goes off.</td>
 </tr>
 <tr>
 <td><code>systems</code></td>
@@ -9032,19 +9038,19 @@ When a class breaks off, jinks or flees is still the pack's own (derived).</p>
 <td><code>link_modes</code></td>
 <td><code>engine</code>, <code>original</code></td>
 <td><code>engine</code></td>
-<td>App NEXT: <code>original</code> — linked fires every mount of the selected mount's beam type, and every mode lets each mount fire on its own timer as far as the energy pays shot by shot (the original, <strong>verified</strong>); <code>engine</code> — linked fires the next two mounts and a group waits for all its mounts and its whole energy. <code>interceptor</code>: <code>original</code>.</td>
+<td>App 0.22.50: <code>original</code> — linked fires every mount of the selected mount's beam type, and every mode lets each mount fire on its own timer as far as the energy pays shot by shot (the original, <strong>verified</strong>); <code>engine</code> — linked fires the next two mounts and a group waits for all its mounts and its whole energy. <code>interceptor</code>: <code>original</code>.</td>
 </tr>
 <tr>
 <td><code>start_throttle</code></td>
 <td>fraction</td>
 <td>0</td>
-<td>App NEXT: the throttle every ship starts at. <code>interceptor</code>: 50 % (<strong>verified</strong>).</td>
+<td>App 0.22.50: the throttle every ship starts at. <code>interceptor</code>: 50 % (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>beams_hit_missiles</code></td>
 <td><code>{chance, radius}</code></td>
 <td>none</td>
-<td>App NEXT: beam bolts strike hostile missiles passing within <code>radius</code> (3 m, <em>derived</em>); each applies its damage with <code>chance</code> (90 %), and a missile whose <code>hit_points</code> that beats is destroyed. <code>interceptor</code>: 90 % (<strong>verified</strong>); it has no <code>point_defence</code>.</td>
+<td>App 0.22.50: beam bolts strike hostile missiles passing within <code>radius</code> (3 m, <em>derived</em>); each applies its damage with <code>chance</code> (90 %), and a missile whose <code>hit_points</code> that beats is destroyed. <code>interceptor</code>: 90 % (<strong>verified</strong>); it has no <code>point_defence</code>.</td>
 </tr>
 <tr>
 <td><code>pilot_grades</code></td>
@@ -9258,7 +9264,7 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 <td><code>recharge_while_burning</code></td>
 <td>bool</td>
 <td><code>false</code></td>
-<td>App NEXT: the energy pool keeps recharging while the afterburner burns (the original's 1 s tick, <strong>verified</strong>); <code>false</code> stops it. <code>interceptor</code>: <code>true</code>.</td>
+<td>App 0.22.50: the energy pool keeps recharging while the afterburner burns (the original's 1 s tick, <strong>verified</strong>); <code>false</code> stops it. <code>interceptor</code>: <code>true</code>.</td>
 </tr>
 <tr>
 <td><code>balance</code></td>
@@ -9384,7 +9390,7 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 <td><code>tachyon_table</code></td>
 <td><code>{tries, rolls}</code></td>
 <td>none</td>
-<td>App NEXT: the table <code>effect: systems</code> beams strike with, the same shape as <code>system_table</code>. A <code>hit: none</code> roll with <code>carry: true</code> only uses up its try (the damage stays). <code>interceptor</code>: beam mounts 10 %, empty 10 %, shield generator 10 %, sensor 5 %, engine 50 %, hyperdrive 10 %, special 3 % (<strong>verified</strong>; tries and carries <em>derived</em>).</td>
+<td>App 0.22.50: the table <code>effect: systems</code> beams strike with, the same shape as <code>system_table</code>. A <code>hit: none</code> roll with <code>carry: true</code> only uses up its try (the damage stays). <code>interceptor</code>: beam mounts 10 %, empty 10 %, shield generator 10 %, sensor 5 %, engine 50 %, hyperdrive 10 %, special 3 % (<strong>verified</strong>; tries and carries <em>derived</em>).</td>
 </tr>
 <tr>
 <td><code>mounts</code></td>
@@ -9396,7 +9402,7 @@ give shape or slots, not both</code>; <code>shape: 'y' is not vee, line_abreast,
 <td><code>pilot_injury</code></td>
 <td><code>{amount, collision, health}</code></td>
 <td>none</td>
-<td>App NEXT: pilots get hurt. A hit whose damage reaches the hull takes <code>amount</code> (whole numbers, [1, 3]) from the pilot's health with a chance of min(damage, 100) %; the split chains (Permeator, Enveloping, shield-bypassing hits) always do, once per chain; a collision takes <code>collision</code> ([5, 10]). At 0 the pilot is unconscious and the ship drifts (disabled); below 0 dead — the ship tumbles away as a wreck, and the player's craft counts lost. Only <a href="#ships-and-objects"><code>crewed</code></a> classes have a pilot (app 0.22.49, #146: stations had one, and a killed station "pilot" sent it tumbling). A ship's pilot record gives the health (a scenario's <code>pilot: {health}</code>, a campaign pilot's), else it is rolled from <code>health: {base, per_rank, rank_roll}</code>. <code>interceptor</code>: as the original (<strong>verified</strong>, <code>0x4516ae</code>; 5 – 15 + rank × 1 – 5).</td>
+<td>App 0.22.50: pilots get hurt. A hit whose damage reaches the hull takes <code>amount</code> (whole numbers, [1, 3]) from the pilot's health with a chance of min(damage, 100) %; the split chains (Permeator, Enveloping, shield-bypassing hits) always do, once per chain; a collision takes <code>collision</code> ([5, 10]). At 0 the pilot is unconscious and the ship drifts (disabled); below 0 dead — the ship tumbles away as a wreck, and the player's craft counts lost. Only <a href="#ships-and-objects"><code>crewed</code></a> classes have a pilot (app 0.22.49, #146: stations had one, and a killed station "pilot" sent it tumbling). A ship's pilot record gives the health (a scenario's <code>pilot: {health}</code>, a campaign pilot's), else it is rolled from <code>health: {base, per_rank, rank_roll}</code>. <code>interceptor</code>: as the original (<strong>verified</strong>, <code>0x4516ae</code>; 5 – 15 + rank × 1 – 5).</td>
 </tr>
 </tbody>
 </table>

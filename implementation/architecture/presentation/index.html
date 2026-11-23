@@ -7236,7 +7236,7 @@ walked. <code>value()</code> maps a value name to text; <code>weekday</code> use
 0 = Monday; tested by <code>weekdays_follow_the_calendar</code>). <code>--screen &lt;id&gt;</code> calls
 <code>StrategyScreen::open_screen</code>, which puts that screen over the first.</p>
 <h3 id="sheet-fonts-and-text-anchors-formatssheetfont-apptext">Sheet fonts and text anchors (<code>formats::sheetfont</code>, <code>app::text</code>)<a class="headerlink" href="#sheet-fonts-and-text-anchors-formatssheetfont-apptext" title="Permanent link">&para;</a></h3>
-<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #122; RQ-UI-03/04).</em> The original strategy
+<p><em>App 0.22.50, branch <code>parity/m2</code> (plan M2, issue #122; RQ-UI-03/04).</em> The original strategy
 screens draw text with bitmap <strong>sheet fonts</strong> placed by two routines; the engine had guessed
 TrueType baselines (<code>r[1] + r[3]/2 + 0.35·size</code>), which is why text looked mis-sized and off its
 controls. Three layers now reproduce the original:</p>
@@ -7275,7 +7275,7 @@ the status bar; wrapping, forced breaks and both block placements),
 <code>the_default_campaigns_generated_fonts_are_grid_sheets</code>, and <code>check::tests</code> (bad sheet, unknown
 widget font).</p>
 <h3 id="captions-text-buttons-lists-and-dialogs-appcaption-contentsmallfont">Captions, text buttons, lists and dialogs (<code>app::caption</code>, <code>content::smallfont</code>)<a class="headerlink" href="#captions-text-buttons-lists-and-dialogs-appcaption-contentsmallfont" title="Permanent link">&para;</a></h3>
-<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #123; RQ-UI-05/06, audit D-32 – D-40).</em> In the
+<p><em>App 0.22.50, branch <code>parity/m2</code> (plan M2, issue #123; RQ-UI-05/06, audit D-32 – D-40).</em> In the
 original every caption is drawn by its control's paint routine from the control's rectangle.
 <code>app::caption</code> holds those rules as pure functions over integer design-space rectangles:</p>
 <table>
@@ -7324,7 +7324,7 @@ advances, every design narrower than its advance, the sheet reads),
 detail text), <code>content::skin::tests::text_button_and_dialog_styles_parse_over_the_originals_look</code>,
 <code>content::screens::tests</code> (list keys), <code>cli::tests</code> (<code>--notice</code>, <code>--hover</code>).</p>
 <h3 id="the-compact-list-box-applistbox">The compact list box (<code>app::listbox</code>)<a class="headerlink" href="#the-compact-list-box-applistbox" title="Permanent link">&para;</a></h3>
-<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #124; RQ-UI-13).</em> <code>app::listbox</code> holds the original
+<p><em>App 0.22.50, branch <code>parity/m2</code> (plan M2, issue #124; RQ-UI-13).</em> <code>app::listbox</code> holds the original
 ListBox's rules (0x51b7c6) as pure functions:</p>
 <ul>
 <li><code>visible_rows(h, lh)</code>: rounds in integers.</li>
@@ -7351,7 +7351,7 @@ ListBox's rules (0x51b7c6) as pure functions:</p>
 <li><code>check::tests</code>: a missing arrow image.</li>
 </ul>
 <h3 id="sprite-buttons-toggles-and-radio-groups-formatsspritetable-appbutton">Sprite buttons, toggles and radio groups (<code>formats::spritetable</code>, <code>app::button</code>)<a class="headerlink" href="#sprite-buttons-toggles-and-radio-groups-formatsspritetable-appbutton" title="Permanent link">&para;</a></h3>
-<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #125; RQ-UI-01/02/07/08).</em></p>
+<p><em>App 0.22.50, branch <code>parity/m2</code> (plan M2, issue #125; RQ-UI-01/02/07/08).</em></p>
 <ul>
 <li><strong><code>formats::spritetable</code></strong> finds the original's sprite table in <code>Interceptor.exe</code> by content:
   the first run of 64 or more 20-byte rows numbered 0, 1, 2, … with sane hot spots. It reads
@@ -7385,7 +7385,7 @@ ListBox's rules (0x51b7c6) as pure functions:</p>
 <li><code>check::tests</code>: a missing sprite.</li>
 </ul>
 <h3 id="history-clock-and-message-boxes-apphistory-appcaption">History, clock and message boxes (<code>app::history</code>, <code>app::caption</code>)<a class="headerlink" href="#history-clock-and-message-boxes-apphistory-appcaption" title="Permanent link">&para;</a></h3>
-<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #127; RQ-UI-14/15/16, RQ-S-18).</em></p>
+<p><em>App 0.22.50, branch <code>parity/m2</code> (plan M2, issue #127; RQ-UI-14/15/16, RQ-S-18).</em></p>
 <ul>
 <li><strong><code>app::history::History</code></strong> replaces the screen set's <code>Vec&lt;String&gt;</code> stack. It holds <code>home</code>,
   <code>current</code>, <code>trail</code> (Back's screens), <code>dialogs</code> and <code>limit</code>. Its operations follow the exe
@@ -7419,7 +7419,7 @@ ListBox's rules (0x51b7c6) as pure functions:</p>
 <li><code>check::tests</code>: a missing dialog image.</li>
 </ul>
 <h3 id="the-originals-message-box-appmsgbox">The original's message box (<code>app::msgbox</code>)<a class="headerlink" href="#the-originals-message-box-appmsgbox" title="Permanent link">&para;</a></h3>
-<p><em>App NEXT, branch <code>parity/m2</code> (follow-up to #127; <code>ui-framework.md</code> §4).</em></p>
+<p><em>App 0.22.50, branch <code>parity/m2</code> (follow-up to #127; <code>ui-framework.md</code> §4).</em></p>
 <p><code>app::msgbox</code> holds the exe's message-box rules as pure functions:</p>
 <table>
 <thead>
@@ -7469,7 +7469,7 @@ offers "OK (5 secs)" (<code>clock.ask_for</code>).</p>
 <li><code>content::skin::tests</code>: <code>kits</code>, <code>styles</code>, <code>fill_large</code>.</li>
 </ul>
 <h3 id="sounds-hover-help-the-dial-and-lamps-appfloater">Sounds, hover help, the dial and lamps (<code>app::floater</code>)<a class="headerlink" href="#sounds-hover-help-the-dial-and-lamps-appfloater" title="Permanent link">&para;</a></h3>
-<p><em>App NEXT, branch <code>parity/m2</code> (plan M2, issue #126; RQ-UI-09 – 12).</em></p>
+<p><em>App 0.22.50, branch <code>parity/m2</code> (plan M2, issue #126; RQ-UI-09 – 12).</em></p>
 <ul>
 <li><strong>Sounds.</strong> The <code>SoundBank</code> loads every non-event <code>sounds:</code> entry as <code>SoundKey::Ui</code>.
   <code>strategy::play_ui(ctx, own, default)</code> plays a widget's <code>sound</code> (<code>none</code> silences it), else the

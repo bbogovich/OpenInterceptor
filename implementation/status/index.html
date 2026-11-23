@@ -8150,6 +8150,13 @@ info panel, the Contacts list, a second click on the contact); the base hull (va
 the Bases rows) and craft condition (the hangar rows); the map's <code>markers</code> — bases with a build
 bar, the rival's known bases and outposts, freighters in flight (<code>Campaign::freighters_in_flight</code>,
 for #141 to extend), battles under way — and their hover labels. MT-6-38.</p>
+<p><strong>#147</strong> (app 0.22.50; a playtest of 0.22.48): the ship status display drew an outline aeroplane
+in the middle of the shield rings, over the craft the original cockpit art paints there. New
+cockpit key <code>ship_status.craft_art</code> (the art region, redrawn tinted by the hull) with the three
+X-COM regions measured from the art (derived), and class key <code>silhouette</code> (an image of the craft
+from above) for cockpits without such art. The <code>default</code> campaign's comet, meteor and
+thunderbolt get silhouettes generated from their models (<code>tools/default_assets/silhouettes.py</code>).
+The outline remains the last fallback. MT-6-42.</p>
 <p><strong>#146</strong> (app 0.22.49; a playtest of 0.22.48): impacts sent a station spinning. Collisions were not
 the cause (a station is immovable there); every class had a pilot under <code>damage.pilot_injury</code>, so
 fighter hits and rams killed the station's "pilot" and <code>hurt_pilot</code> made it a tumbling wreck. The

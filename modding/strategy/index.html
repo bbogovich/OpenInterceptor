@@ -7841,17 +7841,17 @@ names it. Difficulty level ids are constants as well (<code>difficulty &gt;= vet
 <tr>
 <td><code>alien_tech</code></td>
 <td>number</td>
-<td>App NEXT: the rival's tech level, 1 – 3 (<a href="../story/#strategist"><code>strategist.economy</code></a>; 1 without it).</td>
+<td>App 0.22.50: the rival's tech level, 1 – 3 (<a href="../story/#strategist"><code>strategist.economy</code></a>; 1 without it).</td>
 </tr>
 <tr>
 <td><code>alien_bases</code>, <code>alien_outposts</code></td>
 <td>number</td>
-<td>App NEXT: the rival's bases and outposts on the map (<a href="#alien_bases"><code>alien_bases</code></a>; 0 without it).</td>
+<td>App 0.22.50: the rival's bases and outposts on the map (<a href="#alien_bases"><code>alien_bases</code></a>; 0 without it).</td>
 </tr>
 <tr>
 <td><code>centre_distance(s)</code></td>
 <td>number</td>
-<td>App NEXT: map units from system <code>s</code> to the map's centre — a generated map's middle, else the middle of the systems' bounding box. <code>interceptor</code>'s bases must be within 30,000 (5 ly) of it (<strong>verified</strong>).</td>
+<td>App 0.22.50: map units from system <code>s</code> to the map's centre — a generated map's middle, else the middle of the systems' bounding box. <code>interceptor</code>'s bases must be within 30,000 (5 ly) of it (<strong>verified</strong>).</td>
 </tr>
 </tbody>
 </table>
@@ -8123,13 +8123,13 @@ yet.</p>
 <td><code>requires_all</code></td>
 <td>list of topic ids</td>
 <td>none</td>
-<td>App NEXT: topics that must <strong>all</strong> be known as well — <code>research(a) and research(b)</code> joined to <code>requires</code> (and to the translated <code>prereq*</code>). <code>interceptor</code>: Nova Bomb's five extra prerequisites, which the original's code adds to its INI ones (<strong>verified</strong>).</td>
+<td>App 0.22.50: topics that must <strong>all</strong> be known as well — <code>research(a) and research(b)</code> joined to <code>requires</code> (and to the translated <code>prereq*</code>). <code>interceptor</code>: Nova Bomb's five extra prerequisites, which the original's code adds to its INI ones (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>level</code></td>
 <td>number</td>
 <td>0</td>
-<td>App NEXT: the original's <code>Level</code> (read through inheritance); a finished topic earns <code>research_model.score_by_level</code> at its level.</td>
+<td>App 0.22.50: the original's <code>Level</code> (read through inheritance); a finished topic earns <code>research_model.score_by_level</code> at its level.</td>
 </tr>
 <tr>
 <td><code>requires_item</code></td>
@@ -8141,13 +8141,13 @@ yet.</p>
 <td><code>unlock_on</code></td>
 <td>list of events</td>
 <td>none</td>
-<td>App NEXT: an <strong>event-gated</strong> special topic, offered once any of these battle events has happened: <code>destroyed(&lt;class&gt;)</code> (an enemy of that class destroyed), <code>captured(&lt;class&gt;)</code> (captured or disabled), <code>won(&lt;raid&gt;)</code> or <code>won(&lt;raid&gt;#&lt;n&gt;)</code> (that raid's n-th won battle), <code>kind(&lt;kind&gt;)</code> (a won raid's <a href="#raids"><code>kinds</code></a> pick, app 0.22.30). It stays open.</td>
+<td>App 0.22.50: an <strong>event-gated</strong> special topic, offered once any of these battle events has happened: <code>destroyed(&lt;class&gt;)</code> (an enemy of that class destroyed), <code>captured(&lt;class&gt;)</code> (captured or disabled), <code>won(&lt;raid&gt;)</code> or <code>won(&lt;raid&gt;#&lt;n&gt;)</code> (that raid's n-th won battle), <code>kind(&lt;kind&gt;)</code> (a won raid's <a href="#raids"><code>kinds</code></a> pick, app 0.22.30). It stays open.</td>
 </tr>
 <tr>
 <td><code>complete_on</code></td>
 <td>list of events</td>
 <td>none</td>
-<td>App NEXT: the same events finish the topic outright (the original's topics 74 / 75 for captured freighters and AlienType5).</td>
+<td>App 0.22.50: the same events finish the topic outright (the original's topics 74 / 75 for captured freighters and AlienType5).</td>
 </tr>
 <tr>
 <td><code>lab</code>, <code>site</code>, <code>start_cost</code></td>
@@ -8190,7 +8190,7 @@ yet.</p>
 <td><code>score_by_level</code></td>
 <td>list of numbers</td>
 <td>none</td>
-<td>App NEXT: the score a finished topic earns, by its <code>level</code> (a level past the list takes the last). <code>interceptor</code>: <code>[250, 250, 500, 750]</code> (<strong>verified</strong> +250 / +500 / +750 for Levels 1 – 3; Level 0 taking 250 is <em>derived</em>). <code>default</code>: <code>[100, 200, 300]</code>.</td>
+<td>App 0.22.50: the score a finished topic earns, by its <code>level</code> (a level past the list takes the last). <code>interceptor</code>: <code>[250, 250, 500, 750]</code> (<strong>verified</strong> +250 / +500 / +750 for Levels 1 – 3; Level 0 taking 250 is <em>derived</em>). <code>default</code>: <code>[100, 200, 300]</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -8301,13 +8301,13 @@ weapon it carries at any level: <em>derived</em>).</p>
 <td><code>mass</code></td>
 <td>number</td>
 <td>0</td>
-<td>App NEXT: mass it adds to a craft when fitted (a missile's per round), for <a href="#shipments-and-speed_by_mass"><code>speed_by_mass</code></a>. <code>interceptor</code>: shields 250 (<strong>verified</strong>), armour 150 / 300 / 450 (<em>derived</em>).</td>
+<td>App 0.22.50: mass it adds to a craft when fitted (a missile's per round), for <a href="#shipments-and-speed_by_mass"><code>speed_by_mass</code></a>. <code>interceptor</code>: shields 250 (<strong>verified</strong>), armour 150 / 300 / 450 (<em>derived</em>).</td>
 </tr>
 <tr>
 <td><code>strategic_factor</code></td>
 <td>number</td>
 <td>1</td>
-<td>App NEXT: a fitted engine's factor on the craft's map speed (the best one counts). <code>interceptor</code>: Engine Type 2 × 1.15, Type 3 × 1.4 (<strong>verified</strong>).</td>
+<td>App 0.22.50: a fitted engine's factor on the craft's map speed (the best one counts). <code>interceptor</code>: Engine Type 2 × 1.15, Type 3 × 1.4 (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>requires</code></td>
@@ -8363,7 +8363,7 @@ weapon it carries at any level: <em>derived</em>).</p>
 <td><code>mass</code></td>
 <td>number</td>
 <td>0</td>
-<td>App NEXT: with <a href="#shipments-and-speed_by_mass"><code>speed_by_mass</code></a>, the hull's base mass sets its map speed instead of <code>speed</code>. <code>interceptor</code>: 6,700 / 12,700 / 22,700 (<strong>verified</strong>).</td>
+<td>App 0.22.50: with <a href="#shipments-and-speed_by_mass"><code>speed_by_mass</code></a>, the hull's base mass sets its map speed instead of <code>speed</code>. <code>interceptor</code>: 6,700 / 12,700 / 22,700 (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>slots</code></td>
@@ -8547,25 +8547,25 @@ never refused. A whole base can be dismantled too (<a href="#dismantling-a-whole
 <td><code>price_share</code>, <code>hub_cost</code></td>
 <td>number</td>
 <td>0, 0</td>
-<td>App NEXT (RQ-S-08): when <code>price_share</code> is above 0, a new base costs <code>price_share</code> × (<code>hub_cost</code> + its <code>template</code>'s modules as they would be chosen now), in place of <code>cost</code>. <code>interceptor</code>: 0.75 and 1,500,000 (<strong>verified</strong>, README §3.1).</td>
+<td>App 0.22.50 (RQ-S-08): when <code>price_share</code> is above 0, a new base costs <code>price_share</code> × (<code>hub_cost</code> + its <code>template</code>'s modules as they would be chosen now), in place of <code>cost</code>. <code>interceptor</code>: 0.75 and 1,500,000 (<strong>verified</strong>, README §3.1).</td>
 </tr>
 <tr>
 <td><code>hull</code></td>
 <td>number</td>
 <td>0</td>
-<td>App NEXT: the hub's hull points (0: none). An unopposed strike takes <code>strike_damage</code>; <code>repair</code> mends them. <code>interceptor</code>: 6,000, the station chart's HP1 (<strong>verified</strong>); <code>default</code>: 4,000.</td>
+<td>App 0.22.50: the hub's hull points (0: none). An unopposed strike takes <code>strike_damage</code>; <code>repair</code> mends them. <code>interceptor</code>: 6,000, the station chart's HP1 (<strong>verified</strong>); <code>default</code>: 4,000.</td>
 </tr>
 <tr>
 <td><code>repair</code></td>
 <td><code>{per_minute, min_step, boost}</code></td>
 <td>none</td>
-<td>App NEXT (RQ-S-16): <code>per_minute</code> hull points a game minute, at least <code>min_step</code> a step (an hour at most), times each <code>boost: {&lt;module&gt;: factor}</code> while one works. <code>interceptor</code>: 2, 5, Advanced Damage Control × 2 (<strong>verified</strong>, README §3.2).</td>
+<td>App 0.22.50 (RQ-S-16): <code>per_minute</code> hull points a game minute, at least <code>min_step</code> a step (an hour at most), times each <code>boost: {&lt;module&gt;: factor}</code> while one works. <code>interceptor</code>: 2, 5, Advanced Damage Control × 2 (<strong>verified</strong>, README §3.2).</td>
 </tr>
 <tr>
 <td><code>strike_damage</code></td>
 <td>number</td>
 <td>0</td>
-<td>App NEXT: hull points an unopposed strike takes (<code>interceptor</code>: 1,500, <em>derived</em>).</td>
+<td>App 0.22.50: hull points an unopposed strike takes (<code>interceptor</code>: 1,500, <em>derived</em>).</td>
 </tr>
 </tbody>
 </table>
@@ -8658,7 +8658,7 @@ its <code>cargo</code> modules limit nothing: the original hub's own cargo room 
 <td><code>kinds</code></td>
 <td>list of ids</td>
 <td>none</td>
-<td>App NEXT: what a launch of this raid may be (<code>interceptor</code>'s <code>alien_probe</code>: the original's seven probe types); one is picked per contact and a <strong>won</strong> battle reports it as the event <code>kind(&lt;kind&gt;)</code> for research's <code>unlock_on</code>. Every kind is as likely.</td>
+<td>App 0.22.50: what a launch of this raid may be (<code>interceptor</code>'s <code>alien_probe</code>: the original's seven probe types); one is picked per contact and a <strong>won</strong> battle reports it as the event <code>kind(&lt;kind&gt;)</code> for research's <code>unlock_on</code>. Every kind is as likely.</td>
 </tr>
 <tr>
 <td><code>salvage_items</code></td>
@@ -8670,7 +8670,7 @@ its <code>cargo</code> modules limit nothing: the original hub's own cargo room 
 <td><code>react_on_detect</code></td>
 <td>fraction (<code>per_level</code>)</td>
 <td>0</td>
-<td>App NEXT: once a base's sensors see the contact, with this chance it turns on that base — it heads for it (along the lanes on a lane map) and strikes it if not stopped. A plan's shipment keeps its course. <code>interceptor</code>: alien raids <code>{per_level: [25%, 35%, 45%, 55%, 65%]}</code> (the original's 25 + 10 × level %, <strong>verified</strong>; that it re-tasks against the detector is <em>derived</em>).</td>
+<td>App 0.22.50: once a base's sensors see the contact, with this chance it turns on that base — it heads for it (along the lanes on a lane map) and strikes it if not stopped. A plan's shipment keeps its course. <code>interceptor</code>: alien raids <code>{per_level: [25%, 35%, 45%, 55%, 65%]}</code> (the original's 25 + 10 × level %, <strong>verified</strong>; that it re-tasks against the detector is <em>derived</em>).</td>
 </tr>
 </tbody>
 </table>
@@ -9026,7 +9026,7 @@ modules' hit points (<strong>verified</strong>); its station pool (the chart's S
 <td><code>salary</code></td>
 <td>number or table</td>
 <td>0</td>
-<td>Per month, per living pilot. App NEXT: or the original's table <code>{base, rank, brackets, kills, max_health}</code> — a month's pay is <code>base</code> + (the rank's entry of <code>rank</code> + every bracket bonus) / 12, where <code>brackets: {&lt;stat&gt;: [[from, bonus], …]}</code>, <code>kills</code> and <code>max_health</code> give the bonus of the last entry whose <code>from</code> the value reaches (the first when none does). <code>interceptor</code>: 4,000 + the exe's rank and bracket tables (<strong>verified</strong>, <code>0x410297</code>).</td>
+<td>Per month, per living pilot. App 0.22.50: or the original's table <code>{base, rank, brackets, kills, max_health}</code> — a month's pay is <code>base</code> + (the rank's entry of <code>rank</code> + every bracket bonus) / 12, where <code>brackets: {&lt;stat&gt;: [[from, bonus], …]}</code>, <code>kills</code> and <code>max_health</code> give the bonus of the last entry whose <code>from</code> the value reaches (the first when none does). <code>interceptor</code>: 4,000 + the exe's rank and bracket tables (<strong>verified</strong>, <code>0x410297</code>).</td>
 </tr>
 <tr>
 <td><code>recruit_fee</code></td>
@@ -9068,25 +9068,25 @@ modules' hit points (<strong>verified</strong>); its station pool (the chart's S
 <td><code>training</code> (periodic)</td>
 <td><code>{every, stats, factor, add, scale_by, capacity}</code></td>
 <td>—</td>
-<td>App NEXT, the original's training: every <code>every</code> a pilot in training gains, in each of <code>stats</code>, <code>trunc(scale_by / 100 × stat × factor + add)</code> up to <code>stat_max</code>; at most the bases' <code>capacity</code> module effect train at once, the rest drop out. <code>interceptor</code>: every 5 days, Accuracy, Flying and Psionics, <code>trunc(Int / 100 × stat × 0.1 / 6 + 1)</code>, 5 per Training module (<strong>verified</strong>).</td>
+<td>App 0.22.50, the original's training: every <code>every</code> a pilot in training gains, in each of <code>stats</code>, <code>trunc(scale_by / 100 × stat × factor + add)</code> up to <code>stat_max</code>; at most the bases' <code>capacity</code> module effect train at once, the rest drop out. <code>interceptor</code>: every 5 days, Accuracy, Flying and Psionics, <code>trunc(Int / 100 × stat × 0.1 / 6 + 1)</code>, 5 per Training module (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>generate</code></td>
 <td><code>{rank_roll, bonus}</code></td>
 <td>none</td>
-<td>App NEXT, the original's recruit generator: a starting rank — the last of <code>rank_roll</code>'s thresholds a 1 – 100 roll reaches (the pilot gets that rank's experience) — and <code>bonus: {&lt;stat&gt;: [by rank]}</code> or <code>{&lt;stat&gt;: {add: [by rank], times: &lt;stat&gt;}}</code> (the bonus × that stat / 100, truncated) added up to <code>stat_max</code>. <code>interceptor</code>: thresholds 41/61/81/96; Stamina +0/3/6/9/12, Accuracy +0/5/10/15/20 and Flying +0/5/15/20/30 times Intelligence / 100, Aggressiveness −5/0/5/10/15 (<strong>verified</strong>, <code>0x40e8b6</code>).</td>
+<td>App 0.22.50, the original's recruit generator: a starting rank — the last of <code>rank_roll</code>'s thresholds a 1 – 100 roll reaches (the pilot gets that rank's experience) — and <code>bonus: {&lt;stat&gt;: [by rank]}</code> or <code>{&lt;stat&gt;: {add: [by rank], times: &lt;stat&gt;}}</code> (the bonus × that stat / 100, truncated) added up to <code>stat_max</code>. <code>interceptor</code>: thresholds 41/61/81/96; Stamina +0/3/6/9/12, Accuracy +0/5/10/15/20 and Flying +0/5/15/20/30 times Intelligence / 100, Aggressiveness −5/0/5/10/15 (<strong>verified</strong>, <code>0x40e8b6</code>).</td>
 </tr>
 <tr>
 <td><code>health</code></td>
 <td><code>{max, per_day, in_medical, medical, fly_from}</code></td>
 <td>none</td>
-<td>App NEXT: pilots have health. <code>max: {base, per_rank}</code> (whole-number ranges) rolls a recruit's maximum (<code>base</code> + rank × <code>per_rank</code>) and the pilot starts at it; every day each hurt pilot heals <code>per_day</code>, or <code>in_medical</code> while the bases' <code>medical</code> module effect has room; a pilot below <code>fly_from</code> (100 %) of the maximum is grounded. A battle's injuries come back with the pilot (<a href="../reference/#damage"><code>damage.pilot_injury</code></a>); below 0 the pilot is dead. Without it, injuries last <code>heal_days</code>. <code>interceptor</code>: 5 – 15 + rank × 1 – 5, 1 a day, 2 in a medical bay (5 per Medical module, <em>derived</em>), grounded until whole (<em>derived</em>).</td>
+<td>App 0.22.50: pilots have health. <code>max: {base, per_rank}</code> (whole-number ranges) rolls a recruit's maximum (<code>base</code> + rank × <code>per_rank</code>) and the pilot starts at it; every day each hurt pilot heals <code>per_day</code>, or <code>in_medical</code> while the bases' <code>medical</code> module effect has room; a pilot below <code>fly_from</code> (100 %) of the maximum is grounded. A battle's injuries come back with the pilot (<a href="../reference/#damage"><code>damage.pilot_injury</code></a>); below 0 the pilot is dead. Without it, injuries last <code>heal_days</code>. <code>interceptor</code>: 5 – 15 + rank × 1 – 5, 1 a day, 2 in a medical bay (5 per Medical module, <em>derived</em>), grounded until whole (<em>derived</em>).</td>
 </tr>
 <tr>
 <td><code>stat_max</code></td>
 <td>number</td>
 <td>each range's maximum</td>
-<td>App NEXT: the most training or a generator bonus raises a stat to. <code>interceptor</code>: 100.</td>
+<td>App 0.22.50: the most training or a generator bonus raises a stat to. <code>interceptor</code>: 100.</td>
 </tr>
 </tbody>
 </table>
