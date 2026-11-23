@@ -893,7 +893,7 @@ menu's *Load game* page ([Presentation](presentation.md#the-main-menu-and-credit
 
 ## Save sections
 
-Since app NEXT (RQ-S-28, after the original's tagged chunks, unknowns §12.6) a save lists its
+Since app 0.22.33 (RQ-S-28, after the original's tagged chunks, unknowns §12.6) a save lists its
 subsystems' versions under `sections:` — `player`, `bases`, `craft`, `pilots`, `contacts`,
 `deliveries`, `outposts`, `history`, `story` (`save::SECTIONS`). Reading refuses a save whose
 section has another version than this app reads, naming it ("its story section is version 3;

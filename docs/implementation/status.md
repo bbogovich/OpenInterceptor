@@ -651,7 +651,7 @@ scheduler (`side_missions:`); the aliens' treasury and tech level (`strategist.e
 `alien_tech`); aggression from 0.7; the Doomsday piece counts. Not built: alien bases, their
 raid planner and expansion. DEV-101.
 
-**#137** (app NEXT; RQ-S-19/21/22/28; unknowns §2, §12.6): deliveries by the outposts' freighters
+**#137** (app 0.22.33; RQ-S-19/21/22/28; unknowns §2, §12.6): deliveries by the outposts' freighters
 (`shipments:`: queued, 100-unit loads in order, travel, unloading and refuelling, ships without a
 bay refunded), map speed by mass (`speed_by_mass`, hull and item `mass`, engines'
 `strategic_factor`), versioned save sections (`save::SECTIONS`). `interceptor`: the original's

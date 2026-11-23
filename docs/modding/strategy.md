@@ -387,7 +387,7 @@ Module `maintenance`, hull `upkeep` and pilot `salary` are charged monthly on th
 
 ### `shipments` and `speed_by_mass`
 
-`shipments: {capacity, speed, unload, refuel}` (app NEXT, RQ-S-19/21) — purchases and finished
+`shipments: {capacity, speed, unload, refuel}` (app 0.22.33, RQ-S-19/21) — purchases and finished
 manufacture are carried from the [outposts](#outposts) by their freighters instead of arriving
 after `economy.delivery`. They queue at the outposts; an idle freighter (one per outpost) loads
 them **in order** into `capacity` units (default 100) — a hull fills the freighter and only an
@@ -400,7 +400,7 @@ refunded. `interceptor` follows the original (unknowns §2.1 – §2.2, **verifi
 nearest the base first are *derived*. Hired pilots and transfers between bases are not shipped
 yet. `default`: 300 units an hour, an hour to unload and two to refuel.
 
-`speed_by_mass: [[mass bound, map units a second], …]` (app NEXT, RQ-S-22) — a craft whose hull
+`speed_by_mass: [[mass bound, map units a second], …]` (app 0.22.33, RQ-S-22) — a craft whose hull
 has a `mass` moves at the speed of the first band its mass (the hull's plus its fitted items')
 does not pass, × 3600 an hour, × its fitted engines' best `strategic_factor`. `interceptor`: the
 original's seven bands, 0.1875 … 0.0375 (**verified**, unknowns §2.3), and raids' speeds set from
