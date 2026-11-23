@@ -8,6 +8,8 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#143 (app NEXT)** one more: `campaign::tests::soak_tooling_captures_and_keeps_the_fleet`.
+
 **Difficulty fix (app 0.22.36)** two more: `campaign::tests::a_save_names_its_difficulty_before_it_is_read`
 and `campaign::tests::content_resolves_per_level_values_at_the_chosen_level` (the default campaign's saucer scout aims 0.15 at cadet and 0.6 at its last level). The app-side reload is manual test MT-6-37.
 
