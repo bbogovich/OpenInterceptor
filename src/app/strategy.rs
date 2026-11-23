@@ -38,6 +38,7 @@ use super::text;
 use super::ui::Ui;
 use super::widgets::{self, Input, ListView};
 use super::{AppContext, Next};
+use crate::campaign::aliens::AlienPlace;
 use crate::campaign::{save, Campaign, Event, PilotState, Product};
 use crate::content::strategy::{NoticeClock, NoticeKind, StrategyDef};
 use macroquad::prelude::*;
@@ -120,6 +121,8 @@ pub enum Sel {
     Convoy(usize),
     Survey(usize),
     Craft(usize),
+    /// One of the rival's places the player knows of (#139, #142).
+    Alien(AlienPlace),
 }
 
 /// What Enter does on a row.
@@ -150,6 +153,8 @@ enum Act {
     FireEvent(usize),
     /// Join the off-screen battle against a contact and fly it (RQ-C-21).
     JoinBattle(u32),
+    /// Send the current base's ready craft against a rival base or outpost (#142).
+    Attack(AlienPlace),
     /// Move job `j` of the current base's queue up, or cancel it.
     RaiseJob(usize),
     CancelJob(usize),
@@ -199,6 +204,7 @@ impl Row {
             Act::CancelJob(_) => "Cancel",
             Act::Intercept(_) => "Intercept",
             Act::JoinBattle(_) => "Join the battle",
+            Act::Attack(_) => "Attack",
             Act::Survey(_) => "Survey",
             Act::StationResearch(..) => "Start",
         };
@@ -481,6 +487,11 @@ impl StrategyScreen {
 
     /// Opens screen `id` of the campaign's set over its first screen (`--screen`).
     pub fn open_screen(&mut self, ctx: &AppContext, id: &str) {
+        // `--screen testbed`: the testbed's single-screen layout (as Ctrl+T).
+        if id == "testbed" {
+            self.testbed = true;
+            return;
+        }
         let rules = &ctx.content.rules;
         if let Some(first) = rules.strategy_screen.clone() {
             let mut h = History::new(&first, history_limit(rules, &first));
@@ -1206,6 +1217,13 @@ impl StrategyScreen {
             Act::BuildFacility(t, s) => c.build_facility(def, t, s),
             Act::StationResearch(f, t) => c.start_station_research(def, f, t),
             Act::JoinBattle(_) => Ok(()), // handled above
+            // An assault: the ready craft of the current base, as an interception chooses
+            // them (`Campaign::assault`).
+            Act::Attack(place) => {
+                let ready: Vec<usize> =
+                    (0..c.craft.len()).filter(|&k| c.craft[k].base == base && c.craft[k].away.is_none()).collect();
+                c.assault(def, place, &ready).map(|_| ())
+            }
             Act::Intercept(id) => {
                 let ready: Vec<usize> =
                     (0..c.craft.len()).filter(|&k| c.craft[k].base == base && c.craft[k].away.is_none()).collect();
@@ -1591,7 +1609,12 @@ impl StrategyScreen {
     }
 
     /// The object nearest `p` (screen) within `reach` pixels.
-    fn pick(&self, p: Vec2, s: f32, origin: Vec2, reach: f32) -> Option<Sel> {
+    /// Whether the player knows of the rival's place in system `sys` (`--map-demo` shows all).
+    fn place_known(&self, def: &StrategyDef, sys: usize) -> bool {
+        self.reveal_all || crate::campaign::aliens::known(&self.campaign, def, sys)
+    }
+
+    fn pick(&self, def: &StrategyDef, p: Vec2, s: f32, origin: Vec2, reach: f32) -> Option<Sel> {
         let c = &self.campaign;
         let at = |q: [f32; 2]| origin + vec2(q[0], q[1]) * s;
         let mut best: Option<(f32, Sel)> = None;
@@ -1618,6 +1641,13 @@ impl StrategyScreen {
             if let Some((_, pos)) = cr.away {
                 consider(pos, Sel::Craft(k), 4.0);
             }
+        }
+        // The rival's known places win over their star (the same point).
+        for (k, b) in c.aliens.bases.iter().enumerate().filter(|(_, b)| self.place_known(def, b.system)) {
+            consider(c.systems[b.system].pos, Sel::Alien(AlienPlace::Base(k)), 2.0);
+        }
+        for (k, o) in c.aliens.outposts.iter().enumerate().filter(|(_, o)| self.place_known(def, o.system)) {
+            consider(c.systems[o.system].pos, Sel::Alien(AlienPlace::Outpost(k)), 1.0);
         }
         best.map(|(_, s)| s)
     }
@@ -1717,6 +1747,29 @@ impl StrategyScreen {
                 Some(cr) => (cr.name.clone(), "On a mission.".into(), Vec::new()),
                 None => ("Craft".into(), String::new(), Vec::new()),
             },
+            // The rival's place: attack it with the current base's ready craft (#142).
+            Some(Sel::Alien(place)) => {
+                let (what, sys) = match place {
+                    AlienPlace::Base(k) => ("Alien base", c.aliens.bases.get(k).map(|b| b.system)),
+                    AlienPlace::Outpost(k) => ("Alien outpost", c.aliens.outposts.get(k).map(|o| o.system)),
+                };
+                match sys {
+                    Some(s) => {
+                        let ready = c.craft.iter().filter(|cr| cr.base == base && cr.away.is_none()).count();
+                        (
+                            what.into(),
+                            format!(
+                                "The rival's {} in the {} system. {ready} craft ready at {}.",
+                                what.to_lowercase().trim_start_matches("alien "),
+                                c.systems[s].name,
+                                c.bases.get(base).map_or("-", |b| b.name.as_str())
+                            ),
+                            vec![("Attack".into(), Act::Attack(place))],
+                        )
+                    }
+                    None => ("Gone".into(), String::new(), Vec::new()),
+                }
+            }
         }
     }
 
@@ -1800,10 +1853,11 @@ impl StrategyScreen {
                     self.pan += before - after;
                 }
                 if input.clicked {
-                    if let Some(sel) = self.pick(input.mouse, s, origin, 22.0) {
-                        // A second click on the selected contact acts on it — intercept, or
-                        // join its battle (screens without an info panel, the CSD).
-                        if self.sel == Some(sel) && matches!(sel, Sel::Contact(_)) {
+                    if let Some(sel) = self.pick(def, input.mouse, s, origin, 22.0) {
+                        // A second click on the selected contact or rival place acts on it —
+                        // intercept, join its battle, or attack (screens without an info
+                        // panel, the CSD).
+                        if self.sel == Some(sel) && matches!(sel, Sel::Contact(_) | Sel::Alien(_)) {
                             if let Some(a) = self.info(def).2.first().map(|(_, a)| *a) {
                                 self.act(def, a);
                             }
@@ -3514,6 +3568,10 @@ impl StrategyScreen {
                 self.say(format!("Map demo: {e}"));
             }
         }
+        // The rival's base selected: its info offers Attack (#142).
+        if !self.campaign.aliens.bases.is_empty() {
+            self.sel = Some(Sel::Alien(AlienPlace::Base(0)));
+        }
     }
 
     /// The star classes' map icons (`star_classes.<id>.icon`), by class index; the
@@ -3650,8 +3708,11 @@ impl StrategyScreen {
                     None => draw_rectangle(p.x - 3.5 * k, p.y + star + 2.0 * k, 7.0 * k, 5.0 * k, red),
                 }
             }
-            for ab in &c.aliens.bases {
+            for (k, ab) in c.aliens.bases.iter().enumerate() {
                 let p = at(c.systems[ab.system].pos);
+                if self.sel == Some(Sel::Alien(AlienPlace::Base(k))) && inside(p) {
+                    draw_circle_lines(p.x, p.y, star + 6.0, 2.0, YELLOW);
+                }
                 if !inside(p) || !(self.reveal_all || crate::campaign::aliens::known(c, def, ab.system)) {
                     continue;
                 }
@@ -3785,7 +3846,7 @@ impl StrategyScreen {
         // Hover: the name of what is under the mouse.
         let (mx, my) = mouse_position();
         if inside(vec2(mx, my)) {
-            if let Some(sel) = self.pick(vec2(mx, my), s, origin, 18.0) {
+            if let Some(sel) = self.pick(def, vec2(mx, my), s, origin, 18.0) {
                 let name = match sel {
                     Sel::System(i) => c.systems[i].name.clone(),
                     Sel::Contact(id) => c
@@ -3797,6 +3858,8 @@ impl StrategyScreen {
                     Sel::Convoy(_) => "Supply convoy".into(),
                     Sel::Survey(_) => "Survey ship".into(),
                     Sel::Craft(kk) => c.craft.get(kk).map(|x| x.name.clone()).unwrap_or_default(),
+                    Sel::Alien(AlienPlace::Base(_)) => "Alien base".into(),
+                    Sel::Alien(AlienPlace::Outpost(_)) => "Alien outpost".into(),
                 };
                 let tw = ui.measure(&name, 15.0 * k) + 12.0;
                 draw_rectangle(mx + 14.0, my - 4.0, tw, 22.0 * k, Color::new(0.0, 0.0, 0.0, 0.8));
