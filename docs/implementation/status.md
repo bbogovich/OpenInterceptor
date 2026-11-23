@@ -664,7 +664,7 @@ the Bases rows) and craft condition (the hangar rows); the map's `markers` — b
 bar, the rival's known bases and outposts, freighters in flight (`Campaign::freighters_in_flight`,
 for #141 to extend), battles under way — and their hover labels. MT-6-38.
 
-**#146** (app NEXT; a playtest of 0.22.48): impacts sent a station spinning. Collisions were not
+**#146** (app 0.22.49; a playtest of 0.22.48): impacts sent a station spinning. Collisions were not
 the cause (a station is immovable there); every class had a pilot under `damage.pilot_injury`, so
 fighter hits and rams killed the station's "pilot" and `hurt_pilot` made it a tumbling wreck. The
 original injures pilots only on ship objects (rt type 1; flight notes §4.2, §8.3, verified). New
