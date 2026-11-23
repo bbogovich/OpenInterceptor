@@ -195,7 +195,7 @@ directly. `interceptor` starts at 0.7, `Think.ini`'s `StartingAggression` (D-25,
 | `tech_levels` | list of `[to 2, to 3]` per difficulty level | none | Research money at which the tech level rises to 2 and to 3. |
 
 Conditions read the level as `alien_tech` (1 – 3). With [`alien_bases`](strategy.md#alien_bases)
-and its `outpost_income` (app NEXT) the rival's outposts pay instead, each once old enough; with one
+and its `outpost_income` (app 0.22.34) the rival's outposts pay instead, each once old enough; with one
 outpost or none the `income` formula applies. `interceptor` follows the original (README
 §6.1, **verified**): its outposts pay (455,625 each a period, *derived*: the README's example
 outpost), else the fallback 125,000 × (difficulty + 1), `Think.ini`'s

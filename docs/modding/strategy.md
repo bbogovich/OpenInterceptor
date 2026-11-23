@@ -464,7 +464,7 @@ kills by type.
 
 ### `alien_bases`
 
-`alien_bases:` (app NEXT, RQ-S-23 – 26) — the rival owns **bases** and **outposts** on the map, kept
+`alien_bases:` (app 0.22.34, RQ-S-23 – 26) — the rival owns **bases** and **outposts** on the map, kept
 and saved with the campaign, as the original's alien strategist (unknowns §3, §12.1, **verified**).
 Without the section its raids follow their own `every` / `chance` schedules.
 

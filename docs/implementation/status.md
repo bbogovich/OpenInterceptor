@@ -685,7 +685,7 @@ saucer. `interceptor` `--strategy-soak` (app 0.22.32, seed 7):
 D-24 closed: the soak keeps a craft and fights 52 battles in a year (it lost them all by day 30
 and fought one). DEV-102.
 
-**#139** (app NEXT; RQ-S-23 – 26; unknowns §2.4, §3, §11.3, §12.1 – 12.2): `alien_bases:` and
+**#139** (app 0.22.34; RQ-S-23 – 26; unknowns §2.4, §3, §11.3, §12.1 – 12.2): `alien_bases:` and
 `campaign::aliens` — the rival's A and B bases and outposts as saved campaign objects (save section
 `aliens`), ship queues, the 20-hour expansion and 5-day re-founding, 25-day outposts, the raid planner
 sending raids from its A bases, the freighter harassment check, the outposts' income, and
