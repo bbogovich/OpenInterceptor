@@ -11,7 +11,7 @@ so it is not in the count from macOS.
 **#142 (app 0.22.44)** two more: `campaign::aliens::tests::the_player_attacks_and_removes_the_rivals_places`
 and `bases_grow_hangars_and_send_scouts`.
 
-**#141 (app 0.22.41)** four more: `campaign::aliens::tests::a_raid_hunts_a_freighter_and_catches_it_or_lets_it_go`,
+**#141 (app 0.22.41)** four more: `campaign::aliens::tests::a_raid_from_an_a_base_hunts_a_freighter_and_fights_it` (renamed and rewritten in the follow-up: no A base, no raid; 3 ships from the queue; a won battle lets the freighter fly on, a lost one loses it),
 `planned_raids_take_their_size_from_the_table_and_an_escort_at_tech_three`,
 `campaign::tests::hired_pilots_arrive_by_freighter` and
 `content::mission::tests::a_mission_sized_for_a_raid_flies_that_many_and_its_escort`.

@@ -744,3 +744,9 @@ bases' scouts, hangar growth and the queue by hangars; `--soak-assault` for soak
 message on day 103, the Doomsday warning on day 227, the Doomsday complete before the second
 message (the automatic player rarely has two crewed craft free, so it attacks no outpost); the
 story cannot be won by the automatic player.
+
+**#141 follow-up** (app 0.22.45; unknowns §16): hunters from the nearest A base with 3 queued, taken
+from its queue (3 / 4 / 3 / 4 / 5); the base case's own chance (25 + 10d %); meeting within 600 is a
+battle (the hourly simulation, freighter against the raid; the player can join or intercept), the
+cargo lost only if the freighter is destroyed; `Campaign::battle_rules` lets the campaign start that
+battle itself. DEV-105 revised.

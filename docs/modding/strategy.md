@@ -496,11 +496,15 @@ Without the section its raids follow their own `every` / `chance` schedules.
   level, month and target kind apply and whose roll wins adds one ship of `class`. The battle
   uses them: its mission's first enemy role flies that many, the escort joins.
 * **Harassment** (RQ-S-23). Every `harass.every` + `every_per_level` × d hours each freighter in
-  flight within `outpost_radius` of an alien outpost or `base_radius` of a base is attacked with
-  `chance` + `chance_per_level` × d: since app 0.22.41 a raid (`raids.freighter`, `sizes.freighter`
-  ships) sets out after it from the nearest alien place and follows it — intercept the raid to
-  save the freighter; if it comes within an hour's flight the cargo is lost; if the freighter lands
-  first the raid turns back. Without `raids.freighter` the cargo is lost at once.
+  flight within `outpost_radius` of an alien outpost is attacked with `chance` +
+  `chance_per_level` × d, else within `base_radius` of an alien base with `base_chance` +
+  `base_chance_per_level` × d. Since app 0.22.45 the raid (`raids.freighter`) comes from the A base
+  nearest the freighter with `min_queued` ships queued — none, no raid — and takes `sizes.freighter`
+  ships from that queue. It tracks the freighter; within `meet` (600) they fight: the hourly
+  simulation of the freighter (class `harass.freighter`) against the raid, which the player can
+  join, unless the player's craft intercept the raid first. The cargo is lost only if the freighter
+  is destroyed; if it survives it flies on; if it lands before the raid reaches it, the raid turns
+  back. Without `raids.freighter` the cargo is lost at once.
 * **Attacks on the rival** (app 0.22.44). `assault: {base, outpost}` names the raids whose missions
   the player flies against an alien base or outpost (`Campaign::assault`, from the map): a contact
   sits at the place and the chosen craft intercept it as any contact (fly it or auto-resolve it);
@@ -521,7 +525,7 @@ the raid intervals 9 – 12 … 6 – 9 days, 5 / 25 / 40 + 5d %, 45 %, 25 %, 40
 and 50 + 5d %; *derived*: two starting outposts, 15,000-unit distances, a queue of 6 (3 × two
 hangars), 455,625 per outpost, where a freighter's hunters come from; since app 0.22.41 its raid sizes
 (unknowns §11.3: a base [5, 7) … [9, 13), an outpost [4, 6) … [7, 10), a platform [3, 5) … [5, 7),
-a freighter rand[1, d / 2 + 2); Beginner's base row held to [5, 7) is *derived*) and escorts at
+a freighter's hunters 3 / 4 / 3 / 4 / 5; Beginner's base row held to [5, 7) is *derived*) and escorts at
 tech 3 (a Shade after month 5 at a base or outpost with 25 %, else a Phantasm with 25 + 5d %) are
 the original's (**verified**), and `freighter_attack` hunts freighters. Since app 0.22.44 the player
 attacks its places with the `attack_alien_outpost` / `attack_alien_base` missions, its A bases send
