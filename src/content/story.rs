@@ -144,8 +144,8 @@ pub struct PlanDef {
     /// Hours between shipment rolls.
     pub every: f32,
     pub chance: f32,
-    /// With `alien_bases`: each piece takes this much work (outpost-hours; the rival's
-    /// outposts work on it together) and is shipped when done, instead of the
+    /// With `alien_bases`: each piece takes this much work (technician-hours; the rival's
+    /// outposts' technicians work on it every 20 h) and is shipped when done, instead of the
     /// `every` / `chance` rolls. 0: the rolls.
     pub work: f32,
     /// The raid (index into the strategy's raids) a shipment flies as.
@@ -644,7 +644,7 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f(
                     "work",
                     Ty::Num,
-                    "with alien_bases: outpost-hours of work per piece, shipped when done (0: the rolls)",
+                    "with alien_bases: technician-hours of work per piece, shipped when done (0: the rolls)",
                 ),
                 f("chance", Ty::Qty(Unit::Fraction), "chance per roll"),
                 f("raid", Ty::Name, "the raid a shipment flies as"),

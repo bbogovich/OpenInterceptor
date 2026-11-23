@@ -101,8 +101,11 @@ plans:
       - {name: Weapon, count: {per_level: [8, 8, 8, 7, 6]}}
       - {name: Drive, count: {per_level: [9, 8, 7, 6, 5]}}
     start_when: flag(alien_message_1)
-    every: 9d                         # DERIVED
-    # Convoys pass near X-COM space with probability 65 -> 45 % by difficulty.
+    # Each piece takes this many technician-hours of the rival's outposts (unknowns §12.2,
+    # VERIFIED: every 20 game hours, the elapsed time x its technicians, 10 + 10 per platform
+    # per outpost); a finished piece is shipped by convoy. (every / chance: unused.)
+    work: {per_level: [100000, 80000, 70000, 50000, 30000]}
+    every: 9d
     chance: {per_level: [65%, 60%, 55%, 50%, 45%]}
     raid: doomsday_convoy
     warnings:
