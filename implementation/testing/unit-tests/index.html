@@ -6539,6 +6539,14 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>#134 (app 0.22.32)</strong> six more: <code>campaign::autoresolve::tests::ratings_follow_the_original_formulas</code>,
+<code>rounds_come_at_five_hours_then_hourly_and_hits_go_shield_armour_hull</code>,
+<code>a_won_battle_reports_its_kills_and_outcome_actions</code>,
+<code>station_hits_take_modules_first_and_the_hull_by_quarters</code>,
+<code>campaign::tests::battle_damage_stays_on_craft_mends_by_the_day_and_saves</code> (a flown battle's
+damage, the save of a running battle, a day's repair, joining in real time, a craft lost with its
+pilot) and <code>campaign::tests::interceptions_are_fought_off_screen_by_the_hour</code> (the default
+campaign with the hourly model, end to end).</p>
 <p><strong>#133 (app 0.22.28)</strong> four more: <code>sim::combat::tests::hull_hits_and_collisions_hurt_the_pilot_until_out_cold_or_dead</code>,
 <code>content::behaviour::tests::health_rolls_follow_the_original_generator</code>,
 <code>campaign::tests::pilots_heal_train_and_are_paid_as_the_original</code> (health 4 → 8 in two days in the

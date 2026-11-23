@@ -6772,7 +6772,7 @@ one looks like a bug.</p>
 <tr>
 <td>DEV-057</td>
 <td><strong>Auto-resolved interceptions use an engine strength model</strong> (app 0.16.12): each craft's power is √(effective hit points × sustained beam damage per second) from its class (<code>balance::power</code>), a side's power the sum, and the player wins with p = P² / (P² + E²) against the mission's hostile roles at their average counts; the mission's own outcome actions for the rolled result apply. Fitted items, pilots and wingmen are not counted, and a lost auto-resolve does not damage craft or pilots.</td>
-<td>The original's auto-resolution is code, not data (<em>unknown</em>). The square makes a clear superiority nearly certain, like Lanchester's square law; it reuses the <code>--balance</code> numbers so a modder can predict it.</td>
+<td>The original's auto-resolution is code, not data (<em>unknown</em>). The square makes a clear superiority nearly certain, like Lanchester's square law; it reuses the <code>--balance</code> numbers so a modder can predict it. Since app 0.22.32 a campaign with <code>auto_resolve:</code> (<code>interceptor</code>) fights the original's hourly simulation instead (DEV-102).</td>
 <td>4</td>
 </tr>
 <tr>
@@ -7038,6 +7038,12 @@ one looks like a bug.</p>
 <td><strong>The aliens' messages, side missions and economy, with engine choices.</strong> Verified (README §4.3, §6.1 – §6.4, unknowns §11.2, §12.2, Think.ini): the message months and prerequisites with the AlienMessage chance after battles, the side-mission order, months, chances and 6 – 9-day check, the treasury periods, ratios, research cap and tech thresholds, starting aggression 0.7, the MacArthur's 24 – 48 hours, the Doomsday piece counts. Derived: 30-day months for the original's calendar months, which mission stands for each side mission, the arms dealer's 70 %, the alien income from the fallback (no alien outposts), 3 alien downlinks, no aggression adjustment of the split. Not built: alien bases (the A / B variants, the raid planner and the 20-hour expansion), the Doomsday pieces' build work, the Nova Bomb hijack and recon missions, the minor missions.</td>
 <td>Alien bases and outposts are not campaign objects yet.</td>
 <td>M3 (#135)</td>
+</tr>
+<tr>
+<td>DEV-102</td>
+<td><strong>Off-screen battles as built</strong> (app 0.22.32, #134). The rounds, scores, ratings, duels, damage chain, station rules and the losses are the original's (<strong>verified</strong>). Different or unknown: an enemy picks a random live target (the original's <code>k = rand % 50</code> entry is not decoded) and the second enemy list (1/3) is not used — battles have two sides; enemy pilots are rolled from the campaign's recruit ranges (the original rolls them by grade); the station's pool is the chart's SD and its module places are the base's modules in order (<em>derived</em>); a station brought to 0 hull is not removed (base loss is the base layer's); <code>give_up_after</code> is the engine's safeguard against battles neither side can finish; craft repair is 10 % a day (<em>derived</em>; not traced); only shields, armour and hull persist on a craft (no system damage); the player can join a running battle through <code>Campaign::join_offscreen</code>, but the strategy screen has no button for it yet.</td>
+<td>Data; the derived values are keys.</td>
+<td></td>
 </tr>
 </tbody>
 </table>

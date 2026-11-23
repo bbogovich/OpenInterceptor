@@ -8147,6 +8147,61 @@ back; <code>grade_rise</code> with <code>World::campaign_month</code>. DEV-099. 
 bonuses are indexed by the pilot's <strong>rank</strong>, not its grade (tables 0x65f0a8…0x65f0c0 are read with the
 rank just rolled); the grade only picks the Psionics range (0 – 100, 0 – 9, 0, 50 – 79, 45 – 69,
 75 – 99 for grades 0 – 5).</p>
+<p><strong>#134</strong> (app 0.22.32; RQ-C-18/19/20/21, D-24; flight README §13 – 14): <code>auto_resolve:</code> runs an
+auto-resolved interception as the original's hourly simulation (<code>campaign::autoresolve</code>), in game
+time, with the station's part at a base; <code>craft_damage:</code> keeps battle damage on craft (flown or
+not) and on the base's hull; <code>Campaign::join_offscreen</code> stops a running battle with its damage; the
+autoplayer fights off-screen and rebuys a hull when it has none. The original's simulation has no
+system hits, so it never disables or captures a ship: the soak's story still waits for a captured
+saucer. <code>interceptor</code> <code>--strategy-soak</code> (app 0.22.32, seed 7):</p>
+<table>
+<thead>
+<tr>
+<th>Days</th>
+<th>Battles</th>
+<th>Off-screen won / lost</th>
+<th>Craft lost</th>
+<th>Craft at the end</th>
+<th>Topics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>30</td>
+<td>4</td>
+<td>1 / 1</td>
+<td>2</td>
+<td>1</td>
+<td>1 / 71</td>
+</tr>
+<tr>
+<td>90</td>
+<td>11</td>
+<td>4 / 1</td>
+<td>2</td>
+<td>1</td>
+<td>3 / 71</td>
+</tr>
+<tr>
+<td>180</td>
+<td>28</td>
+<td>12 / 1</td>
+<td>7</td>
+<td>1</td>
+<td>5 / 71</td>
+</tr>
+<tr>
+<td>365</td>
+<td>52</td>
+<td>21 / 2</td>
+<td>12</td>
+<td>1</td>
+<td>13 / 71</td>
+</tr>
+</tbody>
+</table>
+<p>D-24 closed: the soak keeps a craft and fights 52 battles in a year (it lost them all by day 30
+and fought one). DEV-102.</p>
 
 
 
