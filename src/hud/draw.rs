@@ -41,6 +41,10 @@ pub struct HudFrame<'a> {
     pub text_scale: f32,
     /// Where the cockpit art paints the ship status display's rings (pack data).
     pub ship_status: crate::content::rules::ShipStatusLook,
+    /// The craft picture in the middle of the ship status display: a texture and, when
+    /// the picture is a region of it (the cockpit art's own craft, `craft_art`), that
+    /// region in texture pixels. `None` draws the engine's simple outline.
+    pub craft_image: Option<(&'a Texture2D, Option<Rect>)>,
 }
 
 fn col(c: [f32; 4]) -> Color {
@@ -477,18 +481,49 @@ fn draw_ship_status(f: &HudFrame, me: &crate::sim::Ship, r: [f32; 4]) {
             draw_arc(c.x, c.y, 48, radius * ring - band * 0.5, from, band, span, col);
         }
     }
-    // The craft from above: a simple fuselage, wings and tail, nose up — turned with the
-    // display's tilt. Screen y points down, so a counter-clockwise turn by `a` maps
-    // (x, y) to (x cos a + y sin a, -x sin a + y cos a).
     let class = f.world.rules.ship(me.class);
     let hull = if class.hull > 0.0 { me.hull / class.hull } else { 1.0 };
-    let s = radius * look.craft;
     let col = hull_color(hull);
+    match (f.craft_image, look.craft_art) {
+        // The art paints the craft itself (#147): that region again, tinted by the hull.
+        // Black stays black under the tint, so only the painted craft changes colour.
+        (Some((tex, Some(src))), Some(art)) => {
+            let d = f.layout.rect(art);
+            let params =
+                DrawTextureParams { dest_size: Some(vec2(d[2], d[3])), source: Some(src), ..Default::default() };
+            draw_texture_ex(tex, d[0], d[1], col, params);
+            return glass_edge(f, c, radius);
+        }
+        // A silhouette image (white on transparent, nose up), `craft` of the half-size
+        // across its longer side and turned with the display's tilt.
+        (Some((tex, None)), _) => {
+            let s = radius * look.craft * 2.0;
+            let k = s / tex.width().max(tex.height()).max(1.0);
+            let (w, h) = (tex.width() * k, tex.height() * k);
+            let params = DrawTextureParams {
+                dest_size: Some(vec2(w, h)),
+                rotation: -look.tilt.to_radians(),
+                ..Default::default()
+            };
+            draw_texture_ex(tex, c.x - w * 0.5, c.y - h * 0.5, col, params);
+            return glass_edge(f, c, radius);
+        }
+        _ => {}
+    }
+    // No picture: the engine's own outline — a fuselage, wings and tail, nose up — turned
+    // with the display's tilt. Screen y points down, so a counter-clockwise turn by `a` maps
+    // (x, y) to (x cos a + y sin a, -x sin a + y cos a).
+    let s = radius * look.craft;
     let (sin, cos) = look.tilt.to_radians().sin_cos();
     let pt = |x: f32, y: f32| Vec2::new(c.x + (x * cos + y * sin) * s, c.y + (-x * sin + y * cos) * s);
     draw_triangle(pt(0.0, -1.0), pt(-0.22, 0.5), pt(0.22, 0.5), col); // fuselage
     draw_triangle(pt(0.0, -0.1), pt(-0.95, 0.45), pt(0.95, 0.45), col); // wings
     draw_triangle(pt(0.0, 0.35), pt(-0.4, 0.85), pt(0.4, 0.85), col); // tail
+    glass_edge(f, c, radius);
+}
+
+/// The glass HUD's edge round the ship status display (cockpit art has its own bezel).
+fn glass_edge(f: &HudFrame, c: Vec2, radius: f32) {
     if f.glass {
         draw_circle_lines(c.x, c.y, radius, f.text_scale, HUD_DIM);
     }

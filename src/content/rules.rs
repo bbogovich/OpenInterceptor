@@ -293,6 +293,10 @@ pub struct ShipClass {
     pub playable: bool,
     /// Cockpit id for the player's view, if this class can be flown from inside.
     pub cockpit: Option<String>,
+    /// The craft seen from above for the ship status display (`silhouette: <image>`,
+    /// white on transparent, nose up), with the pack it resolves in; drawn tinted by the
+    /// hull when the cockpit art paints no craft of its own (#147).
+    pub silhouette: Option<(String, usize)>,
     /// The radio voice set its pilot speaks with (`voice: <voices id>`; R-MSN-007).
     pub voice: Option<String>,
     // --- Durability ------------------------------------------------------------
@@ -1084,13 +1088,24 @@ pub struct ShipStatusLook {
     pub arc: f32,
     /// Size of the craft silhouette in the middle.
     pub craft: f32,
+    /// Where the cockpit art itself paints the craft in the middle of the rings, in
+    /// design pixels of the art (`craft_art: [x, y, w, h]`): that region is redrawn
+    /// tinted by the hull instead of a drawn silhouette (#147).
+    pub craft_art: Option<[f32; 4]>,
 }
 
 impl Default for ShipStatusLook {
     /// The engine's own look, used when a cockpit says nothing: three bands just inside
     /// the instrument's edge.
     fn default() -> Self {
-        ShipStatusLook { rings: [0.989, 0.8405, 0.692], width: 0.11, tilt: 0.0, arc: 140.0, craft: 0.42 }
+        ShipStatusLook {
+            rings: [0.989, 0.8405, 0.692],
+            width: 0.11,
+            tilt: 0.0,
+            arc: 140.0,
+            craft: 0.42,
+            craft_art: None,
+        }
     }
 }
 
@@ -1921,6 +1936,14 @@ pub fn build_with(
                     tilt: s.num("tilt").unwrap_or(d.tilt),
                     arc: s.num("arc").unwrap_or(d.arc).clamp(0.0, 180.0),
                     craft: s.num("craft").unwrap_or(d.craft).max(0.0),
+                    craft_art: match s.nums("craft_art") {
+                        Some(v) if v.len() == 4 && v[2] > 0.0 && v[3] > 0.0 => Some([v[0], v[1], v[2], v[3]]),
+                        Some(_) => {
+                            errors.push(format!("cockpit {id}: ship_status.craft_art needs [x, y, w, h]"));
+                            None
+                        }
+                        None => None,
+                    },
                 }
             }
             None => ShipStatusLook::default(),
@@ -2785,6 +2808,7 @@ fn ship_class(
         model_set,
         playable: g.bool("playable").unwrap_or(false),
         cockpit: g.str("cockpit").map(str::to_string),
+        silhouette: g.str("silhouette").map(|s| (s.to_string(), pack)),
         voice: g.str("voice").map(str::to_string),
         // A station inheriting the original's hit-point chart (`*HP` sections: HP1–HP4)
         // has no HitPoints key: its hull is the chart's HP1. The original reads only HP1
@@ -2947,11 +2971,12 @@ ships:
     beams: [laser, laser]
     missiles: {xwinder: 5}
     cockpit: a
+    silhouette: images/top.png
   pirate: {inherit: interceptor, playable: false, faction: alien, max_speed: 500}
 objects:
   base: {model: models/base.obj, faction: xcom, hit_points: 5000}
 cockpits:
-  a: {image: 'original:CockpitA.dll#12000', instruments: {radar: [10, 20, 30, 40]}, wide: {blackout: true, from: 305, left: images/l.png}, ship_status: {rings: [0.8, 0.6, 0.3], tilt: 6.8, arc: 166}}
+  a: {image: 'original:CockpitA.dll#12000', instruments: {radar: [10, 20, 30, 40]}, wide: {blackout: true, from: 305, left: images/l.png}, ship_status: {rings: [0.8, 0.6, 0.3], tilt: 6.8, arc: 166, craft_art: [1, 2, 3, 4]}}
   vr:
     image: none
     model: models/pit.obj
@@ -3135,6 +3160,15 @@ objects:
     }
 
     #[test]
+    fn a_bad_ship_status_region_is_reported_and_ignored() {
+        let lookup = original_lookup();
+        let src = "cockpits:\n  a: {image: images/a.png, ship_status: {craft_art: [1, 2, 0, 4]}}\n";
+        let (rules, errors) = build(&[source(0, src)], &lookup);
+        assert!(errors.iter().any(|e| e.contains("craft_art needs [x, y, w, h]")), "{errors:?}");
+        assert_eq!(rules.cockpit("a").unwrap().ship_status, ShipStatusLook::default());
+    }
+
+    #[test]
     fn builds_typed_definitions_with_inheritance() {
         let lookup = original_lookup();
         let (rules, errors) = build(&[source(0, BASE)], &lookup);
@@ -3160,7 +3194,17 @@ objects:
         );
         // The ship status look: given keys replace the engine's, the rest keep its defaults.
         let d = ShipStatusLook::default();
-        assert_eq!(a.ship_status, ShipStatusLook { rings: [0.8, 0.6, 0.3], tilt: 6.8, arc: 166.0, ..d });
+        let look = ShipStatusLook {
+            rings: [0.8, 0.6, 0.3],
+            tilt: 6.8,
+            arc: 166.0,
+            craft_art: Some([1.0, 2.0, 3.0, 4.0]),
+            ..d
+        };
+        assert_eq!(a.ship_status, look);
+        // #147: the craft picture — a region of the art, or the class's own silhouette.
+        assert_eq!(i.silhouette, Some(("images/top.png".to_string(), 0)));
+        assert_eq!(p.silhouette, i.silhouette, "inherited");
         assert_eq!(rules.cockpit("vr").unwrap().ship_status, d, "no key: the engine's own look");
         assert_eq!((rules.flight.bolt_frame, rules.flight.bolt_carry), (BoltFrame::Ship, 0.2));
         let v = &rules.voices[0];

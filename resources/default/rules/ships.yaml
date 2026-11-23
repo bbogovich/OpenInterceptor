@@ -15,6 +15,7 @@ ships:
     faction: guard
     playable: true
     cockpit: guard
+    silhouette: textures/silhouette_comet.png   # tools/default_assets/silhouettes.py
     hit_points: 440
     shields: 280
     shield_recharge: 6
@@ -41,6 +42,7 @@ ships:
     faction: guard
     playable: true
     cockpit: guard
+    silhouette: textures/silhouette_meteor.png   # tools/default_assets/silhouettes.py
     hit_points: 640
     shields: 440
     shield_recharge: 7
@@ -67,6 +69,7 @@ ships:
     faction: guard
     playable: true
     cockpit: guard
+    silhouette: textures/silhouette_thunderbolt.png   # tools/default_assets/silhouettes.py
     hit_points: 920
     shields: 640
     shield_recharge: 8

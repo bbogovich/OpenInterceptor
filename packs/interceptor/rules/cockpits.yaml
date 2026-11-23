@@ -31,7 +31,8 @@ cockpits:
       ship_status: [110.25, 408.5, 58, 58]   # centred on the art's painted rings (measured, DERIVED)
     # The art's ship display: three concentric rings split by a divider tilted 6.8 deg
     # (right end up). The bands lie on the rings (radii 24.2, 17.0, 9.5 design px).
-    ship_status: {rings: [0.833, 0.586, 0.327], width: 0.09, tilt: 6.8, arc: 166, craft: 0.25}
+    # The art paints the craft in the middle (measured from the art, DERIVED; #147).
+    ship_status: {rings: [0.833, 0.586, 0.327], width: 0.09, tilt: 6.8, arc: 166, craft: 0.25, craft_art: [134.5, 432.5, 10, 9]}
   b:
     image: original:CockpitB.dll#12200
     # Wide screens: black out the sides of the dashboard (from y=382, where this art's
@@ -52,7 +53,8 @@ cockpits:
       ship_status: [66.25, 373.5, 56, 56]   # centred on the art's painted rings (measured, DERIVED)
     # Rings at radii 23.2, 16.4, 9.1 design px; the divider is level but sits ~1 px
     # below the rings' centre, so the side gaps are a little wider.
-    ship_status: {rings: [0.829, 0.587, 0.326], width: 0.09, tilt: 0, arc: 160, craft: 0.25}
+    # The art paints the craft in the middle (measured from the art, DERIVED; #147).
+    ship_status: {rings: [0.829, 0.587, 0.326], width: 0.09, tilt: 0, arc: 160, craft: 0.25, craft_art: [89.5, 398.5, 10, 8]}
   c:
     image: original:CockpitC.dll#12400
     # Wide screens: black out the sides of the dashboard (from y=352, where this art's
@@ -72,4 +74,5 @@ cockpits:
       gauge4: [372, 325, 26, 24]
       ship_status: [169.25, 406.25, 44, 44]   # centred on the art's painted rings (measured, DERIVED)
     # Rings at radii 19.5, 13.6, 7.7 design px; the divider is level, ~1 px above centre.
-    ship_status: {rings: [0.887, 0.619, 0.348], width: 0.09, tilt: 0, arc: 160, craft: 0.25}
+    # The art paints the craft in the middle (measured from the art, DERIVED; #147).
+    ship_status: {rings: [0.887, 0.619, 0.348], width: 0.09, tilt: 0, arc: 160, craft: 0.25, craft_art: [187, 423.5, 9, 7.5]}

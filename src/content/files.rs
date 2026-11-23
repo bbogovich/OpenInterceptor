@@ -301,6 +301,11 @@ fn ship() -> Ty {
         f("hover", Ty::Bool, "hovers: vertical thrust cancels gravity"),
         f("atmospheric", Ty::Bool, "can enter an atmosphere (default true)"),
         f(
+            "silhouette",
+            Ty::Asset,
+            "the craft from above, nose up, white on transparent: the ship status display's centre",
+        ),
+        f(
             "crewed",
             Ty::Bool,
             "has a pilot who can be hurt or killed (default: fighters, freighters, capitals and drones)",
@@ -473,6 +478,11 @@ fn cockpit() -> Ty {
                 f("tilt", Ty::Num, "counter-clockwise rotation of the display in degrees"),
                 f("arc", Ty::Num, "degrees each half (fore, aft) spans; 180 = no side gaps"),
                 f("craft", Ty::Num, "size of the craft silhouette (fraction of the half-size)"),
+                f(
+                    "craft_art",
+                    Ty::Numbers(4),
+                    "where the art paints the craft, [x, y, w, h] design px: redrawn tinted by the hull",
+                ),
             ]),
             "where the ship_status instrument's shield bands lie on the cockpit art",
         ),

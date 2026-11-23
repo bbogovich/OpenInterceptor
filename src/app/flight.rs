@@ -363,6 +363,9 @@ pub struct FlightSession {
     instruments: HashMap<String, [f32; 4]>,
     /// Where the cockpit art paints the ship status display's shield rings.
     ship_status_look: crate::content::rules::ShipStatusLook,
+    /// The player's craft from above (the class's `silhouette`), for the ship status
+    /// display when the cockpit art paints no craft of its own (#147).
+    silhouette: Option<Texture2D>,
     scenario_id: String,
     ship_choice: Option<String>,
     /// The wingman menu, while open: the highlighted entry.
@@ -614,6 +617,13 @@ impl FlightSession {
             None => (hud::default_instruments(), hud::DESIGN),
         };
         let ship_status_look = cockpit_def.filter(|_| has_cockpit).map(|c| c.ship_status).unwrap_or_default();
+        // Loaded once here, never per frame; a missing image only loses the picture.
+        let silhouette = player_class.silhouette.as_ref().and_then(|(image, pack)| {
+            let img = content.load_image(image, *pack, false).map_err(|e| eprintln!("silhouette: {e}")).ok()?;
+            let t = Texture2D::from_rgba8(img.width as u16, img.height as u16, &img.rgba);
+            t.set_filter(FilterMode::Linear);
+            Some(t)
+        });
         let mut messages = MessageLog::default();
         messages.push(0.0, scenario.title.to_uppercase());
         // Tell the pilot about an ion storm (it shortens their radar).
@@ -659,6 +669,7 @@ impl FlightSession {
             design,
             instruments,
             ship_status_look,
+            silhouette,
             scenario_id: scenario.id.clone(),
             ship_choice: ship.map(str::to_string),
             wing_menu: None,
@@ -1093,6 +1104,14 @@ impl FlightSession {
             text_scale: 1.0,
             // The built-in layout has no painted rings to match: the engine's own look.
             ship_status: if custom { self.ship_status_look } else { Default::default() },
+            // Field by field (not a `&self` method), so `instrument_targets` can still be
+            // borrowed mutably while the frame lives.
+            craft_image: craft_image(
+                with_art.then_some(self.cockpit.as_ref()).flatten(),
+                self.ship_status_look.craft_art,
+                self.design,
+                self.silhouette.as_ref(),
+            ),
         };
         if alive && !anchored.is_empty() {
             let offset = self.cockpit_model.as_ref().map(|(_, o)| *o).unwrap_or_default();
@@ -1704,6 +1723,22 @@ fn wrap_text(text: &str, width: usize) -> Vec<String> {
 fn draw_centered(s: &str, y: f32, size: f32, color: Color) {
     let w = measure_text(s, None, size as u16, 1.0).width;
     draw_text(s, (screen_width() - w) * 0.5, y, size, color);
+}
+
+/// The ship status display's craft picture (#147): with 2D cockpit art whose cockpit
+/// names a `craft_art` region, that region of the art (in texture pixels: the design
+/// rect scaled by the art's size over the design); otherwise the class's silhouette.
+fn craft_image<'a>(
+    art: Option<&'a Texture2D>,
+    craft_art: Option<[f32; 4]>,
+    design: Vec2,
+    silhouette: Option<&'a Texture2D>,
+) -> Option<(&'a Texture2D, Option<Rect>)> {
+    if let (Some(tex), Some(a)) = (art, craft_art) {
+        let (kx, ky) = (tex.width() / design.x.max(1.0), tex.height() / design.y.max(1.0));
+        return Some((tex, Some(Rect::new(a[0] * kx, a[1] * ky, a[2] * kx, a[3] * ky))));
+    }
+    silhouette.map(|t| (t, None))
 }
 
 #[cfg(test)]
