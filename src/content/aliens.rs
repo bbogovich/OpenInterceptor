@@ -95,6 +95,12 @@ pub struct AlienBasesDef {
     pub harass_every: [f32; 2],
     pub harass_radius: [f32; 2],
     pub harass_chance: [f32; 2],
+    /// Near a base the chance is `harass_base_chance[0] + [1] × d` (25 + 10d %).
+    pub harass_base_chance: [f32; 2],
+    /// The raid and the freighter meet within this many map units (600).
+    pub harass_meet: f32,
+    /// The freighter's ship class in its battle (`harass.freighter`).
+    pub freighter_class: Option<String>,
 }
 
 impl AlienBasesDef {
@@ -221,6 +227,12 @@ impl AlienBasesDef {
             harass_every: [hours(sub("harass"), "every", 6.0), num(sub("harass"), "every_per_level", -1.0)],
             harass_radius: [num(sub("harass"), "outpost_radius", 4000.0), num(sub("harass"), "base_radius", 2000.0)],
             harass_chance: [frac(sub("harass"), "chance", 0.5), frac(sub("harass"), "chance_per_level", 0.05)],
+            harass_base_chance: [
+                frac(sub("harass"), "base_chance", 0.25),
+                frac(sub("harass"), "base_chance_per_level", 0.10),
+            ],
+            harass_meet: num(sub("harass"), "meet", 600.0).max(1.0),
+            freighter_class: sub("harass").and_then(|g| g.str("freighter")).map(str::to_string),
         })
     }
 
@@ -315,6 +327,10 @@ impl AlienBasesDef {
                     f("base_radius", Ty::Num, "or to an alien base (2000)"),
                     f("chance", Ty::Qty(Unit::Fraction), "is attacked (50 %)"),
                     f("chance_per_level", Ty::Qty(Unit::Fraction), "+ per level (5 %)"),
+                    f("base_chance", Ty::Qty(Unit::Fraction), "near a base instead (25 %)"),
+                    f("base_chance_per_level", Ty::Qty(Unit::Fraction), "+ per level (10 %)"),
+                    f("meet", Ty::Num, "the raid meets the freighter this close (600)"),
+                    f("freighter", Ty::Name, "the freighter's ship class in the battle"),
                 ]),
                 "freighters in flight near the rival's places are attacked",
             ),

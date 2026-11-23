@@ -106,6 +106,31 @@ pub struct Base {
     pub hull: f32,
 }
 
+/// The battle rules a campaign holds for the battles it starts itself
+/// ([`Campaign::battle_rules`]). Shared (`Arc`), not saved, and equal whatever they hold:
+/// two campaigns compare by their own state.
+#[derive(Clone, Default)]
+pub struct BattleRules(pub Option<std::sync::Arc<crate::content::rules::Ruleset>>);
+
+impl BattleRules {
+    /// A shared copy of `rules`.
+    pub fn of(rules: &crate::content::rules::Ruleset) -> BattleRules {
+        BattleRules(Some(std::sync::Arc::new(rules.clone())))
+    }
+}
+
+impl PartialEq for BattleRules {
+    fn eq(&self, _: &BattleRules) -> bool {
+        true
+    }
+}
+
+impl std::fmt::Debug for BattleRules {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "BattleRules({})", if self.0.is_some() { "set" } else { "none" })
+    }
+}
+
 /// A pilot's state.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PilotState {
@@ -311,6 +336,9 @@ pub struct Campaign {
     pub offscreen: Vec<autoresolve::Offscreen>,
     /// The rival's bases and outposts (`alien_bases:`).
     pub aliens: aliens::AlienState,
+    /// The battle rules the campaign starts its own off-screen battles with (an alien raid
+    /// meeting a freighter, RQ-S-23): set by the screen or the automatic player, never saved.
+    pub battle_rules: BattleRules,
     /// Test tooling only (`--soak-capture`, never saved): a won battle's first destroyed
     /// ship of each class that some topic needs `captured(<class>)` counts as captured.
     pub autoplay_capture: bool,
@@ -583,6 +611,7 @@ impl Campaign {
             offscreen: Vec::new(),
             aliens: Default::default(),
             autoplay_capture: false,
+            battle_rules: BattleRules::default(),
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -2409,6 +2438,14 @@ impl Campaign {
     pub fn battle_result(&mut self, def: &StrategyDef, contact: u32, result: &str, actions: &[String], kills: u32) {
         // An attack on one of the rival's places: won, the place is gone.
         aliens::assault_result(self, contact, result);
+        // A raid's battle with the freighter it hunted: lost, so is the cargo.
+        let mut hunt_events = Vec::new();
+        aliens::hunt_result(self, def, contact, result, &mut hunt_events);
+        for e in hunt_events {
+            if let Event::Notice(t, _) = e {
+                self.notices.push(t);
+            }
+        }
         // Test tooling (`autoplay_capture`): kills of classes a topic needs captured count
         // as captures, so an automatic player can open those topics.
         let mut owned: Vec<String>;
@@ -2631,10 +2668,22 @@ impl Campaign {
             .find(|m| m.id == def.raids[c.raid].mission)
             .ok_or_else(|| format!("no mission '{}'", def.raids[c.raid].mission))?;
         let party = self.battle_party(contact);
-        if party.is_empty() {
+        // A raid that has met the freighter it hunted fights the freighter itself.
+        let freighter = self
+            .aliens
+            .hunts
+            .iter()
+            .any(|h| h.contact == contact && h.met)
+            .then(|| def.alien_bases.as_ref().and_then(|a| a.freighter_class.clone()))
+            .flatten()
+            .filter(|_| party.is_empty());
+        if party.is_empty() && freighter.is_none() {
             return Err("no craft can engage".into());
         }
-        let mine = rules.ship_id(&def.hulls[self.craft[party[0]].hull].id).map(|id| rules.ship(id).faction);
+        let mine = match &freighter {
+            Some(f) => rules.ship_id(f).map(|id| rules.ship(id).faction),
+            None => rules.ship_id(&def.hulls[self.craft[party[0]].hull].id).map(|id| rules.ship(id).faction),
+        };
         // Pilot stats by name: a craft's pilot, or a recruit rolled for an enemy.
         let stats_of = |p: &Pilot| -> Vec<(String, f32)> {
             def.pilots
@@ -2645,6 +2694,11 @@ impl Campaign {
         // (side, craft, class, fit, condition, index into `people`)
         type Planned = (u8, Option<usize>, String, Loadout, Option<[f32; 5]>, Option<usize>);
         let mut plan: Vec<Planned> = Vec::new();
+        if let Some(f) = &freighter {
+            let p = self.make_pilot(def);
+            people.push(stats_of(&p));
+            plan.push((0, None, f.clone(), Loadout::default(), None, Some(people.len() - 1)));
+        }
         for &k in &party {
             let pilot = self.pilots.iter().find(|p| p.craft == Some(k)).map(stats_of);
             let who = pilot.map(|s| {
@@ -3033,6 +3087,9 @@ pub struct Autoplay<'a> {
 pub fn autoplay_run(def: &StrategyDef, o: &Autoplay, mut c: Campaign, days: f64) -> Campaign {
     let rules = o.rules;
     c.autoplay_capture = o.capture;
+    if let (Some(r), None) = (rules, c.battle_rules.0.as_ref()) {
+        c.battle_rules = BattleRules::of(r);
+    }
     let mut battles = c.story.battles_won;
     while c.hours < days * 24.0 {
         // Fewer craft than the fleet (counting hulls on order): buy the cheapest hull

@@ -888,6 +888,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         contacts,
         offscreen: list("offscreen").iter().map(read_offscreen).collect(),
         autoplay_capture: false,
+        battle_rules: Default::default(),
         aliens: g.node("aliens").map(|n| read_aliens(n, system_count)).unwrap_or_default(),
         deliveries,
         next_flow,
@@ -1184,7 +1185,13 @@ fn write_aliens(a: &super::aliens::AlienState) -> Node {
         ("scouts", nums(&a.scouts.iter().map(|x| *x as f64).collect::<Vec<_>>())),
         (
             "hunts",
-            seq(a.hunts.iter().map(|h| nums(&[h.contact as f64, h.outpost as f64, h.base as f64, h.arrive])).collect()),
+            seq(a
+                .hunts
+                .iter()
+                .map(|h| {
+                    nums(&[h.contact as f64, h.outpost as f64, h.base as f64, h.arrive, f64::from(u8::from(h.met))])
+                })
+                .collect()),
         ),
     ])
 }
@@ -1260,6 +1267,7 @@ fn read_aliens(node: &Node, systems: usize) -> super::aliens::AlienState {
                 outpost: at(v, 1) as usize,
                 base: at(v, 2) as usize,
                 arrive: at(v, 3),
+                met: at(v, 4) > 0.5,
             })
             .collect(),
         piece_work: rows("pieces").iter().map(|v| (at(v, 0), at(v, 1) as u32)).collect(),

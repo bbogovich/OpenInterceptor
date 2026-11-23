@@ -463,7 +463,9 @@ impl StrategyScreen {
     pub fn new_campaign(ctx: &AppContext) -> Option<StrategyScreen> {
         let def = ctx.content.rules.strategy.as_ref()?;
         let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(1);
-        Some(Self::with(Campaign::new(def, ctx.content.rules.difficulty, seed)))
+        let mut c = Campaign::new(def, ctx.content.rules.difficulty, seed);
+        c.battle_rules = crate::campaign::BattleRules::of(&ctx.content.rules);
+        Some(Self::with(c))
     }
 
     /// A screen over a campaign made elsewhere (the testbed's start-at-chapter).
@@ -513,6 +515,7 @@ impl StrategyScreen {
         let path = slot_path(&id, slot).ok_or("no user data folder")?;
         let text = std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
         let mut s = Self::with(save::read(&text, def, &pack_refs(ctx))?);
+        s.campaign.battle_rules = crate::campaign::BattleRules::of(&ctx.content.rules);
         // A campaign that has ended shows its ending again.
         s.ending = s.campaign.story.ending;
         Ok(s)
