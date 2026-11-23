@@ -772,6 +772,44 @@ and tech level (the salvage roll itself is per item, §11.2).
   (19), ECMProbe (21), IntelProbe (22) and HunterProbe (24) give nothing. (Whether the probe must be
   destroyed rather than just met is derived.)
 
+## 16. Freighter harassment details (#141, 2026-11-22)
+
+### 16.1 Where the chasing fleet comes from (verified, `0x573181` → `0x57338e`)
+
+`0x573181` (every (6 − d) h) checks every X-COM flight plan in space: within **4,000 units of an alien
+outpost** it launches mission **5** with chance 50 + 5d %; within **2,000 units of an alien base**
+mission **4** with chance 25 + 10d %. `0x57338e(mission, target)` then works like the raid launcher:
+* source = the **alien base agent (`Agent006v4`) nearest the target that has at least 3 ships queued**
+  (only variant-A bases queue ships, §12.1); no such base → no fleet;
+* size = rand[a, b) via `0x4050d0` (a + rand() mod (b − a), upper bound excluded), so a fixed 3 (d 0 and 2), 4 (d 1 and 3), 5 (d 4) — table 0x57354a — capped by the base's
+  queued ships;
+* the ships are **taken out of that base's build queue** (`0x57e2a5`; class list AlienType1 ×3 for
+  missions 4/5) and created (`0x4094d2`, owner 9) with the base's alien fit (§15.2) and pilots;
+* the fleet gets a tactical agent with the mission and the target plan.
+So yes: the chasers consume queued ships; a base with an empty queue cannot harass.
+
+### 16.2 Catching the freighter (verified unless marked)
+
+* The chasing plan's destination is a map point that **tracks the target plan**: while the target is
+  more than **600 units** away, the point is moved toward it each update (`0x561539`, distance via
+  `0x49c454`; step speed clamp(distance − 250, 500, 1,500) × the chaser's speed ratio, 0–1).
+* When the two plans meet, the tactical agent starts an **encounter** (`0x5787b5` → SceneManager
+  `0x4e634b`): flown by the player if they choose to, otherwise the hourly combat simulation
+  (`flight/README.md` §13), kind 5 (ship vs ship).
+* **Cargo:** loading moves a shipment into the freighter plan's cargo and **frees the shipment
+  record** (`0x4152c1`: `0x55b2f5` / `0x55b462` / `0x55b5cc`, then the record is deleted). A freighter
+  destroyed in the encounter is deleted with its ships (§13.4), so **its cargo is lost** — no refund
+  or re-queue was found (derived from the absence of such code). A freighter that survives continues
+  its route.
+
+### 16.3 Mission 3's special armament (verified, `0x573998`)
+
+The values are **beam mount type bytes** (`+0xa8`, `+0xb4`, `+0xc0` = beam mounts 1–3; §2 of the
+flight notes): **8 = TachyonPulser**. On mission 3, ship k ≥ 4 of the fleet (k counted from 0), with
+chance 100 − 25k %, gets: AlienType1 — mount 1 = TachyonPulser (replacing its Plasma);
+AlienType2 — mounts 1–3 = TachyonPulser. Ships 0–3 keep their normal fit. (Mission 3 is the raid
+on a random X-COM outpost, §3.2.)
+
 ## 10. What remains unknown
 
 * Counter meanings 36–90 and 95–104 (objective events); the debrief field +0x30c.
