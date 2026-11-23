@@ -46,7 +46,7 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #139 alien bases and outposts (`alien_bases:`, `campaign::aliens`): A/B bases, ship queues, the raid planner, 20 h expansion, 5 d re-founding, 25 d outposts, outpost income, RQ-S-23 harassment, plan piece work (`plans.<id>.work`, not enabled in `interceptor`: unit in question) | 0.22.34 |
 | #139 follow-up: piece work by the rival's technicians (10 + 10 per platform per outpost) every 20 h; `interceptor` builds its Doomsday pieces this way | 0.22.35 |
 | #143 soak tooling: --soak-fleet (keep N craft), --soak-capture (kills of capturable classes count as captures), autoplay researches event-opened topics first | 0.22.38 |
-| #141 freighters in flight (`aliens::freighters`), RQ-S-23 raids that hunt them, raid sizes and escorts by tech (`raids.sizes`, `escorts`), hired pilots as shipments | NEXT |
+| #141 freighters in flight (`aliens::freighters`), RQ-S-23 raids that hunt them, raid sizes and escorts by tech (`raids.sizes`, `escorts`), hired pilots as shipments | 0.22.41 |
 | #137 RQ-S-19/21 deliveries by outpost freighter (100 units, 135 units/h), RQ-S-22 map speed by mass, RQ-S-28 versioned save sections (DEV-103) | 0.22.33 |
 
 ## Issues
