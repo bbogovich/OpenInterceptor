@@ -664,6 +664,14 @@ the Bases rows) and craft condition (the hangar rows); the map's `markers` — b
 bar, the rival's known bases and outposts, freighters in flight (`Campaign::freighters_in_flight`,
 for #141 to extend), battles under way — and their hover labels. MT-6-38.
 
+**#147** (app NEXT; a playtest of 0.22.48): the ship status display drew an outline aeroplane
+in the middle of the shield rings, over the craft the original cockpit art paints there. New
+cockpit key `ship_status.craft_art` (the art region, redrawn tinted by the hull) with the three
+X-COM regions measured from the art (derived), and class key `silhouette` (an image of the craft
+from above) for cockpits without such art. The `default` campaign's comet, meteor and
+thunderbolt get silhouettes generated from their models (`tools/default_assets/silhouettes.py`).
+The outline remains the last fallback. MT-6-41.
+
 **#146** (app NEXT; a playtest of 0.22.48): impacts sent a station spinning. Collisions were not
 the cause (a station is immovable there); every class had a pilot under `damage.pilot_injury`, so
 fighter hits and rams killed the station's "pilot" and `hurt_pilot` made it a tumbling wreck. The

@@ -84,10 +84,25 @@ cockpits:
 | `width` | `0.11` | Band thickness, a fraction of the half-size. |
 | `tilt` | `0` | Rotates the whole display counter-clockwise by this many degrees (the craft too), for art drawn at an angle: the fore/aft split then follows the painted divider. |
 | `arc` | `140` | Degrees each half spans; `180` leaves no gap at the sides. |
-| `craft` | `0.42` | Size of the craft silhouette, a fraction of the half-size. |
+| `craft` | `0.42` | Size of the craft silhouette, a fraction of the half-size (its longer side). |
+| `craft_art` | none | App NEXT (#147): `[x, y, w, h]` in the art's design pixels where the cockpit art itself paints the craft in the middle of the rings. That region of the art is drawn again tinted by the hull's condition (green whole, through amber, to red), and no silhouette is drawn over it. |
+
+**The craft in the middle** (app NEXT, #147) is, in order:
+
+1. the art's own craft, when the cockpit has 2D art and a `craft_art` region;
+2. otherwise the flown class's [`silhouette`](reference.md#ships-and-objects): an image of the
+   craft from above, nose up, white on transparent, scaled to `craft` and turned with `tilt`;
+3. otherwise a plain outline (fuselage, wings, tail) drawn by the engine.
+
+Each is tinted by the hull. The `default` campaign's three flyable craft have silhouettes made
+from their own models by `tools/default_assets/silhouettes.py` (each face projected straight
+down and filled, 64 × 64 px with 4 × 4 supersampling).
 
 The X-COM cockpits' values were measured from the art (DERIVED): three concentric rings per
-display, with cockpit A's divider tilted 6.8° (right end up) and B's and C's level.
+display, with cockpit A's divider tilted 6.8° (right end up) and B's and C's level. Each art
+paints its craft inside the innermost ring; the `craft_art` regions (A `[134.5, 432.5, 10, 9]`,
+B `[89.5, 398.5, 10, 8]`, C `[187, 423.5, 9, 7.5]`) were measured from the art's bright pixels
+(DERIVED). Until app NEXT an outline aeroplane was drawn over them.
 
 | Cockpit | Where it is |
 |---|---|

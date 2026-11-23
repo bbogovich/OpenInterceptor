@@ -2458,3 +2458,10 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Steps | 1. On the mission select (Battles and tools), press **D** several times, then **Tab**, then **Tab** again. 2. Main menu → Options: on the Difficulty row press **Right**, then **Left**, then **Left**; on the Campaign row press **Right**. 3. With the app running, rebuild the bundle (`python3 tools/build_bundle.py --skip-build --no-settings`) and press **D** again. |
 | Expected | 1: each D shows the next level, each Tab the other campaign; no "Could not start". 2: Right goes to the next level, Left to the previous one (wrapping at the ends); after each change the Options page stays open with the same row selected; the Campaign row switches campaign. 3: the level changes (the bundle is swapped in whole). If a reload ever fails, the message names the folders searched and the screen stays where it was. |
 
+### MT-6-41 — The craft in the middle of the ship status display
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data for steps 1 – 2. |
+| Steps | 1. `openinterceptor --campaign interceptor --scenario duel-drone --ship lightning --view cockpit` (then `firestar`, `avenger`). 2. Take hull damage. 3. `--campaign default --scenario debris-showcase --ship comet --view cockpit` (then `meteor`, `thunderbolt`). |
+| Expected | 1: inside the innermost shield ring is the art's own small craft, tinted green — no drawn aeroplane over it. 2: the craft turns amber, then red, as the hull falls. 3: the ship status bezel shows the flown craft's own shape from above (the comet's rounded hull and fins), not an aeroplane. |
