@@ -29,7 +29,11 @@ screens:
       # DERIVED. A black hole cannot be opened.
       map: {kind: map, shape: round, rect: [66, 61, 333, 333], labels: {font: caption}, zoom_levels: [45, 30],
             base_portraits: ["original:sprite#566", "original:sprite#586"], base_portrait_frames: 20,
-            outpost_marker: "original:sprite#916"}   # under a star with an X-COM outpost (VERIFIED, §1.2)
+            outpost_marker: "original:sprite#916",   # under a star with an X-COM outpost (VERIFIED, §1.2)
+            # Level-0 icons (VERIFIED, unknowns-2026-11.md §1.2): X-COM base 902, alien base 903,
+            # alien outpost 917 (blinking), fleets: X-COM plans (the freighters) 606, alien 608.
+            markers: {base: "original:sprite#902", alien_base: "original:sprite#903", alien_outpost: "original:sprite#917",
+                      freighter: "original:sprite#606", contact: "original:sprite#608"}}
       # The view knob, control 101 (VERIFIED, §14.5): 13 turning frames (rows 978-990) at (13, 25);
       # clicked within 14 px of (9, 99), (29, 45) or (90, 22) it picks level 0, 1 or 2, with the
       # RotarySwitch sound. Lamps 992/994/996 off, 993/995/997 on, 991 where level 2 is
@@ -91,6 +95,9 @@ screens:
     background: original:WrappersDLL.dll#6105
     widgets:
       base: {kind: value, value: base, rect: [475, 13, 150, 16], font: body, align: centre}   # the base drop-down [475,13] w 150 (VERIFIED); font and centring DERIVED (D-40)
+      # The base's hull (RQ-S-16) in the info pane's second 152 x 18 row (the row VERIFIED,
+      # what it shows DERIVED).
+      hull: {kind: value, value: base_hull, rect: [464, 82, 152, 18], font: body, at: [464, 91]}
       # The info pane [347,39,639,266] (VERIFIED): the rows below its header, the selected
       # row and its actions at the pane's foot (placement in the pane DERIVED).
       # The side panel's three 42 x 32 buttons (VERIFIED, unknowns-2026-11.md §14.2; idle row N,

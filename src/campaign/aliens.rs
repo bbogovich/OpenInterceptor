@@ -73,6 +73,14 @@ pub fn technicians(c: &Campaign, def: &StrategyDef) -> f64 {
     c.aliens.outposts.iter().map(|o| (base + per * o.opps as f32) as f64).sum()
 }
 
+/// Whether the player knows of the rival's place in system `sys`: within a sensor
+/// range of one of the player's bases (DERIVED: the original shows only places "known to
+/// the player", `0x422107`, whose rule was not traced).
+pub fn known(c: &Campaign, def: &StrategyDef, sys: usize) -> bool {
+    let p = c.systems[sys].pos;
+    (0..c.bases.len()).any(|b| distance(c.systems[c.bases[b].system].pos, p) <= c.sensor_range(def, b))
+}
+
 /// The piece-work update period: 20 game hours (`0x57b746`).
 const PIECE_UPDATE: f64 = 20.0;
 
@@ -428,6 +436,19 @@ fn harass(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn the_player_knows_places_within_a_bases_sensor_range() {
+        let (d, _) = build(crate::content::strategy::tests::SAMPLE);
+        let d = d.unwrap();
+        let c = Campaign::new(&d, 0, 1);
+        // The sample's base at system a (0, 0) sees 500 + its radar's 2,500 units.
+        let range = c.sensor_range(&d, 0);
+        assert!(known(&c, &d, 0));
+        assert_eq!(known(&c, &d, 1), range >= 3000.0, "system b is 3,000 away");
+        assert!(!known(&c, &d, 2) || range >= 4000.0);
+    }
+
     use super::*;
     use crate::campaign::StarSystem;
     use crate::content::strategy::tests::{build, SAMPLE};
