@@ -74,6 +74,17 @@ pub struct AlienBasesDef {
     pub sizes: Vec<(String, Vec<[f32; 2]>)>,
     /// Escorts by alien tech level: the first that applies and wins its roll joins.
     pub escorts: Vec<Escort>,
+    /// The player's attacks on the rival's places (`assault: {base, outpost}`): the raid
+    /// whose mission is flown at each (its contact sits at the place).
+    pub assault_base: Option<String>,
+    pub assault_outpost: Option<String>,
+    /// Scouts (`scouts:`): every `every` an A base with at least `min_queued` ships queued
+    /// sends up to `ships` of them (raid `raid`) to a free system `range` away.
+    pub scouts: Option<Scouts>,
+    /// Base growth (`growth:`): hangars built every `every` hours (a range), each with
+    /// `chance` + `per_hangar` × hangars while fewer than `max`; the ship queue holds
+    /// `queue_per_hangar` × hangars. `None`: `queue.max`.
+    pub growth: Option<Growth>,
     /// What an alien outpost pays the rival's treasury each income period, once
     /// `income_after` hours old (0: the economy's own `income` formula).
     pub outpost_income: f32,
@@ -160,6 +171,34 @@ impl AlienBasesDef {
                     (k.clone(), rows)
                 })
                 .collect(),
+            assault_base: sub("assault").and_then(|g| g.str("base")).map(str::to_string),
+            assault_outpost: sub("assault").and_then(|g| g.str("outpost")).map(str::to_string),
+            scouts: sub("scouts").map(|g| Scouts {
+                every: g.qty("every", Unit::Time).map_or(120.0, |s| s / 3600.0).max(1.0),
+                min_queued: g.num("min_queued").unwrap_or(5.0).max(0.0) as u32,
+                ships: g.num("ships").unwrap_or(3.0).max(1.0) as u32,
+                raid: g.str("raid").map(str::to_string),
+                range: g.nums("range").filter(|v| v.len() == 2).map_or([15000.0, 25000.0], |v| [v[0], v[1]]),
+            }),
+            growth: sub("growth").map(|g| Growth {
+                every: {
+                    let v: Vec<f32> = g
+                        .list("every")
+                        .iter()
+                        .filter_map(|t| super::schema::quantity(t, Unit::Time).ok().map(|s| s / 3600.0))
+                        .collect();
+                    if v.len() == 2 {
+                        [v[0], v[1]]
+                    } else {
+                        [40.0, 52.0]
+                    }
+                },
+                start: g.num("start_hangars").unwrap_or(1.0).max(0.0) as u32,
+                max: g.num("max_hangars").unwrap_or(2.0).max(0.0) as u32,
+                chance: g.qty("chance", Unit::Fraction).unwrap_or(0.75),
+                per_hangar: g.qty("per_hangar", Unit::Fraction).unwrap_or(-0.10),
+                queue_per_hangar: g.num("queue_per_hangar").unwrap_or(3.0).max(0.0) as u32,
+            }),
             escorts: raids
                 .and_then(|r| r.node("escorts"))
                 .and_then(|n| n.as_seq())
@@ -279,6 +318,37 @@ impl AlienBasesDef {
                 ]),
                 "freighters in flight near the rival's places are attacked",
             ),
+            f(
+                "assault",
+                Ty::Struct(vec![
+                    f("base", Ty::Name, "the raid whose mission the player flies against an alien base"),
+                    f("outpost", Ty::Name, "the same against an alien outpost"),
+                ]),
+                "the player's attacks on the rival's places: a won battle removes the place",
+            ),
+            f(
+                "scouts",
+                Ty::Struct(vec![
+                    f("every", Ty::Qty(Unit::Time), "the check (5d)"),
+                    f("min_queued", Ty::Num, "ships an A base needs queued (5)"),
+                    f("ships", Ty::Num, "most sent (3)"),
+                    f("raid", Ty::Name, "the scouts' raid"),
+                    f("range", Ty::Numbers(2), "to a free system this far ([15000, 25000))"),
+                ]),
+                "scouts from the A bases",
+            ),
+            f(
+                "growth",
+                Ty::Struct(vec![
+                    f("every", Ty::List(Box::new(Ty::Qty(Unit::Time))), "[from, to): time between builds ([40h, 52h])"),
+                    f("start_hangars", Ty::Num, "hangars a new base has (1)"),
+                    f("max_hangars", Ty::Num, "most hangars (2)"),
+                    f("chance", Ty::Qty(Unit::Fraction), "a hangar's chance (75 %)"),
+                    f("per_hangar", Ty::Qty(Unit::Fraction), "+ per hangar it has (-10 %)"),
+                    f("queue_per_hangar", Ty::Num, "queued ships per hangar (3)"),
+                ]),
+                "alien base growth: hangars and the ship queue",
+            ),
             f("outpost_income", Ty::Num, "each alien outpost's pay into the rival's treasury per income period (0: the economy's formula)"),
             f("income_after", Ty::Qty(Unit::Time), "an outpost pays once this old (0.95 x 28 days)"),
         ])
@@ -304,4 +374,25 @@ impl AlienBasesDef {
         let rows = &self.sizes.iter().find(|(k, _)| k == kind)?.1;
         rows.get(d).or(rows.last()).copied()
     }
+}
+
+/// `alien_bases.scouts` (the original's `0x57d439`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Scouts {
+    pub every: f32,
+    pub min_queued: u32,
+    pub ships: u32,
+    pub raid: Option<String>,
+    pub range: [f32; 2],
+}
+
+/// `alien_bases.growth` (the original's `0x57d86c`, its first steps).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Growth {
+    pub every: [f32; 2],
+    pub start: u32,
+    pub max: u32,
+    pub chance: f32,
+    pub per_hangar: f32,
+    pub queue_per_hangar: u32,
 }

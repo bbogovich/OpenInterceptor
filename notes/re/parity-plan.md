@@ -47,6 +47,7 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #139 follow-up: piece work by the rival's technicians (10 + 10 per platform per outpost) every 20 h; `interceptor` builds its Doomsday pieces this way | 0.22.35 |
 | #143 soak tooling: --soak-fleet (keep N craft), --soak-capture (kills of capturable classes count as captures), autoplay researches event-opened topics first | 0.22.38 |
 | #141 freighters in flight (`aliens::freighters`), RQ-S-23 raids that hunt them, raid sizes and escorts by tech (`raids.sizes`, `escorts`), hired pilots as shipments | 0.22.41 |
+| #142 player attacks on the rival's places (`alien_bases.assault`, `Campaign::assault`), scouts, hangar growth and the ship queue; side missions and the remaining new-base checks wait on RE | NEXT |
 | #137 RQ-S-19/21 deliveries by outpost freighter (100 units, 135 units/h), RQ-S-22 map speed by mass, RQ-S-28 versioned save sections (DEV-103) | 0.22.33 |
 
 ## Issues

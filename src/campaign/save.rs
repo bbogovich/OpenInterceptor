@@ -1131,7 +1131,18 @@ fn write_aliens(a: &super::aliens::AlienState) -> Node {
             seq(a
                 .bases
                 .iter()
-                .map(|b| nums(&[b.system as f64, b.variant as f64, b.queued as f64, b.next_queue, b.founded]))
+                .map(|b| {
+                    nums(&[
+                        b.system as f64,
+                        b.variant as f64,
+                        b.queued as f64,
+                        b.next_queue,
+                        b.founded,
+                        b.hangars as f64,
+                        b.next_build,
+                        b.next_scout,
+                    ])
+                })
                 .collect()),
         ),
         ("outposts", seq(a.outposts.iter().map(|o| nums(&[o.system as f64, o.founded, o.opps as f64])).collect())),
@@ -1163,6 +1174,15 @@ fn write_aliens(a: &super::aliens::AlienState) -> Node {
                 .collect()),
         ),
         (
+            "assaults",
+            seq(a
+                .assaults
+                .iter()
+                .map(|x| nums(&[x.contact as f64, f64::from(u8::from(x.base)), x.system as f64]))
+                .collect()),
+        ),
+        ("scouts", nums(&a.scouts.iter().map(|x| *x as f64).collect::<Vec<_>>())),
+        (
             "hunts",
             seq(a.hunts.iter().map(|h| nums(&[h.contact as f64, h.outpost as f64, h.base as f64, h.arrive])).collect()),
         ),
@@ -1189,6 +1209,9 @@ fn read_aliens(node: &Node, systems: usize) -> super::aliens::AlienState {
                 queued: at(v, 2) as u32,
                 next_queue: at(v, 3),
                 founded: at(v, 4),
+                hangars: at(v, 5) as u32,
+                next_build: v.get(6).copied().unwrap_or(f64::MAX),
+                next_scout: v.get(7).copied().unwrap_or(f64::MAX),
             })
             .collect(),
         outposts: rows("outposts")
@@ -1221,6 +1244,15 @@ fn read_aliens(node: &Node, systems: usize) -> super::aliens::AlienState {
                 }
             })
             .collect(),
+        assaults: rows("assaults")
+            .iter()
+            .map(|v| super::aliens::Assault {
+                contact: at(v, 0) as u32,
+                base: at(v, 1) > 0.5,
+                system: at(v, 2) as usize,
+            })
+            .collect(),
+        scouts: g.node("scouts").map(row).unwrap_or_default().into_iter().map(|x| x as u32).collect(),
         hunts: rows("hunts")
             .iter()
             .map(|v| super::aliens::Hunt {
