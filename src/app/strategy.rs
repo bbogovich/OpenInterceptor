@@ -3676,10 +3676,11 @@ impl StrategyScreen {
         if !self.minimap {
             for o in &c.outposts {
                 let sys = &c.systems[o.system];
-                if sys.hidden {
+                let p = at(sys.pos);
+                // As its star: not when hidden or outside the (round) map.
+                if sys.hidden || !inside(p) {
                     continue;
                 }
-                let p = at(sys.pos);
                 match &self.outpost_tex {
                     Some(t) => {
                         let (w, h) = (t.width() * k, t.height() * k);
