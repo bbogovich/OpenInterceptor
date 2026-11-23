@@ -55,7 +55,7 @@ Filed 2026-11-22 as GitHub issues (labels `parity-m1`, `parity-m2`, `parity-m3`,
 |---|---|
 | M1 combat | #113 station hull/shields, #114 alien base hard points and layouts, #115 turret fire control, #116 repair and system damage, #117 shield types and special weapons, #118 AI piloting, #119 AI retreat and Nova, #120 missiles/cloak/PD/hulls, #121 balance report and re-measure |
 | M2 screens | #122 sheet fonts and anchors, #123 CSD readouts and captions, #124 compact lists, #125 sprites and buttons, #126 sounds/tooltips/dial/lamps, #127 dialogs/history/clock, #128 screen content |
-| M3 strategy | #129 research, #130 sensors, #131 outposts, #132 bases, #133 pilots, #134 auto-resolve, #135 aliens, #137 deliveries and saves, #139 alien bases and outposts |
+| M3 strategy | #129 research, #130 sensors, #131 outposts, #132 bases, #133 pilots, #134 auto-resolve, #135 aliens, #137 deliveries and saves, #139 alien bases and outposts, #140 strategy screens for the new state, #141 freighters as contacts and raid sizes, #142 attacks on the rival and their side missions, #143 soak autoplay |
 | RE | #136 remaining unknowns |
 
 ## Order of work
