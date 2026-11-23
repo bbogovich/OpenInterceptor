@@ -664,7 +664,7 @@ the Bases rows) and craft condition (the hangar rows); the map's `markers` — b
 bar, the rival's known bases and outposts, freighters in flight (`Campaign::freighters_in_flight`,
 for #141 to extend), battles under way — and their hover labels. MT-6-38.
 
-**#142 screens** (app NEXT): the rival's known bases and outposts are selectable (`Sel::Alien`);
+**#142 screens** (app 0.22.46): the rival's known bases and outposts are selectable (`Sel::Alien`);
 their info offers **Attack** (`Act::Attack`, the current base's ready craft, `Campaign::assault`),
 and on the CSD a second click on the selected place runs it. `--screen testbed`. MT-6-39.
 

@@ -388,7 +388,7 @@ only.
 
 A second click on the selected contact acts on it: **Intercept**, or **Join the battle** when it
 is being fought off-screen (RQ-C-21) — for screens without an info panel, such as the CSD.
-Since app NEXT the rival's known bases and outposts can be selected too (they win over their
+Since app 0.22.46 the rival's known bases and outposts can be selected too (they win over their
 star); their info offers **Attack**, which sends the current base's ready craft as an
 interception would (`Campaign::assault`, #142), and a second click on the selected place runs
 it. A campaign without `alien_bases` has no such places, so nothing changes there.
