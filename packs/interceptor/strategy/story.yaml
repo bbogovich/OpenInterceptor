@@ -12,56 +12,94 @@ arcs:
     steps: [alien_message_1, alien_message_2, alien_message_3, alien_message_4, alien_message_5, summon_macarthur, final_mission]
 
 events:
+  # The five alien messages (RQ-S-12; strategy README §4.3, unknowns §11.2, VERIFIED): each is
+  # intercepted after a won battle, with the AlienMessage goodies chance (7/7/5/5/4 %), once its
+  # month has come (Feb, Apr, Jun, Aug, Nov 2067; here whole 30-day months 1/3/5/7/10 since the
+  # start: DERIVED) and its prerequisites (the previous message, the saucer examinations and
+  # the Doomsday pieces) are known; it then opens the message's research topic.
   alien_message_1:
-    # Not before 1 February; a chance after each battle (7/7/5/5/4 %), or later regardless (DERIVED: day 120).
     when: >-
-      day >= 31 and (day >= 120 or (difficulty <= experienced and random(0.07))
-      or (difficulty >= veteran and difficulty <= genius and random(0.05)) or (difficulty >= superhuman and random(0.04)))
+      month >= 1
+      and ((difficulty <= experienced and random(0.07)) or (difficulty >= veteran and difficulty <= genius and random(0.05)) or (difficulty >= superhuman and random(0.04)))
     check: after_battle
-    do: ["message(An alien transmission has been intercepted. Our scientists are decoding it.)", set_flag(alien_message_1), "video(original:alientrans1.smk)"]
+    do: ["message(An alien transmission has been intercepted. Our scientists are decoding it.)", set_flag(alien_message_1), discover(alien_message_1), "video(original:alientrans1.smk)"]
   alien_message_2:
-    # From 1 March, with a Structural Component shipment seen and a saucer examined (DERIVED topic).
-    when: "day >= 59 and plan(doomsday) > 0 and research(type_1_saucer_examination)"
-    do: ["message(A second alien transmission: the aliens are building something.)", set_flag(alien_message_2), "video(original:alientrans2.smk)"]
+    when: >-
+      month >= 3 and research(alien_message_1) and research(alien_structural_component_piece_1) and research(type_1_saucer_examination)
+      and ((difficulty <= experienced and random(0.07)) or (difficulty >= veteran and difficulty <= genius and random(0.05)) or (difficulty >= superhuman and random(0.04)))
+    check: after_battle
+    do: ["message(A second alien transmission: the aliens are building something.)", set_flag(alien_message_2), discover(alien_message_2), "video(original:alientrans2.smk)"]
   alien_message_3:
-    when: "day >= 120 and research(type_2_saucer_examination)"
-    do: ["message(A third transmission speaks of a weapon beyond a gateway.)", set_flag(alien_message_3), "video(original:alientrans3.smk)"]
+    when: >-
+      month >= 5 and research(alien_message_2) and research(type_2_saucer_examination)
+      and ((difficulty <= experienced and random(0.07)) or (difficulty >= veteran and difficulty <= genius and random(0.05)) or (difficulty >= superhuman and random(0.04)))
+    check: after_battle
+    do: ["message(A third transmission speaks of a weapon beyond a gateway.)", set_flag(alien_message_3), discover(alien_message_3), "video(original:alientrans3.smk)"]
   alien_message_4:
-    when: "day >= 181 and research(type_3_saucer_examination) and plan(doomsday) >= 0.33"
-    do: ["message(A fourth transmission: the weapon's drive is being assembled.)", set_flag(alien_message_4), "video(original:alientrans4.smk)"]
+    when: >-
+      month >= 7 and research(alien_message_3) and research(type_3_saucer_examination) and research(alien_weapon_component_piece_2)
+      and ((difficulty <= experienced and random(0.07)) or (difficulty >= veteran and difficulty <= genius and random(0.05)) or (difficulty >= superhuman and random(0.04)))
+    check: after_battle
+    do: ["message(A fourth transmission: the weapon's drive is being assembled.)", set_flag(alien_message_4), discover(alien_message_4), "video(original:alientrans4.smk)"]
   alien_message_5:
-    when: "day >= 273 and plan(doomsday) >= 0.66"
-    do: ["message(The fifth transmission reveals the gateway: a black hole at the edge of the frontier.)", set_flag(alien_message_5), "video(original:alientrans5.smk)"]
+    when: >-
+      month >= 10 and research(alien_message_4) and research(alien_drive_component_piece_3)
+      and ((difficulty <= experienced and random(0.07)) or (difficulty >= veteran and difficulty <= genius and random(0.05)) or (difficulty >= superhuman and random(0.04)))
+    check: after_battle
+    do: ["message(The fifth transmission reveals the gateway: a black hole at the edge of the frontier.)", set_flag(alien_message_5), discover(alien_message_5), "video(original:alientrans5.smk)"]
   summon_macarthur:
     when: "research(alien_hull_alloys) and research(dimension_jump_drive) and research(nova_bomb)"
     do: ["message(@orig.MAC_PROMPT1)", set_flag(macarthur)]
   final_mission:
-    # The MacArthur arrives in about a week.
+    # The MacArthur arrives rand[24, 48) hours after the request (RQ-S-15, README §6.4, VERIFIED).
     when: "fired(summon_macarthur) >= 1"
-    check: weekly
+    delay: [24h, 48h]
     do: ["mission(destroy_doomsday_weapon)"]
 
-  # Side missions (DERIVED triggers; the original's are discrete events).
+  # Side missions (RQ-S-13, README §6.2, VERIFIED order, months and chances): fired only by
+  # the scheduler below. Which of this pack's missions stands for each is DERIVED.
+  alien_raiders:
+    check: scheduled
+    do: ["message(Alien raiders have been sighted on the frontier.)", "mission(deep_space_ambush)"]
   rogue_freighter:
-    when: "month >= 1 and month <= 6"
-    check: monthly
-    chance: 15%
+    check: scheduled
     do: ["message(A rogue freighter has been sighted. Intercept it for the corporations.)", "mission(ambush_pirate_squadron)", "money(250000)"]
+  pirate_rescue:
+    check: scheduled
+    do: ["message(Pirates are attacking a corporate convoy.)", "mission(defend_freighter_convoy_pirates)"]
+  arms_dealer:
+    check: scheduled
+    do: ["message(An arms dealer is selling to the aliens. Stop the shipment.)", "mission(ambush_pirate_squadron)"]
+  # Fluff missions (DERIVED stand-in for the original's up to four minor missions).
   kabron_pirates:
     when: "month >= 3"
     check: monthly
     chance: 10%
+    once: false
+    cooldown: 60d
     do: ["message(Kabron pirates are raiding the shipping lanes.)", "mission(ambush_pirate_squadron)"]
+
+# The side-mission scheduler (RQ-S-13, README §6.2, VERIFIED): every rand[6, 9) days the first
+# entry that qualifies fires. Months are whole 30-day months since the start (the original's
+# month value - 1: DERIVED). Arms dealer's chance is 100 x the aliens' aggression % in the
+# original (DERIVED here as 70 %); the Nova Bomb hijack and recon missions are not built.
+side_missions:
+  check_every: [6d, 9d]
+  list:
+    - {event: alien_raiders, months: [2, 7], chance: 10%}
+    - {event: rogue_freighter, months: [5, 17], chance: 20%}
+    - {event: pirate_rescue, months: [9, 23], chance: 20%}
+    - {event: arms_dealer, months: [6, 1000], chance: 70%}
 
 plans:
   doomsday:
     owner: alien
-    # Totals 25/25/25/20/18 by difficulty, split Structural/Weapon/Drive (Beginner 8/8/9,
-    # Superhuman 7/6/5; the middle levels DERIVED).
+    # The pieces by type and difficulty (unknowns §12.2, VERIFIED): 8/8/9, 9/8/8, 10/8/7, 7/7/6,
+    # 7/6/5 (25/25/25/20/18 in all).
     stages:
-      - {name: Structural, count: {per_level: [8, 8, 8, 7, 7]}}
+      - {name: Structural, count: {per_level: [8, 9, 10, 7, 7]}}
       - {name: Weapon, count: {per_level: [8, 8, 8, 7, 6]}}
-      - {name: Drive, count: {per_level: [9, 9, 9, 6, 5]}}
+      - {name: Drive, count: {per_level: [9, 8, 7, 6, 5]}}
     start_when: flag(alien_message_1)
     every: 9d                         # DERIVED
     # Convoys pass near X-COM space with probability 65 -> 45 % by difficulty.
@@ -74,8 +112,24 @@ plans:
     complete: ["defeat(doomsday_complete)"]
 
 strategist:
-  aggression: {start: 1.0, min: 0.7, max: 1.6, up: 0.1, down: 0.1}   # DERIVED (Think.ini's aggression rules come later)
+  # Starting aggression 0.7 (Think.ini [GeneralAI] StartingAggression, VERIFIED, D-25); the
+  # monthly rise and fall are DERIVED.
+  aggression: {start: 0.7, min: 0.5, max: 1.6, up: 0.1, down: 0.1}
   calm_after_wins: 3
+  # The aliens' treasury and tech level (RQ-S-14, README §6.1, VERIFIED): income every 25
+  # days (the fallback 125,000 x (difficulty + 1): the aliens' outposts are not modelled),
+  # split every 6.25 days by Think.ini's FinancialAI ratios (research 0.3, goods 0.4, Doomsday
+  # 0.3; the aggression adjustment is not modelled), research spending every 20 hours up to
+  # 20,000 x downlinks / 7 (3 alien downlinks: DERIVED), tech 2 and 3 at the thresholds.
+  economy:
+    income_every: 25d
+    income: "125000 * (difficulty + 1)"
+    split_every: 150h
+    ratios: [0.3, 0.4, 0.3]
+    spend_every: 20h
+    research_per_downlink: 20000
+    downlinks: 3
+    tech_levels: [[1000000, 1500000], [800000, 1300000], [700000, 1100000], [600000, 1050000], [500000, 900000]]
 
 endings:
   doomsday_destroyed: {victory: true, text: "The Doomsday weapon is destroyed. The frontier is safe.", video: "original:credits_sm2a.smk"}

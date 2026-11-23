@@ -72,6 +72,21 @@ events:
       - {text: "Refuse", do: ["relation(raiders, -10)"]}
     do: ["message(The Black Comet gang offers a truce - for a price.)"]
 
+  # Side missions the scheduler below picks from (one at most per check).
+  stray_scouts:
+    check: scheduled
+    do: ["message(Dominion scouts are probing a colony. Chase them off.)", "mission(intercept_scouts)"]
+  comet_ambush_call:
+    check: scheduled
+    do: ["message(A freighter calls for help: the Black Comet is on it.)", "mission(pocket_ambush)"]
+
+# Every 6 - 9 days, the first side mission whose months and chance pass is flown.
+side_missions:
+  check_every: [6d, 9d]
+  list:
+    - {event: stray_scouts, months: [1, 6], chance: 25%}
+    - {event: comet_ambush_call, months: [3, 99], chance: 15%}
+
 plans:
   eclipse_engine:
     owner: dominion
@@ -95,6 +110,16 @@ relations:
 strategist:
   aggression: {start: 1.0, min: 0.6, max: 1.8, up: 0.1, down: 0.1}
   calm_after_wins: 3
+  # The Dominion's war chest: its tech level (`alien_tech`) rises as it spends on research.
+  economy:
+    income_every: 20d
+    income: "100000 * (difficulty + 1)"
+    split_every: 5d
+    ratios: [0.4, 0.3, 0.3]
+    spend_every: 1d
+    research_per_downlink: 15000
+    downlinks: 2
+    tech_levels: [[600000, 1200000], [500000, 1000000], [400000, 800000]]
 
 endings:
   engine_destroyed: {victory: true, text: "The Eclipse Engine is a cloud of glittering wreckage, the Regent flees into the dark, and the inner worlds keep their sun."}

@@ -52,6 +52,7 @@ pub mod id {
     pub const CONSTRUCTION_ATTACKS: u16 = 28;
     pub const BASE_DISTANCE: u16 = 29;
     pub const CENTRE_DISTANCE: u16 = 30;
+    pub const ALIEN_TECH: u16 = 31;
 }
 
 /// Names with a meaning of their own as a system query's argument: in a `placement:`
@@ -161,6 +162,12 @@ pub const QUERIES: &[QueryDef] = &[
         doc:
             "map units from the system to the map's centre (a generated map's middle, else the systems' bounding box's)",
     },
+    QueryDef {
+        name: "alien_tech",
+        args: &[],
+        result: Type::Num,
+        doc: "the aliens' tech level, 1 - 3 (strategist.economy)",
+    },
 ];
 
 /// The campaign schema: every id in `names` is a constant (its index), then the
@@ -214,6 +221,7 @@ mod tests {
             (id::CONSTRUCTION_ATTACKS, "construction_attacks"),
             (id::BASE_DISTANCE, "base_distance"),
             (id::CENTRE_DISTANCE, "centre_distance"),
+            (id::ALIEN_TECH, "alien_tech"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

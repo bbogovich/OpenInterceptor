@@ -87,6 +87,66 @@ pub struct StoryState {
     pub research_pending: bool,
     /// The ending reached (index into `story.endings`).
     pub ending: Option<usize>,
+    /// Per event: the hour a delayed firing is due (`delay:`), if one is waiting.
+    pub pending_at: Vec<Option<f64>>,
+    /// The hour of the next side-mission check.
+    pub side_next: f64,
+    /// The aliens' economy (`strategist.economy`).
+    pub alien: AlienState,
+}
+
+/// The aliens' money and tech level (RQ-S-14, strategy README §6.1).
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct AlienState {
+    /// Unsplit money, and the funds a split fills: research budget, goods, Doomsday.
+    pub treasury: f64,
+    pub research_budget: f64,
+    pub goods: f64,
+    pub doomsday: f64,
+    /// Research money spent so far (it raises the tech level).
+    pub research: f64,
+    /// Tech level 1 – 3.
+    pub tech: u8,
+    /// The hours of the next income, split and spending.
+    pub next_income: f64,
+    pub next_split: f64,
+    pub next_spend: f64,
+}
+
+impl AlienState {
+    /// The numbers in field order (saves).
+    pub fn to_nums(&self) -> [f64; 10] {
+        [
+            self.treasury,
+            self.research_budget,
+            self.goods,
+            self.doomsday,
+            self.research,
+            self.tech as f64,
+            self.next_income,
+            self.next_split,
+            self.next_spend,
+            0.0,
+        ]
+    }
+
+    /// From [`to_nums`](Self::to_nums)' numbers (missing ones keep `base`'s).
+    pub fn from_nums(v: &[f64], base: AlienState) -> AlienState {
+        if v.len() < 9 {
+            return base;
+        }
+        AlienState {
+            treasury: v[0],
+            research_budget: v[1],
+            goods: v[2],
+            doomsday: v[3],
+            research: v[4],
+            tech: v[5] as u8,
+            next_income: v[6],
+            next_split: v[7],
+            next_spend: v[8],
+        }
+    }
 }
 
 impl StoryState {
@@ -102,6 +162,18 @@ impl StoryState {
             plan_warned: vec![0; s.plans.len()],
             standing: s.relations.as_ref().map(|r| r.start.clone()).unwrap_or_default(),
             aggression: s.strategist.start,
+            pending_at: vec![None; s.events.len()],
+            side_next: s.side_missions.as_ref().map_or(0.0, |m| m.every[0] as f64),
+            alien: match &s.alien_economy {
+                Some(e) => AlienState {
+                    tech: 1,
+                    next_income: e.income_every as f64,
+                    next_split: e.split_every as f64,
+                    next_spend: e.spend_every as f64,
+                    ..Default::default()
+                },
+                None => AlienState { tech: 1, ..Default::default() },
+            },
             ..Default::default()
         }
     }
@@ -321,6 +393,62 @@ impl Campaign {
     }
 }
 
+/// Fires event `e`: counts it, steps its arc, runs its actions and offers its choices.
+fn fire(c: &mut Campaign, def: &StrategyDef, e: usize, events: &mut Vec<Event>) {
+    let ev = &def.story.events[e];
+    c.story.fired[e] += 1;
+    c.story.last_fired[e] = c.hours;
+    if let Some(a) = ev.arc {
+        c.story.arc_step[a] += 1;
+    }
+    let actions = ev.actions.clone();
+    c.apply_actions(def, &actions, events);
+    if !ev.choices.is_empty() {
+        events.push(Event::Choice { event: e });
+    }
+}
+
+/// The aliens' treasury (README §6.1): income every `income_every` hours, a split every
+/// `split_every` into research, goods and Doomsday funds, research spending every
+/// `spend_every` (up to `research_per_downlink` × downlinks / 7, or / 14 with none), and the
+/// tech level rising at the difficulty's thresholds.
+fn alien_economy(c: &mut Campaign, def: &StrategyDef, now: f64) {
+    let Some(e) = &def.story.alien_economy else { return };
+    while now >= c.story.alien.next_income {
+        c.story.alien.next_income += e.income_every as f64;
+        let income = c.eval(def, &e.income, None) as f64;
+        c.story.alien.treasury += income.max(0.0);
+    }
+    while now >= c.story.alien.next_split {
+        c.story.alien.next_split += e.split_every as f64;
+        let t = std::mem::take(&mut c.story.alien.treasury);
+        let [r, g, d] = e.ratios;
+        let sum = (r + g + d).max(1e-6) as f64;
+        c.story.alien.research_budget += t * r as f64 / sum;
+        c.story.alien.goods += t * g as f64 / sum;
+        c.story.alien.doomsday += t * d as f64 / sum;
+    }
+    while now >= c.story.alien.next_spend {
+        c.story.alien.next_spend += e.spend_every as f64;
+        let cap =
+            e.research_per_downlink as f64 * if e.downlinks > 0.0 { e.downlinks as f64 / 7.0 } else { 1.0 / 14.0 };
+        let spend = c.story.alien.research_budget.min(cap);
+        c.story.alien.research_budget -= spend;
+        c.story.alien.research += spend;
+        let levels = e.tech_levels.get(c.difficulty).or(e.tech_levels.last()).copied();
+        if let Some([to2, to3]) = levels {
+            let r = c.story.alien.research as f32;
+            c.story.alien.tech = if r >= to3 {
+                3
+            } else if r >= to2 {
+                2
+            } else {
+                1
+            };
+        }
+    }
+}
+
 /// One slice of story time (`dt` hours that ended at `c.hours`).
 pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event>) {
     let s = &def.story;
@@ -335,10 +463,19 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
         Check::Monthly => crossed(720.0),
         Check::AfterBattle => c.story.battle_pending,
         Check::OnResearch => c.story.research_pending,
+        Check::Scheduled => false,
     };
     // 1. Events.
     for e in 0..s.events.len() {
         let ev = &s.events[e];
+        // A delayed firing waits for its hour (RQ-S-15), whatever the event's check.
+        if let Some(at) = c.story.pending_at[e] {
+            if now >= at {
+                c.story.pending_at[e] = None;
+                fire(c, def, e, events);
+            }
+            continue;
+        }
         if !due(ev.check, c) || (ev.once && c.story.fired[e] > 0) || now - c.story.last_fired[e] < ev.cooldown as f64 {
             continue;
         }
@@ -350,17 +487,32 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
         if !c.holds(def, ev.when.as_ref()) || c.roll() >= ev.chance {
             continue;
         }
-        c.story.fired[e] += 1;
-        c.story.last_fired[e] = now;
-        if let Some(a) = ev.arc {
-            c.story.arc_step[a] += 1;
-        }
-        let actions = ev.actions.clone();
-        c.apply_actions(def, &actions, events);
-        if !ev.choices.is_empty() {
-            events.push(Event::Choice { event: e });
+        match ev.delay {
+            Some([lo, hi]) => c.story.pending_at[e] = Some(now + (lo + c.roll() * (hi - lo)) as f64),
+            None => fire(c, def, e, events),
         }
     }
+    // 1b. The side-mission scheduler (RQ-S-13): every few days the first entry of its list
+    // whose months, event condition and chance pass fires.
+    if let Some(sm) = &s.side_missions {
+        if now >= c.story.side_next {
+            let [lo, hi] = sm.every;
+            c.story.side_next = now + (lo + c.roll() * (hi - lo)) as f64;
+            let month = (now / super::MONTH).floor() as f32;
+            for m in &sm.list {
+                let ev = &s.events[m.event];
+                if month < m.months[0] || month > m.months[1] || (ev.once && c.story.fired[m.event] > 0) {
+                    continue;
+                }
+                if c.holds(def, ev.when.as_ref()) && c.roll() < m.chance {
+                    fire(c, def, m.event, events);
+                    break;
+                }
+            }
+        }
+    }
+    // 1c. The aliens' economy (RQ-S-14).
+    alien_economy(c, def, now);
     c.story.battle_pending = false;
     c.story.research_pending = false;
     // 2. Rival plans.
@@ -459,6 +611,57 @@ encyclopaedia: {e1: {title: Act one, text: It began, unlock: arc(main) >= 1}}
             all.extend(c.advance(d, end - c.hours));
         }
         all
+    }
+
+    #[test]
+    fn delayed_events_wait_their_hours() {
+        let text =
+            SAMPLE.to_string() + "events:\n  arrive: {when: day >= 0, delay: [24h, 48h], do: [\"message(Arrived)\"]}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 9);
+        // Checked daily: at the first day's end it is scheduled 24 - 48 hours on.
+        let early = run(&mut c, &d, 25.0);
+        assert!(!early.iter().any(|e| matches!(e, Event::Notice(t, _) if t == "Arrived")), "not at once");
+        let at = c.story.pending_at[0].expect("scheduled");
+        assert!((48.0..=72.0).contains(&at), "{at}");
+        let later = run(&mut c, &d, 60.0);
+        assert!(later.iter().any(|e| matches!(e, Event::Notice(t, _) if t == "Arrived")));
+        assert_eq!(c.story.fired[0], 1);
+    }
+
+    #[test]
+    fn the_side_mission_scheduler_fires_the_first_qualifying_in_its_months() {
+        let text = SAMPLE.to_string()
+            + "events:\n  early: {check: scheduled, do: [\"message(Early)\"]}\n  late: {check: scheduled, do: [\"message(Late)\"]}\n\
+               side_missions: {check_every: [6d, 9d], list: [{event: early, months: [2, 3], chance: 100%}, {event: late, months: [0, 99], chance: 100%}]}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 3);
+        // Before month 2 only `late` qualifies; one mission per check.
+        let events = run(&mut c, &d, 24.0 * 40.0);
+        let (early, late) = (d.story.event("early").unwrap(), d.story.event("late").unwrap());
+        assert_eq!((c.story.fired[early], c.story.fired[late]), (0, 1), "{events:?}");
+        // In month 2 `early` comes first.
+        run(&mut c, &d, 24.0 * 40.0);
+        assert_eq!(c.story.fired[early], 1);
+    }
+
+    #[test]
+    fn the_aliens_economy_raises_their_tech_level() {
+        let text = SAMPLE.to_string()
+            + "strategist: {economy: {income_every: 1d, income: \"100000\", split_every: 1d, ratios: [1, 0, 0], spend_every: 1d, research_per_downlink: 700000, downlinks: 1, tech_levels: [[150000, 400000]]}}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 3);
+        assert_eq!(c.story.alien.tech, 1);
+        run(&mut c, &d, 24.0 * 2.5);
+        assert_eq!(c.story.alien.tech, 2, "{:?}", c.story.alien);
+        run(&mut c, &d, 24.0 * 3.0);
+        assert_eq!(c.story.alien.tech, 3, "{:?}", c.story.alien);
     }
 
     #[test]

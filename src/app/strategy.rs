@@ -332,6 +332,11 @@ pub struct StrategyScreen {
     base_pics: (Vec<String>, u32),
     /// The map's outpost marker this frame (`outpost_marker`), if it has one.
     outpost_tex: Option<Texture2D>,
+    /// New bases' prices by base type (`Campaign::base_price`), cached for the info panel:
+    /// recomputed only when the selected system or the research known changes, so the
+    /// per-frame draw neither allocates nor needs the campaign mutably.
+    base_prices: Vec<f64>,
+    base_prices_key: Option<(Option<usize>, usize)>,
     /// The view knob's shown frame (it turns towards its stop).
     knob_frame: f32,
     /// The panels `hide(<panel>)` has hidden (`show` brings them back).
@@ -522,6 +527,8 @@ impl StrategyScreen {
             base_pics: (Vec::new(), 1),
             knob_frame: 0.0,
             outpost_tex: None,
+            base_prices: Vec::new(),
+            base_prices_key: None,
             minimap: false,
             base: 0,
             system: None,
@@ -1553,8 +1560,7 @@ impl StrategyScreen {
                     }
                     None => {
                         for (t, bt) in def.base_types.iter().enumerate() {
-                            // (The price checks research, which needs the campaign mutably.)
-                            let price = self.campaign.clone().base_price(def, t);
+                            let price = self.base_prices.get(t).copied().unwrap_or(bt.cost as f64);
                             acts.push((format!("Build {} ({})", bt.name, money(price)), Act::NewBase(t, s)));
                         }
                     }
@@ -2546,6 +2552,16 @@ impl StrategyScreen {
     fn draw_info(&mut self, ui: &Ui, def: &StrategyDef, r: [f32; 4], input: &Input, k: f32) -> Option<Act> {
         if !self.art {
             ui.panel(r[0], r[1], r[2], r[3]);
+        }
+        // The base prices depend on the research known (the template's best modules).
+        let key = (self.system, self.campaign.known.iter().filter(|k| **k).count());
+        if self.base_prices_key != Some(key) {
+            self.base_prices_key = Some(key);
+            self.base_prices.clear();
+            for t in 0..def.base_types.len() {
+                let p = self.campaign.base_price(def, t);
+                self.base_prices.push(p);
+            }
         }
         let (title, text, acts) = self.info(def);
         // Room for a nine-slice frame's corners.
