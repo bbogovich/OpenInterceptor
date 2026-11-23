@@ -8846,6 +8846,18 @@ Without the section its raids follow their own <code>every</code> / <code>chance
   ships) sets out after it from the nearest alien place and follows it — intercept the raid to
   save the freighter; if it comes within an hour's flight the cargo is lost; if the freighter lands
   first the raid turns back. Without <code>raids.freighter</code> the cargo is lost at once.</li>
+<li><strong>Attacks on the rival</strong> (app 0.22.44). <code>assault: {base, outpost}</code> names the raids whose missions
+  the player flies against an alien base or outpost (<code>Campaign::assault</code>, from the map): a contact
+  sits at the place and the chosen craft intercept it as any contact (fly it or auto-resolve it);
+  a won battle removes the place — an outpost's technicians with it, so the plans' piece work
+  slows — and any other result ends the attack.</li>
+<li><strong>Scouts</strong> (app 0.22.44). <code>scouts: {every, min_queued, ships, raid, range}</code>: every <code>every</code> an A base
+  with <code>min_queued</code> ships queued sends up to <code>ships</code> of them (<code>raid</code>) to a free system without an
+  outpost within rand[<code>range</code>); arriving unopposed they strike nothing.</li>
+<li><strong>Growth</strong> (app 0.22.44). <code>growth: {every, start_hangars, max_hangars, chance, per_hangar,
+  queue_per_hangar}</code>: a base builds every rand[<code>every</code>) hours; while it has fewer than
+  <code>max_hangars</code> hangars it adds one with <code>chance</code> + <code>per_hangar</code> × hangars; its ship queue holds
+  <code>queue_per_hangar</code> × hangars (instead of <code>queue.max</code>).</li>
 <li><strong>Income.</strong> <code>outpost_income</code>: what each outpost older than <code>income_after</code> pays the treasury per
   <a href="../story/#strategist"><code>strategist.economy</code></a> income period (with two or more outposts).</li>
 </ul>
@@ -8856,7 +8868,10 @@ hangars), 455,625 per outpost, where a freighter's hunters come from; since app 
 (unknowns §11.3: a base [5, 7) … [9, 13), an outpost [4, 6) … [7, 10), a platform [3, 5) … [5, 7),
 a freighter rand[1, d / 2 + 2); Beginner's base row held to [5, 7) is <em>derived</em>) and escorts at
 tech 3 (a Shade after month 5 at a base or outpost with 25 %, else a Phantasm with 25 + 5d %) are
-the original's (<strong>verified</strong>), and <code>freighter_attack</code> hunts freighters; its planner raids are
+the original's (<strong>verified</strong>), and <code>freighter_attack</code> hunts freighters. Since app 0.22.44 the player
+attacks its places with the <code>attack_alien_outpost</code> / <code>attack_alien_base</code> missions, its A bases send
+3-ship scouts every 5 days and grow to 2 hangars (75 − 10n %, 3 queued a hangar; <strong>verified</strong>; one
+hangar to start is <em>derived</em>); its planner raids are
 <code>heavy_base_attack</code> / <code>base_attack</code>, <code>outpost_attack</code> and <code>opp_attack</code>. <code>--strategy-soak</code> prints
 the rival's places.</p>
 <h3 id="auto_resolve-and-craft_damage"><code>auto_resolve</code> and <code>craft_damage</code><a class="headerlink" href="#auto_resolve-and-craft_damage" title="Permanent link">&para;</a></h3>
