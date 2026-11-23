@@ -730,7 +730,7 @@ on days 122 and 192 (never without the flag); 3 craft at the end. The Doomsday a
 the first alien message (5 % per won battle at Veteran, none in this seed's first year); in 730
 days it comes, and the Doomsday completes (day ≈ 700) before the second message's prerequisites.
 
-**#141** (app NEXT; RQ-S-19, RQ-S-23, unknowns §2, §3.3, §11.3): `aliens::freighters` (the freighters
+**#141** (app 0.22.41; RQ-S-19, RQ-S-23, unknowns §2, §3.3, §11.3): `aliens::freighters` (the freighters
 in flight, for the map and the rival); a harassed freighter gets a raid after it (`raids.freighter`)
 that the player can intercept; raid sizes and escorts by alien tech (`raids.sizes`, `escorts`) size
 the battle; hired pilots travel as shipments. DEV-105. `interceptor` `--strategy-soak` (Veteran,
