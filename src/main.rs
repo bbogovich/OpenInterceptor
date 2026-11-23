@@ -84,7 +84,9 @@ fn headless(options: &cli::Options) -> Option<i32> {
             return Some(1);
         };
         // Day by day, so the stores can be checked against their capacity throughout.
-        let mut c = openinterceptor::campaign::Campaign::new(def, 1, 7);
+        // At the level the content resolved its `per_level` values at (`--difficulty`, else
+        // the campaign's default), so the soak's numbers are that level's.
+        let mut c = openinterceptor::campaign::Campaign::new(def, content.rules.difficulty, 7);
         let mut over = Vec::new();
         for d in 1..=days.ceil() as u32 {
             c = openinterceptor::campaign::autoplay_with(def, Some(&content.rules), c, (d as f64).min(days));

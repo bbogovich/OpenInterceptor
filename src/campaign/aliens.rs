@@ -465,7 +465,8 @@ mod tests {
         assert!(a.bases.iter().all(|b| b.variant == 1), "the starting bases are A");
         // They save and load (their own section).
         let packs = [crate::campaign::save::PackRef { id: "t".into(), version: "1".into() }];
-        let back = crate::campaign::save::read(&crate::campaign::save::write(&c, "t", &packs), &d, &packs).unwrap();
+        let text = crate::campaign::save::write(&c, "t", &packs);
+        let back = crate::campaign::save::read(&text, &d, &packs).unwrap();
         assert_eq!(back.aliens, c.aliens);
         // Every base 3,000 or more from the player's base at (0, 0).
         assert!(a.bases.iter().all(|b| c.systems[b.system].pos[0] >= 3000.0));

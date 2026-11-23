@@ -617,6 +617,14 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
 
 /// Reads a save's header: the campaign id and the packs it was made with (to choose and
 /// check what to load before reading the rest).
+/// The difficulty level index a save was played at (its `difficulty`), read without
+/// loading it: the content must be loaded at that level before [`read`], because
+/// `per_level` values are resolved when the content loads.
+pub fn difficulty_of(text: &str) -> Option<usize> {
+    let doc = yaml::parse(text).ok()?;
+    Get(&doc).num("difficulty").map(|d| d.max(0.0) as usize)
+}
+
 pub fn header(text: &str) -> Result<(String, Vec<PackRef>), String> {
     let doc = yaml::parse(text).map_err(|e| format!("save: {e}"))?;
     let g = Get(&doc);
