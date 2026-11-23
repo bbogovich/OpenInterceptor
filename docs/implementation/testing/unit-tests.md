@@ -8,6 +8,12 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#139 (app NEXT)** five more in `campaign::aliens::tests`:
+`the_rival_starts_with_a_bases_that_queue_ships_and_outposts_that_pay` (and its save section),
+`the_raid_planner_sends_raids_from_an_a_base_with_ships_queued`,
+`new_bases_come_on_the_originals_triggers_and_are_b`, `the_rivals_outposts_build_its_plans_pieces`
+and `freighters_near_the_rivals_places_are_attacked`.
+
 **#134 (app 0.22.32)** six more: `campaign::autoresolve::tests::ratings_follow_the_original_formulas`,
 `rounds_come_at_five_hours_then_hourly_and_hits_go_shield_armour_hull`,
 `a_won_battle_reports_its_kills_and_outcome_actions`,
