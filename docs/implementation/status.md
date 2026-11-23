@@ -658,6 +658,12 @@ bay refunded), map speed by mass (`speed_by_mass`, hull and item `mass`, engines
 values and slower raids by fleet mass; `default`: colony freighters. Not built: the aliens'
 harassment of freighters (#139). DEV-103.
 
+**#140** (app NEXT; RQ-C-21, RQ-UI-19/20): joining an off-screen battle (`Act::JoinBattle`: the
+info panel, the Contacts list, a second click on the contact); the base hull (value `base_hull`,
+the Bases rows) and craft condition (the hangar rows); the map's `markers` — bases with a build
+bar, the rival's known bases and outposts, freighters in flight (`Campaign::freighters_in_flight`,
+for #141 to extend), battles under way — and their hover labels. MT-6-38.
+
 **#133** (app 0.22.28; RQ-S-10, RQ-S-11, RQ-C-10's campaign link, RQ-C-23, D-08; strategy README §5,
 flight README §4.2, with the generator, salary and bracket tables read from the exe): `pilots.generate`,
 `pilots.health`, the periodic `pilots.training`, the salary table and `stat_max`; `damage.pilot_injury`
