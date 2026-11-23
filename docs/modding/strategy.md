@@ -91,6 +91,7 @@ names it. Difficulty level ids are constants as well (`difficulty >= veteran`).
 | `facility_progress(s)` | number | The construction progress (0..1) of the least finished facility in system `s`; 1 when none is building (also when there is none). |
 | `construction_attacks(s)` | number | [Construction strikes](#construction-strikes) suffered by the facilities built in system `s`. |
 | `base_distance(s)` | number | Map units from system `s` to the player's nearest base, in a straight line; 1 000 000 000 with no base (app 0.19.0). |
+| `alien_tech` | number | App NEXT: the rival's tech level, 1 – 3 ([`strategist.economy`](story.md#strategist); 1 without it). |
 | `centre_distance(s)` | number | App NEXT: map units from system `s` to the map's centre — a generated map's middle, else the middle of the systems' bounding box. `interceptor`'s bases must be within 30,000 (5 ly) of it (**verified**). |
 
 Systems are named by their map id (`ajax`, `nebula_haven`) and are checked names like everything

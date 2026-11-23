@@ -93,12 +93,13 @@ An event is a condition, a chance, a list of actions and, optionally, choices fo
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `when` | condition | always | When it may fire, in the [campaign context](#conditions). |
-| `check` | `daily`, `weekly`, `monthly`, `after_battle`, `on_research` | `daily` | How often it is checked: at each day, week (168 h) or month (720 h) boundary, after any battle the player flies, or after any research topic is finished. |
+| `check` | `daily`, `weekly`, `monthly`, `after_battle`, `on_research`, `scheduled` | `daily` | How often it is checked: at each day, week (168 h) or month (720 h) boundary, after any battle the player flies, or after any research topic is finished. `scheduled` (app NEXT): only the [side-mission scheduler](#side_missions) fires it. |
 | `chance` | fraction | 100 % | The chance per check, once `when` holds. |
 | `do` | list of [actions](#actions) (or one action) | none | What it does when it fires. |
 | `choices` | list of `{text, do}` | none | A choice for the player, made after `do` has run: `text` is the option (a `@key` or words), `do` its actions. Up to five are offered on number keys. |
 | `once` | bool | `true` | Fires only once. |
 | `cooldown` | time | 0 | For a repeating event (`once: false`): the least time between firings (`60d`). |
+| `delay` | `[min, max]` times | none | App NEXT: once the event would fire (its check, condition and chance passed), it fires a random time in this range later instead, whatever its `check` (`interceptor`: the MacArthur arrives `[24h, 48h]` after the request, RQ-S-15, **verified**). |
 | `arc` | arc id | none | The arc it is a step of. Not needed when the arc lists it in `steps`. |
 
 An event fires when, at a check, it is not spent (`once`) or cooling down, it is its arc's next
@@ -181,7 +182,41 @@ The rival's mood (a global section). Its **aggression** multiplies the chance of
 | `calm_after_wins` | number | 2 | Battles won in a month that count as winning. |
 
 Without a `strategist` section aggression stays at 1. The `aggression(n)` action moves it
-directly. The design's budgets, expansion, offence ladder and `Think.ini` values are not built.
+directly. `interceptor` starts at 0.7, `Think.ini`'s `StartingAggression` (D-25, **verified**).
+
+`strategist.economy` (app NEXT, RQ-S-14) — the rival's treasury and tech level:
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `income_every`, `income` | time, expression | 25 d, `125000 * (difficulty + 1)` | Money the treasury gets each period. |
+| `split_every`, `ratios` | time, `[research, goods, doomsday]` | 6.25 d, `[0.3, 0.4, 0.3]` | Each period the treasury is split into the three funds by these shares. |
+| `spend_every`, `research_per_downlink`, `downlinks` | time, number, number | 20 h, 20000, 0 | Each period up to `research_per_downlink` × `downlinks` / 7 (/ 14 with none) moves from the research fund into research. |
+| `tech_levels` | list of `[to 2, to 3]` per difficulty level | none | Research money at which the tech level rises to 2 and to 3. |
+
+Conditions read the level as `alien_tech` (1 – 3). `interceptor` follows the original (README
+§6.1, **verified**): the fallback income (the aliens' outposts are not modelled), `Think.ini`'s
+ratios, 20,000 per downlink and the thresholds 1.0M / 1.5M (Beginner) … 0.5M / 0.9M (Superhuman);
+its 3 alien downlinks and the missing aggression adjustment of the split are *derived*.
+
+## `side_missions`
+
+`side_missions: {check_every, list}` (app NEXT, RQ-S-13) — a scheduler for side missions: every
+`check_every` (a random time in `[min, max]`) the entries of `list` are tried **in order**, and
+the first whose `months` window holds (whole 30-day months since the start), whose event is not
+spent (`once`) and whose `when` holds fires, with its own `chance`; at most one a check. The
+events are `check: scheduled`.
+
+| Entry key | Type | Meaning |
+|---|---|---|
+| `event` | event id | The side mission's event (unknown: load error). |
+| `months` | `[first, last]` | Months it may fire in (default: any). |
+| `chance` | fraction | The chance when it qualifies (default 100 %). |
+
+`interceptor` (README §6.2, **verified** order, months and chances): alien raiders (months 2 – 7,
+10 %), rogue freighter (5 – 17, 20 %), pirate rescue (9 – 23, 20 %), arms dealer (from 6, 70 %:
+*derived*, the original uses the aliens' aggression), every 6 – 9 days. Which mission stands for
+each, and the month offset (the original's month value − 1), are *derived*; the Nova Bomb hijack
+and the recon mission are not built. `default`: Dominion scouts and a Black Comet ambush call.
 
 ## `endings` and `campaign_end`
 
@@ -319,18 +354,20 @@ is not there, that arcs only move forward, and that the serial and the Engine ar
 guide describes. Every estimate is marked `DERIVED` in the file.
 
 - **Arc `doomsday`**: `alien_message_1` – `alien_message_5`, `summon_macarthur`,
-  `final_mission`. The first message is checked `after_battle` from 1 February with a chance per
-  battle by difficulty, or regardless later (the later day is *derived*); the next ones need
-  their date, a saucer examination topic and the Doomsday plan's progress; MacArthur needs three
-  research topics, and the final mission (`destroy_doomsday_weapon`, whose win now sets
-  `doomsday_destroyed`) is offered about a week later.
-- **Plan `doomsday`**: three stages (Structural, Weapon, Drive) with `{per_level: …}` counts,
+  `final_mission`. Since app NEXT (RQ-S-12, README §4.3, unknowns §11.2, **verified**) each message
+  is intercepted after a battle with the AlienMessage goodies chance (7 / 7 / 5 / 5 / 4 %), from
+  its month (February, April, June, August, November 2067 — here whole 30-day months 1 / 3 / 5 /
+  7 / 10, *derived*) once its prerequisites are known: the previous message, the saucer
+  examinations and the Doomsday pieces; it opens its (hidden) research topic. MacArthur needs
+  three research topics; the final mission (`destroy_doomsday_weapon`) follows 24 – 48 hours later
+  (`delay`, **verified**).
+- **Plan `doomsday`**: three stages (Structural, Weapon, Drive) with the original's counts by
+  difficulty (8/8/9, 9/8/8, 10/8/7, 7/7/6, 7/6/5, unknowns §12.2, **verified** since app NEXT),
   shipments as the raid `doomsday_convoy` (the escorted alien freighter ambush) with a chance by
   difficulty, three warnings and `defeat(doomsday_complete)`.
-- **Side missions**: two of the original's seven so far — a rogue freighter and Kabron pirates,
-  both flying `ambush_pirate_squadron` on *derived* triggers.
-- **Strategist**: aggression with *derived* values (the original's `Think.ini` rules are not
-  read yet).
+- **Side missions**: the [scheduler](#side_missions) with four of the original's seven; Kabron
+  pirates stay as a *derived* stand-in for the minor missions.
+- **Strategist**: aggression from 0.7 (rise and fall *derived*) and the [aliens' economy](#strategist).
 - **Videos** (app 0.12.0): each alien message also plays the original's transmission film,
   `video(original:alientrans1.smk)` – `alientrans5.smk`; the victory ending plays the credits
   film (`video: original:credits_sm2a.smk`, app 0.12.1); and a new campaign opens with
@@ -341,10 +378,8 @@ guide describes. Every estimate is marked `DERIVED` in the file.
   original's own text keys — `@orig.DD_WARNING1` – `DD_WARNING3`, `@orig.MAC_PROMPT1`,
   `@orig.DD_TOOLATE`, `@orig.S_LASTBASEDEAD` — read from the player's data at load.
 
-!!! warning "Derived: the saucer examinations"
-    The gates of messages 2 – 4 use the topics `type_1_saucer_examination`,
-    `type_2_saucer_examination` and `type_3_saucer_examination` for the guide's Wraith, Spectre
-    and Phantasm examinations. That mapping is **derived and unconfirmed**.
+The saucer examinations the message gates name are the original's topics 70 – 72 (**verified**
+since app 0.22.27).
 
 ## Trying a story out
 
