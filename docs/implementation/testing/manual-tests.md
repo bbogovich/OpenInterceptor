@@ -1374,12 +1374,12 @@ Hit static (steps 3–5): confirmed by the user, 2026-11-11 — "Hit static - co
 | MT-4-64 | `interceptor`: bolts do not drift with your own sideways motion | `gunnery-range` (`interceptor`), Lightning; `rocket-vs-saucer` (default) | not run | | | App 0.22.0; Track A A2, `flight.bolt_inherit: false` |
 | MT-4-65 | `interceptor`: the lead indicator | `gunnery-range` and `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.22.0; Track A A2/A7, the lead follows `bolt_inherit` |
 | MT-4-66 | Station shield pool and covered modules | `base-assault` (`interceptor`), Lightning; `outpost-strike` (default) | not run | | | App 0.22.4; #113, `shield_pool`, `shielded_by_hub`, `damage_model: station`, hull = `HP1` |
-| MT-4-67 | `interceptor`: system damage, mounts and repair | `duel-wraith` (`interceptor`), Lightning | not run | | | App NEXT; #116, `system_table`, `repair_order`, `efficiency`, `disables_below` |
-| MT-4-68 | `interceptor`: AI flying and missiles | `duel-wraith`, `duel-pirate-lightning`, a scenario with wingmen (`interceptor`), Lightning | not run | | | App NEXT; #118, `steer`, `lock_cone`, `pilot_grades`, speed requests |
-| MT-4-69 | `interceptor`: station layouts, the connection point and minefields | `base-assault`, `station-tour` (`interceptor`) | not run | | | App NEXT; #114, `hard_points`, `modules` by `at`, `minefields` |
-| MT-4-70 | `interceptor`: station and freighter turrets | `base-assault`, `station-tour`, `escort` (`interceptor`) | not run | | | App NEXT; #115, `aim: fixed`/`gimballed`, `interval`, `free_fire`, `line_of_sight` |
-| MT-4-71 | `interceptor`: accumulator shields, the Tachyon Pulser, link modes | `duel-shade`, `duel-harbinger`, `gunnery-range` (`interceptor`), Avenger | not run | | | App NEXT; #117 |
-| MT-4-72 | `interceptor`: retreat rolls, break-off, the Nova bomb | `duel-wraith` (`interceptor`), a campaign battle with the Nova Bomb fitted | not run | | | App NEXT; #119 |
+| MT-4-67 | `interceptor`: system damage, mounts and repair | `duel-wraith` (`interceptor`), Lightning | not run | | | App 0.22.50; #116, `system_table`, `repair_order`, `efficiency`, `disables_below` |
+| MT-4-68 | `interceptor`: AI flying and missiles | `duel-wraith`, `duel-pirate-lightning`, a scenario with wingmen (`interceptor`), Lightning | not run | | | App 0.22.50; #118, `steer`, `lock_cone`, `pilot_grades`, speed requests |
+| MT-4-69 | `interceptor`: station layouts, the connection point and minefields | `base-assault`, `station-tour` (`interceptor`) | not run | | | App 0.22.50; #114, `hard_points`, `modules` by `at`, `minefields` |
+| MT-4-70 | `interceptor`: station and freighter turrets | `base-assault`, `station-tour`, `escort` (`interceptor`) | not run | | | App 0.22.50; #115, `aim: fixed`/`gimballed`, `interval`, `free_fire`, `line_of_sight` |
+| MT-4-71 | `interceptor`: accumulator shields, the Tachyon Pulser, link modes | `duel-shade`, `duel-harbinger`, `gunnery-range` (`interceptor`), Avenger | not run | | | App 0.22.50; #117 |
+| MT-4-72 | `interceptor`: retreat rolls, break-off, the Nova bomb | `duel-wraith` (`interceptor`), a campaign battle with the Nova Bomb fitted | not run | | | App 0.22.50; #119 |
 
 ## Stage 4 cases
 
@@ -1912,7 +1912,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning`. The MFD Status page (systems) and the hull readout. |
+| Preconditions | App 0.22.50 or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-wraith --ship lightning`. The MFD Status page (systems) and the hull readout. |
 | Steps | 1. Let the Wraiths hit you until the hull is below 75 % and system messages appear; break off and fly clear. 2. Watch the hull and the systems for 30 s. 3. Fight on until a beam mount or launcher is reported destroyed; fire the guns and the missiles. 4. Keep taking hits until the engine is badly damaged. 5. Shoot a Wraith's systems down the same way and watch how it fights. |
 | Expected | 1: messages name beam mounts and launchers as well as systems. 2: the **hull climbs about 2 points a second** first if the engine is whole (the engine is repaired first when damaged); then the shield generator, flight control and so on; a system shown destroyed never comes back. 3: a destroyed mount no longer fires (one of two guns fires); a destroyed launcher's missiles are gone and the rack is skipped. 4: thrust falls to half, then a quarter; below 15 % the craft is **disabled** — no thrust, afterburner off — and the hull is repaired before the engine. Turning gets sluggish as flight control is hit but never stops. Missile lock and the hyperdrive work as usual however damaged the sensor and hyperdrive are. 5: a Wraith that lost its guns stops hurting you. |
 
@@ -1921,7 +1921,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-pirate-lightning --ship lightning`, then `duel-wraith`, then a scenario with wingmen (`mixed-dogfight` or `escort`). |
+| Preconditions | App 0.22.50 or later; the player's data. `openinterceptor --campaign interceptor --scenario duel-pirate-lightning --ship lightning`, then `duel-wraith`, then a scenario with wingmen (`mixed-dogfight` or `escort`). |
 | Steps | 1. Fly straight and level, then jink, while the pirates attack; watch how they hold their aim. 2. Let a pirate close head-on. 3. In `duel-wraith`, count missile launches over a minute; note whether one comes while the Wraith's nose points well away from you. 4. Run away from the Wraiths, more than 3 km. 5. With wingmen, fly at about 200 m/s and watch them hold formation. |
 | Expected | 1: pirates track you tightly (their aim corrects within a frame or two), but half the time lead too little or too much. 2: they break off at about 250 m. 3: Wraiths fire missiles only just after swinging onto you (within about 2.5 s of the aim settling), never with the nose away; launches are at least 5 s apart. 4: pirates and Wraiths sprint after you (slightly faster than their normal top speed); they never light an afterburner. 5: wingmen hold their slots at your speed instead of falling behind; an AI ship never runs out of energy from burning. |
 
@@ -1930,7 +1930,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario station-tour`; then `--scenario base-assault --difficulty superhuman` and `--difficulty beginner`. |
+| Preconditions | App 0.22.50 or later; the player's data. `openinterceptor --campaign interceptor --scenario station-tour`; then `--scenario base-assault --difficulty superhuman` and `--difficulty beginner`. |
 | Steps | 1. Fly round the pirate base and the arms dealer; count their turrets and watch where they sit. 2. Restart `station-tour` a few times. 3. In `base-assault` on Superhuman, look round the alien base from a distance before closing. 4. Bring its shields down, then fire at the underside of the hub (the connection point, about 217 m below its centre) until it is destroyed. 5. Repeat 3 on Beginner. |
 | Expected | 1: the arms dealer has five laser turrets — on top, two on the underside angled down, and one on each side; the pirate base up to six — top, bottom and on its mid-ring — each standing on the hull and firing outwards. 2: the pirate base's turret count varies (each is there 75 % of the time on Beginner). 3: mines ring the base (most likely: two rings of four missile mines 4 km out and two of nine explosive mines 2 km out); they go off when you fly near. 4: shots at the underside drain the connection point first (the hull does not drop); "Connection Point Destroyed" appears; the base is not destroyed by it alone. 5: no minefields on Beginner. |
 
@@ -1939,7 +1939,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's data. `openinterceptor --campaign interceptor --scenario base-assault`, then `station-tour`, then `escort`. |
+| Preconditions | App 0.22.50 or later; the player's data. `openinterceptor --campaign interceptor --scenario base-assault`, then `station-tour`, then `escort`. |
 | Steps | 1. Approach the alien base from 5 km and fly across its front, then hold still at 3 km. 2. Watch an X-COM base's turrets engage an enemy (`station-tour` or a base defence mission). 3. Fly round the pirate base at 2 – 3 km. 4. In `escort`, watch the X-COM freighters' guns when enemies close. |
 | Expected | 1: the plasma pods open fire from about 5 km, steadily (about one shot a second each, not bursts), and hit a still target most of the time but miss by up to 20 m sideways now and then; they do not fire at you from behind their facing. 2: X-COM turrets fire at the laser's rate and almost never miss a target in front of them. 3: pirate turrets fire singly at a steady pace, some stop when part of the station is between you and them. 4: each freighter fires from a nose turret and a tail turret (no longer from its own beams), within 2 km. |
 
@@ -1948,7 +1948,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's data. `--scenario duel-shade --ship avenger`, then `duel-harbinger`, then `gunnery-range --ship avenger`. |
+| Preconditions | App 0.22.50 or later; the player's data. `--scenario duel-shade --ship avenger`, then `duel-harbinger`, then `gunnery-range --ship avenger`. |
 | Steps | 1. Fire beams at a Shade whose shields are up; watch its shield readout. 2. Bring its shields down with missiles, then fire beams. 3. Let the Harbinger's tachyon turrets hit you; watch hull, armour, systems and how fast they repair. 4. In `gunnery-range`, set linked (the Avenger mixes beam types) and fire; then full; hold the afterburner and watch the energy. |
 | Expected | 1: the Shade's shields **rise** under beam fire instead of falling. 2: once down, beams hurt it. 3: the shields drop, then only systems are damaged (mostly the engine) — hull and armour stay — and repair crawls (ten times slower) until everything is whole. 4: linked fires every mount of one beam type together; with little energy, full fires the mounts it can pay for rather than none; energy still recharges while burning, so it drains more slowly than 100 per second. |
 
@@ -1957,7 +1957,7 @@ also a button and the S and F keys are gone: in MT-4-06 sell with *Sell 1*, in M
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's data. `--scenario duel-wraith`, on Beginner and on Superhuman; a campaign craft with the Nova Bomb fitted. |
+| Preconditions | App 0.22.50 or later; the player's data. `--scenario duel-wraith`, on Beginner and on Superhuman; a campaign craft with the Nova Bomb fitted. |
 | Steps | 1. Damage a Wraith badly without destroying its guns; note whether it jumps out. 2. Destroy its beam mounts (system hits) and watch it for 20 s. 3. Fly head-on past a Wraith and time how long it stays away before turning back, on both levels. 4. In a battle, launch the Nova Bomb and watch the radio and the enemies. |
 | Expected | 1: it never jumps out because of hull damage. 2: within about 5 – 10 s of losing its last gun it most likely (50 – 75 %) jumps out. 3: it breaks off under 250 m and comes round after about 5 s on Beginner, 3 s on Superhuman. 4: the bomb does not explode when it reaches a ship; "NOVA BOMB ARMED" at 30 s, "NOVA BOMB DETONATED" at 60 s (a flash, no damage), most enemies jump out soon after, then "BATTLE ENDS IN 32 SECONDS" and "… 13 SECONDS". |
 
@@ -2349,7 +2349,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy` (the CSD). 2. Look at the four green readouts and the status bar. 3. `--screen purchase`, then `--screen manufacture`. 4. `--screen bases`, `equip_ships`. 5. `--no-original --check`. |
 | Expected | 2: time, weekday, date and funds in the original's white-and-green font, each centred in its bar (the time with evenly spaced digits); the status bar's text centred in it. 3: the funds in yellow, centred in the dark slot under the shelf (not above it). 4: the base name in the white body font on the title strip. 5: no errors (the default skin's generated fonts load). Screenshots of app 0.22.5 are in the parity M2 report. |
 
@@ -2357,7 +2357,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --screen <id>` for `purchase`, `manufacture`, `research`, `bases`, `equip_ships`, `base_stats`, `ufopedia`, `reports`. 2. Click a row, then each action button; double-click a row; scroll with the wheel. 3. `--strategy --notice "Hello there"` with `interceptor`, then with `--no-original` (default). Press Enter. |
 | Expected | 1: every list in the white body font inside its art panel; nothing drawn across the art; Research's rows on the eight black slots; the selected row's text and its buttons in their black boxes; the base name centred on the top strip. 2: the selected row highlighted; a pressed button shows a green fill and acts on the click; a double click does the first action. 3: a message box with the caption in the readout font, the text wrapped and an OK text button 25 px above the bottom; default: the same in its gold and cream. Enter closes it. |
 
@@ -2365,7 +2365,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --screen purchase`. 2. Watch the selected row for a few seconds. 3. Hold the mouse on a row. 4. Click the down arrow once; then hold it. 5. Scroll to the end; then to the top. 6. `--screen equip_ships`; `--screen manufacture`. |
 | Expected | 1: eleven rows in the white body font under the green strip, the strip showing PURCHASE, SIZE, COST, STORES and QUANTITY (no `#`), each cell under its header. 2: the bar's green brightens and dims smoothly about every 2.5 s. 3: the row flashes amber while held. 4: one row per click; held, a pause of about a third of a second, then about 12 rows a second. 5: at the end the down arrow shows its disabled image and does nothing; at the top the up arrow does. 6: Equip Ships shows three rows with SHIP, PILOT and STATUS columns and its own arrows; Manufacture its own header. |
 
@@ -2373,7 +2373,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy` (the CSD). Press and hold the Bases button; move the cursor off it and back; release outside it. 2. Press Research and release on it. 3. On Bases, press each side button. 4. On Purchase, click the manufacture radio; then on Manufacture the purchase radio. 5. On Equip Ships, click each tab. |
 | Expected | 1: while held inside, the button shows its pressed sprite; outside, the art's up look; releasing outside still opens Bases. 2: Research opens on release, not on press. 3: each shows its pressed image while held and opens its screen on release. 4: the radios switch screens; the current screen's radio shows pressed. 5: the clicked tab stays pressed and the others are released. No coloured box around any sprite. |
 
@@ -2381,7 +2381,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy`; set the dial to 1 hour; watch the clock. 2. Open Bases; wait; then its close button (top-left). 7. Open the UFOpedia; press its exit. 3. CSD → Bases → Purchase → the manufacture radio → close; close again. 4. CSD → Research → close. 5. `--strategy --notice "Hello"`; click *OK (5-SECS)*; repeat with *OK*. 6. Play until a module finishes building. |
 | Expected | 1: the clock runs. 2: on Bases the clock stands still; closing returns to the CSD and it runs again at 1 hour. 3: the first close returns from Manufacture to Bases (the radio did not add a step), the second to the CSD. 4: back on the CSD. 5: the original's red style-3 message box (frame kit, blinking ornament at the bottom right, caption in the black slot) with the fill and capsule buttons; *OK (5-SECS)* sets the dial to 5 s, *OK* leaves it (since app 0.22.15 a `--notice` is kind *other*: a plain OK). 6: the module report shows both buttons and the speed is unchanged until one is chosen; a story notice shows a plain OK. 7: the UFOpedia's exit (bottom right) goes back. |
 
@@ -2389,7 +2389,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data; sound on. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data; sound on. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy`. Watch the four red map-corner lamps and the small lamp at the bottom right. 2. Rest the cursor on the Bases button, then on a dial hole, then on the minimap; move off. 3. Click each dial hole; press keys 1 – 6. 4. Press the Bases button; on Bases press a side button; on Purchase press a scroll arrow and an action button; open Equip Ships and press a tab. 5. `--strategy --notice "Hello"`, click OK. |
 | Expected | 1: the corner lamps flicker through their frames about 1.5 times a second, all four together; the status lamp cycles. 2: after the cursor stops, a dark-blue box with the original's help text appears above the control (below it near the top of the screen); it closes when the cursor leaves. 3: each click turns the rotary switch (its sound), lights that hole's lamp and sets the speed; the globe turns faster or slower with the clock and stops on other screens; keys 1 – 6 pick speeds 5 s … 1 day. 4: each press makes the original's sound (beep, click, Beep8, Beep29b, Beep3025). 5: the box's opening sound, then MsgBoxBtn on OK. |
 
@@ -2397,7 +2397,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data for steps 1 – 4. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data for steps 1 – 4. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy`. Move the cursor over the map, rest it on a star, then on two stars close together, then outside the circle. 2. Look at the stars. 3. Open Reports; press next and previous through all six. 4. Open Equip Ships; click a craft in a socket. 5. `openinterceptor --campaign default --strategy`; move over the map; open Reports and Archive. |
 | Expected | 1: no names until the cursor is within about 15 px of a star; then its name, upper-cased in the 6 px yellow font, centred 20 px above it, kept inside the circle near the rim; with two stars the labels alternate every second; outside the circle nothing. 2: the 9 × 9 class icons, not dots; real star names (Capella, …). 3: Income, Finance, Alien activity, X-COM activity, Outposts, Player status, each with its list; no value reads -0. 4: the craft name and pilot sit in the left sockets; the click selects that craft in the list. 5: hover labels in the default body font; Reports lists the six reports under their names; Archive lists the topics researched. |
 
@@ -2405,7 +2405,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --chapter 2 --screen reports`; step through all six with next. 2. On Finance click each of the five rows. 3. Start a new game: on the CSD turn the wheel over the map, then click a star, then turn the wheel back. 4. Open Equip Ships; click a socket. 5. Open Bases, Base Stats and the UFOpedia and use their arrows. |
 | Expected | 1: green line graphs with a dark-green grid and month labels; the activity reports show a coloured system map and its legend; Outposts a table and a small map; Player status the pilots with their ranks. 2: the graph changes series, with LOW and HIGH lines. 3: the map shows a handful of stars around the base at 45 units a pixel, closer at 30; a star opens its animated picture; the wheel goes back. 4: the sockets show icons only; the unusable ones the dark sprite; the selected one an overlay. 5: each arrow scrolls its list one row and is greyed at the end. |
 
@@ -2413,7 +2413,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy`. Click the view knob's three positions (lower left, middle, upper right) with and without a star selected. 2. Click the system with the base, then a black hole. 3. Open Bases; press previous, next and the check mark. 4. `--chapter 2 --screen reports`; look at the axes; step to Alien activity. |
 | Expected | 1: each click turns the knob and plays the rotary sound; lower left = far view, middle = closer; upper right only with a star selected (its lamp shows unavailable otherwise) and shows the star's animated picture. 2: the base system shows the base picture; the black hole is only centred. 3: previous / next move the module selection; the check mark builds the selected module. 4: income 0 – 18,000 in 18 steps, 22 month columns with names under them and the years between brackets; the alien legend stays inside the panel. |
 
@@ -2421,7 +2421,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. No unit test covers it: the reload runs in the app's loop. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. No unit test covers it: the reload runs in the app's loop. |
 | Steps | 1. Main menu → Options → Difficulty: **Genius**; New Game. Open an alien base raid's battle or note a `per_level` value that differs by level (e.g. the Doomsday piece work, 50,000 technician-hours at Genius against 100,000 at Beginner, seen as days between pieces with `--strategy-soak`; or an alien fighter's turn and speed in a flown battle). Save in slot 1. 2. Main menu → Options → Difficulty: **Beginner**. 3. Load slot 1. 4. Fly the next interception, or open Options. |
 | Expected | 3: the campaign loads without an error. 4: the battle plays at Genius (alien pilots as at Genius, the X-COM shields and armour without Beginner's 150 % / 130 %), and Options shows **Genius**: the content was reloaded at the save's level before the save was read. Starting a New Game afterwards in this session uses Genius (the menu's remembered choice in `settings.yaml` stays Beginner for the next start). |
 
@@ -2429,7 +2429,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data; `auto_resolve` on. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data; `auto_resolve` on. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --map-demo` (or let time run until a freighter carries a purchase and a contact is fought off-screen). 2. Hover the base, a freighter, a contact, a battle. 3. Click the contact under attack twice. 4. Open Bases and Equip Ships. 5. Repeat 1 – 4 with `--campaign default` (Ctrl+T layout). |
 | Expected | 1: the base icon (902) with a progress bar while built; freighters (606) on their way; alien places in sensor range (903, 917 blinking); a blinking red square on a battle. 2: the labels name them in the original's colours. 3: the battle is flown from where it stands. 4: Bases shows "HULL x / 6,000"; a damaged craft's row gives its hull, shields and armour. 5: shapes instead of icons; the Contacts list offers "Join the battle"; the Bases list gives the hull. |
 
@@ -2437,7 +2437,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data; ready craft with pilots at the base. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data; ready craft with pilots at the base. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --map-demo` (the rival's base is selected). 2. Click the selected alien base again. 3. `--map-demo --screen testbed`: press **Attack** in the info panel. 4. `--campaign default --strategy --map-demo`. |
 | Expected | 1: the status bar reads ALIEN BASE, a yellow ring marks it. 2 and 3: the base's ready craft fly to the place as an interception (a contact appears there); the battle follows on arrival. 4: no rival places, nothing offers Attack. |
 
@@ -2446,7 +2446,7 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Preconditions | App 0.22.50 or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy`; let the clock run at the slowest speed and watch the dial. 2. `--strategy --map-level 2` (or click a star twice on the map). |
 | Expected | 1: the globe turns smoothly through a full rotation in about 3 s, centred in the dial's round opening (not low against its bottom edge); the corner lamps cycle in about 0.7 s. 2: the star's animated picture sits in the middle of a black scope — no grey panel art inside the circle — as at the other zoom levels. |
 
@@ -2454,7 +2454,14 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 
 | Field | |
 |---|---|
-| Preconditions | App NEXT or later, the **built bundle** (`python3 tools/build_bundle.py`), not `cargo run`; the player's Interceptor data. Run it with `open dist/OpenInterceptor-<version>.app`, and once more from another working directory (`cd /tmp && <repo>/dist/OpenInterceptor-<version>.app/Contents/MacOS/openinterceptor`). |
+| Preconditions | App 0.22.50 or later, the **built bundle** (`python3 tools/build_bundle.py`), not `cargo run`; the player's Interceptor data. Run it with `open dist/OpenInterceptor-<version>.app`, and once more from another working directory (`cd /tmp && <repo>/dist/OpenInterceptor-<version>.app/Contents/MacOS/openinterceptor`). |
 | Steps | 1. On the mission select (Battles and tools), press **D** several times, then **Tab**, then **Tab** again. 2. Main menu → Options: on the Difficulty row press **Right**, then **Left**, then **Left**; on the Campaign row press **Right**. 3. With the app running, rebuild the bundle (`python3 tools/build_bundle.py --skip-build --no-settings`) and press **D** again. |
 | Expected | 1: each D shows the next level, each Tab the other campaign; no "Could not start". 2: Right goes to the next level, Left to the previous one (wrapping at the ends); after each change the Options page stays open with the same row selected; the Campaign row switches campaign. 3: the level changes (the bundle is swapped in whole). If a reload ever fails, the message names the folders searched and the screen stays where it was. |
 
+### MT-6-42 — The craft in the middle of the ship status display
+
+| Field | |
+|---|---|
+| Preconditions | App 0.22.50 or later; the player's Interceptor data for steps 1 – 2. |
+| Steps | 1. `openinterceptor --campaign interceptor --scenario duel-drone --ship lightning --view cockpit` (then `firestar`, `avenger`). 2. Take hull damage. 3. `--campaign default --scenario debris-showcase --ship comet --view cockpit` (then `meteor`, `thunderbolt`). |
+| Expected | 1: inside the innermost shield ring is the art's own small craft, tinted green — no drawn aeroplane over it. 2: the craft turns amber, then red, as the hull falls. 3: the ship status bezel shows the flown craft's own shape from above (the comet's rounded hull and fins), not an aeroplane. |

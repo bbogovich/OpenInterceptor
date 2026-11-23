@@ -99,7 +99,7 @@ An event is a condition, a chance, a list of actions and, optionally, choices fo
 | `choices` | list of `{text, do}` | none | A choice for the player, made after `do` has run: `text` is the option (a `@key` or words), `do` its actions. Up to five are offered on number keys. |
 | `once` | bool | `true` | Fires only once. |
 | `cooldown` | time | 0 | For a repeating event (`once: false`): the least time between firings (`60d`). |
-| `delay` | `[min, max]` times | none | App NEXT: once the event would fire (its check, condition and chance passed), it fires a random time in this range later instead, whatever its `check` (`interceptor`: the MacArthur arrives `[24h, 48h]` after the request, RQ-S-15, **verified**). |
+| `delay` | `[min, max]` times | none | App 0.22.50: once the event would fire (its check, condition and chance passed), it fires a random time in this range later instead, whatever its `check` (`interceptor`: the MacArthur arrives `[24h, 48h]` after the request, RQ-S-15, **verified**). |
 | `arc` | arc id | none | The arc it is a step of. Not needed when the arc lists it in `steps`. |
 
 An event fires when, at a check, it is not spent (`once`) or cooling down, it is its arc's next

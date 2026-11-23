@@ -266,7 +266,7 @@ walked. `value()` maps a value name to text; `weekday` uses `Date::weekday` (Zel
 
 ### Sheet fonts and text anchors (`formats::sheetfont`, `app::text`)
 
-*App NEXT, branch `parity/m2` (plan M2, issue #122; RQ-UI-03/04).* The original strategy
+*App 0.22.50, branch `parity/m2` (plan M2, issue #122; RQ-UI-03/04).* The original strategy
 screens draw text with bitmap **sheet fonts** placed by two routines; the engine had guessed
 TrueType baselines (`r[1] + r[3]/2 + 0.35·size`), which is why text looked mis-sized and off its
 controls. Three layers now reproduce the original:
@@ -310,7 +310,7 @@ widget font).
 
 ### Captions, text buttons, lists and dialogs (`app::caption`, `content::smallfont`)
 
-*App NEXT, branch `parity/m2` (plan M2, issue #123; RQ-UI-05/06, audit D-32 – D-40).* In the
+*App 0.22.50, branch `parity/m2` (plan M2, issue #123; RQ-UI-05/06, audit D-32 – D-40).* In the
 original every caption is drawn by its control's paint routine from the control's rectangle.
 `app::caption` holds those rules as pure functions over integer design-space rectangles:
 
@@ -342,7 +342,7 @@ detail text), `content::skin::tests::text_button_and_dialog_styles_parse_over_th
 
 ### The compact list box (`app::listbox`)
 
-*App NEXT, branch `parity/m2` (plan M2, issue #124; RQ-UI-13).* `app::listbox` holds the original
+*App 0.22.50, branch `parity/m2` (plan M2, issue #124; RQ-UI-13).* `app::listbox` holds the original
 ListBox's rules (0x51b7c6) as pure functions:
 
 - `visible_rows(h, lh)`: rounds in integers.
@@ -370,7 +370,7 @@ Tests:
 
 ### Sprite buttons, toggles and radio groups (`formats::spritetable`, `app::button`)
 
-*App NEXT, branch `parity/m2` (plan M2, issue #125; RQ-UI-01/02/07/08).*
+*App 0.22.50, branch `parity/m2` (plan M2, issue #125; RQ-UI-01/02/07/08).*
 
 - **`formats::spritetable`** finds the original's sprite table in `Interceptor.exe` by content:
   the first run of 64 or more 20-byte rows numbered 0, 1, 2, … with sane hot spots. It reads
@@ -405,7 +405,7 @@ Tests:
 
 ### History, clock and message boxes (`app::history`, `app::caption`)
 
-*App NEXT, branch `parity/m2` (plan M2, issue #127; RQ-UI-14/15/16, RQ-S-18).*
+*App 0.22.50, branch `parity/m2` (plan M2, issue #127; RQ-UI-14/15/16, RQ-S-18).*
 
 - **`app::history::History`** replaces the screen set's `Vec<String>` stack. It holds `home`,
   `current`, `trail` (Back's screens), `dialogs` and `limit`. Its operations follow the exe
@@ -440,7 +440,7 @@ Tests:
 
 ### The original's message box (`app::msgbox`)
 
-*App NEXT, branch `parity/m2` (follow-up to #127; `ui-framework.md` §4).*
+*App 0.22.50, branch `parity/m2` (follow-up to #127; `ui-framework.md` §4).*
 
 `app::msgbox` holds the exe's message-box rules as pure functions:
 
@@ -469,7 +469,7 @@ Tests:
 
 ### Sounds, hover help, the dial and lamps (`app::floater`)
 
-*App NEXT, branch `parity/m2` (plan M2, issue #126; RQ-UI-09 – 12).*
+*App 0.22.50, branch `parity/m2` (plan M2, issue #126; RQ-UI-09 – 12).*
 
 - **Sounds.** The `SoundBank` loads every non-event `sounds:` entry as `SoundKey::Ui`.
   `strategy::play_ui(ctx, own, default)` plays a widget's `sound` (`none` silences it), else the

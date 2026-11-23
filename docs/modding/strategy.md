@@ -91,9 +91,9 @@ names it. Difficulty level ids are constants as well (`difficulty >= veteran`).
 | `facility_progress(s)` | number | The construction progress (0..1) of the least finished facility in system `s`; 1 when none is building (also when there is none). |
 | `construction_attacks(s)` | number | [Construction strikes](#construction-strikes) suffered by the facilities built in system `s`. |
 | `base_distance(s)` | number | Map units from system `s` to the player's nearest base, in a straight line; 1 000 000 000 with no base (app 0.19.0). |
-| `alien_tech` | number | App NEXT: the rival's tech level, 1 – 3 ([`strategist.economy`](story.md#strategist); 1 without it). |
-| `alien_bases`, `alien_outposts` | number | App NEXT: the rival's bases and outposts on the map ([`alien_bases`](#alien_bases); 0 without it). |
-| `centre_distance(s)` | number | App NEXT: map units from system `s` to the map's centre — a generated map's middle, else the middle of the systems' bounding box. `interceptor`'s bases must be within 30,000 (5 ly) of it (**verified**). |
+| `alien_tech` | number | App 0.22.50: the rival's tech level, 1 – 3 ([`strategist.economy`](story.md#strategist); 1 without it). |
+| `alien_bases`, `alien_outposts` | number | App 0.22.50: the rival's bases and outposts on the map ([`alien_bases`](#alien_bases); 0 without it). |
+| `centre_distance(s)` | number | App 0.22.50: map units from system `s` to the map's centre — a generated map's middle, else the middle of the systems' bounding box. `interceptor`'s bases must be within 30,000 (5 ly) of it (**verified**). |
 
 Systems are named by their map id (`ajax`, `nebula_haven`) and are checked names like everything
 else, as are resource ids, feature tags and research-site ids (app 0.16.3).
@@ -192,11 +192,11 @@ yet.
 | `unlocks` | list | none | What finishing it makes available: `items.<id>`, `hulls.<id>`, `modules.<id>` (or `base_modules.<id>`), `base_types.<id>`. Something a topic unlocks cannot be bought, made or built until the topic is known. |
 | `description` | text | empty | Encyclopaedia text (Stage 5 shows it). |
 | `prereq1`, `prereq2`, `prereq3` | numbers | none | The original's numeric prerequisites, read through inheritance; with a [`tech_ids`](#tech_ids) table and no `requires`, they become `research(a) and research(b)` (app 0.8.0). |
-| `requires_all` | list of topic ids | none | App NEXT: topics that must **all** be known as well — `research(a) and research(b)` joined to `requires` (and to the translated `prereq*`). `interceptor`: Nova Bomb's five extra prerequisites, which the original's code adds to its INI ones (**verified**). |
-| `level` | number | 0 | App NEXT: the original's `Level` (read through inheritance); a finished topic earns `research_model.score_by_level` at its level. |
+| `requires_all` | list of topic ids | none | App 0.22.50: topics that must **all** be known as well — `research(a) and research(b)` joined to `requires` (and to the translated `prereq*`). `interceptor`: Nova Bomb's five extra prerequisites, which the original's code adds to its INI ones (**verified**). |
+| `level` | number | 0 | App 0.22.50: the original's `Level` (read through inheritance); a finished topic earns `research_model.score_by_level` at its level. |
 | `requires_item` | item id or list | none | App 0.22.25: an **artefact-gated** topic (the original's Prereq 127, RQ-S-03): offered only once one of these items has been *recovered* by salvage (the destroyed ships' [`salvage_fits`](#research-and-research_model), raids' [`salvage_items`](#raids)) and only while one stays in some base's stores. A list (app 0.22.27) accepts any of them — the original takes a launcher or its torpedoes. When none is left (sold, lost) the topic closes, and stays closed until another is recovered. Unknown item: load error. |
-| `unlock_on` | list of events | none | App NEXT: an **event-gated** special topic, offered once any of these battle events has happened: `destroyed(<class>)` (an enemy of that class destroyed), `captured(<class>)` (captured or disabled), `won(<raid>)` or `won(<raid>#<n>)` (that raid's n-th won battle), `kind(<kind>)` (a won raid's [`kinds`](#raids) pick, app 0.22.30). It stays open. |
-| `complete_on` | list of events | none | App NEXT: the same events finish the topic outright (the original's topics 74 / 75 for captured freighters and AlienType5). |
+| `unlock_on` | list of events | none | App 0.22.50: an **event-gated** special topic, offered once any of these battle events has happened: `destroyed(<class>)` (an enemy of that class destroyed), `captured(<class>)` (captured or disabled), `won(<raid>)` or `won(<raid>#<n>)` (that raid's n-th won battle), `kind(<kind>)` (a won raid's [`kinds`](#raids) pick, app 0.22.30). It stays open. |
+| `complete_on` | list of events | none | App 0.22.50: the same events finish the topic outright (the original's topics 74 / 75 for captured freighters and AlienType5). |
 | `lab`, `site`, `start_cost` | | none | A **station-only** topic: see [Logistics › research stations](#research-stations-and-station-only-topics) (app 0.9.0). |
 
 `research_model:` — how research progresses.
@@ -206,7 +206,7 @@ yet.
 | `mode` | `download` / `labs` | `download` | How it is described: the original's downloads, or staff in labs. The rule is the same: each base works on **one** topic at a time. |
 | `rate` | expression | 10 | Work units per hour at one base, evaluated per base (so `module_count` counts that base's modules). |
 | `switching` | `keep_progress` / `lose_progress` | `keep_progress` | Whether switching a base to another topic keeps the work done on the old one (with `lose_progress` it is lost unless another base is still working on it). |
-| `score_by_level` | list of numbers | none | App NEXT: the score a finished topic earns, by its `level` (a level past the list takes the last). `interceptor`: `[250, 250, 500, 750]` (**verified** +250 / +500 / +750 for Levels 1 – 3; Level 0 taking 250 is *derived*). `default`: `[100, 200, 300]`. |
+| `score_by_level` | list of numbers | none | App 0.22.50: the score a finished topic earns, by its `level` (a level past the list takes the last). `interceptor`: `[250, 250, 500, 750]` (**verified** +250 / +500 / +750 for Levels 1 – 3; Level 0 taking 250 is *derived*). `default`: `[100, 200, 300]`. |
 
 A topic finishes when its work reaches `size`; every base working on it stops, a message
 says so, and its `score_by_level` score is added to the month's.
@@ -250,8 +250,8 @@ weapon it carries at any level: *derived*).
 | `size` | number | 1 | Storage space: what one takes of a base's store at a base type with hub [`storage`](#base_modules-and-base_types) (app 0.16.10; since 0.16.15 the base type decides). |
 | `rounds` | number | 1 | Missiles: the rounds one missile slot holds; fitting a slot takes this many from the store (app 0.7.2). `interceptor` (app 0.22.19): each `*Launcher`'s `Rounds` — X-Winder 5, Permeator 3, Sidestep 4, Fusion 2, Elerium 4, Enveloping 3, Parallax 3, Passive Cloaking 2, Doppelganger 1, Nova 1 (**verified**). |
 | `protection` | number | 0 | A `shield`: shield points per facing; an `armor`: armour points (app 0.15.0). An item that inherits the original's equipment and sets none takes the original's `Special` (shields) or `HitPoints` (armour) — *derived*. In battle a craft flies with the **strongest** fitted shield and the **sum** of its fitted armour, in place of its class's `shields` / `armor`; with none fitted it keeps the class's own (which `fitted:` on the [ship class](reference.md#ships-and-objects) may supply). |
-| `mass` | number | 0 | App NEXT: mass it adds to a craft when fitted (a missile's per round), for [`speed_by_mass`](#shipments-and-speed_by_mass). `interceptor`: shields 250 (**verified**), armour 150 / 300 / 450 (*derived*). |
-| `strategic_factor` | number | 1 | App NEXT: a fitted engine's factor on the craft's map speed (the best one counts). `interceptor`: Engine Type 2 × 1.15, Type 3 × 1.4 (**verified**). |
+| `mass` | number | 0 | App 0.22.50: mass it adds to a craft when fitted (a missile's per round), for [`speed_by_mass`](#shipments-and-speed_by_mass). `interceptor`: shields 250 (**verified**), armour 150 / 300 / 450 (*derived*). |
+| `strategic_factor` | number | 1 | App 0.22.50: a fitted engine's factor on the craft's map speed (the best one counts). `interceptor`: Engine Type 2 × 1.15, Type 3 × 1.4 (**verified**). |
 | `requires` | condition | none | Available only while this holds (as well as any topic that unlocks it). |
 | `tech_required`, `tech_required2` | numbers | none | The original's numeric tech ids, read through inheritance; with a [`tech_ids`](#tech_ids) table and no `requires`, they become the prerequisite (app 0.8.0). Also on hulls and modules. |
 
@@ -264,7 +264,7 @@ weapon it carries at any level: *derived*).
 | `prod_time` | number | 0 | Work units to manufacture one. |
 | `upkeep` | number | 0 | Per month, per craft (also read from the original's `maint_cost` through inheritance). |
 | `speed` | number | 1000 | Map units per hour on the star map. |
-| `mass` | number | 0 | App NEXT: with [`speed_by_mass`](#shipments-and-speed_by_mass), the hull's base mass sets its map speed instead of `speed`. `interceptor`: 6,700 / 12,700 / 22,700 (**verified**). |
+| `mass` | number | 0 | App 0.22.50: with [`speed_by_mass`](#shipments-and-speed_by_mass), the hull's base mass sets its map speed instead of `speed`. `interceptor`: 6,700 / 12,700 / 22,700 (**verified**). |
 | `slots` | mapping kind: count | none | Equipment slots: `{beam: 2, missile: 2, shield: 1, armor: 1}` (also read from the original's mount counts through inheritance). `beam`, `missile`, `shield` and `armor` slots change the craft in battle; other kinds are filled but have no effect yet. The `interceptor` hulls have one `shield` and one `armor` slot (app 0.15.0, *derived*). |
 | `requires` | condition | none | Available only while this holds. |
 | `components` | mapping component: amount | none | With [logistics](#logistics): what a main base builds one from. A hull with components is not paid for in money when its manufacture starts; it waits until the components are in the base's store (app 0.9.0). |
@@ -324,10 +324,10 @@ never refused. A whole base can be dismantled too ([below](#dismantling-a-whole-
 | `hangar`, `quarters` | number | 0 | Craft and pilots the hub alone houses. The default Guard base houses 6 pilots (4 before app 0.16.15, which the opening crew filled). |
 | `storage` | number | 0 | The hub's store capacity in item `size`s (app 0.16.15). 0: no store limit at bases of this type; above 0, its `storage` modules add to it. |
 | `placement` | condition | none (anywhere) | Where a base of this type may be built: a condition over the candidate `system` (app 0.19.0; [below](#where-a-base-or-facility-may-be-built)). `base_distance(system) <= 3500` is "within 3500 map units of one of your bases". |
-| `price_share`, `hub_cost` | number | 0, 0 | App NEXT (RQ-S-08): when `price_share` is above 0, a new base costs `price_share` × (`hub_cost` + its `template`'s modules as they would be chosen now), in place of `cost`. `interceptor`: 0.75 and 1,500,000 (**verified**, README §3.1). |
-| `hull` | number | 0 | App NEXT: the hub's hull points (0: none). An unopposed strike takes `strike_damage`; `repair` mends them. `interceptor`: 6,000, the station chart's HP1 (**verified**); `default`: 4,000. |
-| `repair` | `{per_minute, min_step, boost}` | none | App NEXT (RQ-S-16): `per_minute` hull points a game minute, at least `min_step` a step (an hour at most), times each `boost: {<module>: factor}` while one works. `interceptor`: 2, 5, Advanced Damage Control × 2 (**verified**, README §3.2). |
-| `strike_damage` | number | 0 | App NEXT: hull points an unopposed strike takes (`interceptor`: 1,500, *derived*). |
+| `price_share`, `hub_cost` | number | 0, 0 | App 0.22.50 (RQ-S-08): when `price_share` is above 0, a new base costs `price_share` × (`hub_cost` + its `template`'s modules as they would be chosen now), in place of `cost`. `interceptor`: 0.75 and 1,500,000 (**verified**, README §3.1). |
+| `hull` | number | 0 | App 0.22.50: the hub's hull points (0: none). An unopposed strike takes `strike_damage`; `repair` mends them. `interceptor`: 6,000, the station chart's HP1 (**verified**); `default`: 4,000. |
+| `repair` | `{per_minute, min_step, boost}` | none | App 0.22.50 (RQ-S-16): `per_minute` hull points a game minute, at least `min_step` a step (an hour at most), times each `boost: {<module>: factor}` while one works. `interceptor`: 2, 5, Advanced Damage Control × 2 (**verified**, README §3.2). |
+| `strike_damage` | number | 0 | App 0.22.50: hull points an unopposed strike takes (`interceptor`: 1,500, *derived*). |
 
 !!! warning "Breaking change in app 0.19.0: `max_distance` is gone"
     `base_types.<id>.max_distance` was removed in app 0.19.0; `placement:` replaces it. A mod
@@ -371,9 +371,9 @@ its `cargo` modules limit nothing: the original hub's own cargo room is unknown.
 | `requires` | condition | none | Rolled only while this holds (`day >= 10`). |
 | `target` | `base` / `system` | `base` | What it heads for: one of the player's bases, or any system. |
 | `speed` | number | 600 | Map units per hour. |
-| `kinds` | list of ids | none | App NEXT: what a launch of this raid may be (`interceptor`'s `alien_probe`: the original's seven probe types); one is picked per contact and a **won** battle reports it as the event `kind(<kind>)` for research's `unlock_on`. Every kind is as likely. |
+| `kinds` | list of ids | none | App 0.22.50: what a launch of this raid may be (`interceptor`'s `alien_probe`: the original's seven probe types); one is picked per contact and a **won** battle reports it as the event `kind(<kind>)` for research's `unlock_on`. Every kind is as likely. |
 | `salvage_items` | list of `{item, goodies}` | none | App 0.22.25: artefacts a **won** battle with this raid may recover besides the destroyed ships' `salvage_fits` (`interceptor`: the alien corpses, which raid yields which race *derived*): each is rolled once with its [`goodies`](#research-and-research_model) table's chance at the campaign's difficulty and goes to the home base of the first craft in the battle (base 0 if none), opening the topics whose `requires_item` it is. Unknown item or table: load error. |
-| `react_on_detect` | fraction (`per_level`) | 0 | App NEXT: once a base's sensors see the contact, with this chance it turns on that base — it heads for it (along the lanes on a lane map) and strikes it if not stopped. A plan's shipment keeps its course. `interceptor`: alien raids `{per_level: [25%, 35%, 45%, 55%, 65%]}` (the original's 25 + 10 × level %, **verified**; that it re-tasks against the detector is *derived*). |
+| `react_on_detect` | fraction (`per_level`) | 0 | App 0.22.50: once a base's sensors see the contact, with this chance it turns on that base — it heads for it (along the lanes on a lane map) and strikes it if not stopped. A plan's shipment keeps its course. `interceptor`: alien raids `{per_level: [25%, 35%, 45%, 55%, 65%]}` (the original's 25 + 10 × level %, **verified**; that it re-tasks against the detector is *derived*). |
 
 On a free-travel map a launched raid appears well outside the map, in a random direction, and
 flies straight for its target; on a lane map it enters at a system and follows the lanes
@@ -602,17 +602,17 @@ modules' hit points (**verified**); its station pool (the chart's SD) and the cr
 |---|---|---|---|
 | `stats` | mapping stat: `[min, max]` | none | Each pilot's stats, rolled in the range. Any names. |
 | `ranks` | mapping rank: experience | none | Ranks in ascending order with the experience each needs. |
-| `salary` | number or table | 0 | Per month, per living pilot. App NEXT: or the original's table `{base, rank, brackets, kills, max_health}` — a month's pay is `base` + (the rank's entry of `rank` + every bracket bonus) / 12, where `brackets: {<stat>: [[from, bonus], …]}`, `kills` and `max_health` give the bonus of the last entry whose `from` the value reaches (the first when none does). `interceptor`: 4,000 + the exe's rank and bracket tables (**verified**, `0x410297`). |
+| `salary` | number or table | 0 | Per month, per living pilot. App 0.22.50: or the original's table `{base, rank, brackets, kills, max_health}` — a month's pay is `base` + (the rank's entry of `rank` + every bracket bonus) / 12, where `brackets: {<stat>: [[from, bonus], …]}`, `kills` and `max_health` give the bonus of the last entry whose `from` the value reaches (the first when none does). `interceptor`: 4,000 + the exe's rank and bracket tables (**verified**, `0x410297`). |
 | `recruit_fee` | number | 0 | Cost to hire one. |
 | `pool` | number | 6 | Recruits offered at a time (refreshed every month). |
 | `names` | list of text | none | Names to draw from. |
 | `heal_days` | number | 14 | Days an injured pilot is out. |
 | `survive` | fraction | 60 % | Chance that a pilot shot down ejects (injured) rather than dies. |
 | `training` | `{gain, cost}` | none | Pilot training (app 0.16.7): a ready pilot put into training gains `gain` points in **every** stat a day, up to the top of that stat's `stats` range, and costs `cost` money a day. Without it (or with `gain: 0`) the Hangar offers no *Train* button. Training continues until stopped; it is saved. |
-| `training` (periodic) | `{every, stats, factor, add, scale_by, capacity}` | — | App NEXT, the original's training: every `every` a pilot in training gains, in each of `stats`, `trunc(scale_by / 100 × stat × factor + add)` up to `stat_max`; at most the bases' `capacity` module effect train at once, the rest drop out. `interceptor`: every 5 days, Accuracy, Flying and Psionics, `trunc(Int / 100 × stat × 0.1 / 6 + 1)`, 5 per Training module (**verified**). |
-| `generate` | `{rank_roll, bonus}` | none | App NEXT, the original's recruit generator: a starting rank — the last of `rank_roll`'s thresholds a 1 – 100 roll reaches (the pilot gets that rank's experience) — and `bonus: {<stat>: [by rank]}` or `{<stat>: {add: [by rank], times: <stat>}}` (the bonus × that stat / 100, truncated) added up to `stat_max`. `interceptor`: thresholds 41/61/81/96; Stamina +0/3/6/9/12, Accuracy +0/5/10/15/20 and Flying +0/5/15/20/30 times Intelligence / 100, Aggressiveness −5/0/5/10/15 (**verified**, `0x40e8b6`). |
-| `health` | `{max, per_day, in_medical, medical, fly_from}` | none | App NEXT: pilots have health. `max: {base, per_rank}` (whole-number ranges) rolls a recruit's maximum (`base` + rank × `per_rank`) and the pilot starts at it; every day each hurt pilot heals `per_day`, or `in_medical` while the bases' `medical` module effect has room; a pilot below `fly_from` (100 %) of the maximum is grounded. A battle's injuries come back with the pilot ([`damage.pilot_injury`](reference.md#damage)); below 0 the pilot is dead. Without it, injuries last `heal_days`. `interceptor`: 5 – 15 + rank × 1 – 5, 1 a day, 2 in a medical bay (5 per Medical module, *derived*), grounded until whole (*derived*). |
-| `stat_max` | number | each range's maximum | App NEXT: the most training or a generator bonus raises a stat to. `interceptor`: 100. |
+| `training` (periodic) | `{every, stats, factor, add, scale_by, capacity}` | — | App 0.22.50, the original's training: every `every` a pilot in training gains, in each of `stats`, `trunc(scale_by / 100 × stat × factor + add)` up to `stat_max`; at most the bases' `capacity` module effect train at once, the rest drop out. `interceptor`: every 5 days, Accuracy, Flying and Psionics, `trunc(Int / 100 × stat × 0.1 / 6 + 1)`, 5 per Training module (**verified**). |
+| `generate` | `{rank_roll, bonus}` | none | App 0.22.50, the original's recruit generator: a starting rank — the last of `rank_roll`'s thresholds a 1 – 100 roll reaches (the pilot gets that rank's experience) — and `bonus: {<stat>: [by rank]}` or `{<stat>: {add: [by rank], times: <stat>}}` (the bonus × that stat / 100, truncated) added up to `stat_max`. `interceptor`: thresholds 41/61/81/96; Stamina +0/3/6/9/12, Accuracy +0/5/10/15/20 and Flying +0/5/15/20/30 times Intelligence / 100, Aggressiveness −5/0/5/10/15 (**verified**, `0x40e8b6`). |
+| `health` | `{max, per_day, in_medical, medical, fly_from}` | none | App 0.22.50: pilots have health. `max: {base, per_rank}` (whole-number ranges) rolls a recruit's maximum (`base` + rank × `per_rank`) and the pilot starts at it; every day each hurt pilot heals `per_day`, or `in_medical` while the bases' `medical` module effect has room; a pilot below `fly_from` (100 %) of the maximum is grounded. A battle's injuries come back with the pilot ([`damage.pilot_injury`](reference.md#damage)); below 0 the pilot is dead. Without it, injuries last `heal_days`. `interceptor`: 5 – 15 + rank × 1 – 5, 1 a day, 2 in a medical bay (5 per Medical module, *derived*), grounded until whole (*derived*). |
+| `stat_max` | number | each range's maximum | App 0.22.50: the most training or a generator bonus raises a stat to. `interceptor`: 100. |
 
 `scores: {<name>: points}` — mission score names. A mission outcome's `score(<name>)` adds the
 points to the campaign score and the month's score; the name `undefended` is used when a raid
