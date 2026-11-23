@@ -93,6 +93,7 @@ fn headless(options: &cli::Options) -> Option<i32> {
             rules: Some(&content.rules),
             fleet: options.soak_fleet.unwrap_or(start_craft),
             capture: options.soak_capture,
+            assault: options.soak_assault,
         };
         let mut over = Vec::new();
         for d in 1..=days.ceil() as u32 {

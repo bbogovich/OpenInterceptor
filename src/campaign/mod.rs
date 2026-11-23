@@ -1972,6 +1972,9 @@ impl Campaign {
                     || a.outpost_raid.as_deref() == Some(id)
                     || a.opp_raid.as_deref() == Some(id)
                     || a.freighter_raid.as_deref() == Some(id)
+                    || a.assault_base.as_deref() == Some(id)
+                    || a.assault_outpost.as_deref() == Some(id)
+                    || a.scouts.as_ref().and_then(|s| s.raid.as_deref()) == Some(id)
             })
         };
         // Raids: roll, and launch a contact from the map's edge towards a target.
@@ -2249,7 +2252,7 @@ impl Campaign {
     /// A contact reached its target unopposed: the mission's `lose` outcomes apply.
     fn unopposed(&mut self, def: &StrategyDef, contact: u32, events: &mut Vec<Event>) {
         // A raid after a freighter catches it instead of striking (RQ-S-23).
-        if aliens::hunt_arrived(self, def, contact, events) {
+        if aliens::hunt_arrived(self, def, contact, events) || aliens::quiet_arrival(self, contact) {
             return;
         }
         let Some(k) = self.contacts.iter().position(|c| c.id == contact) else { return };
@@ -2404,6 +2407,8 @@ impl Campaign {
     /// `retreat`, `killed`); `actions` the outcome's campaign actions as written
     /// (`score(x)`, `money(n)`, `salvage`, `set_flag(x)`, `lose(class)`, …).
     pub fn battle_result(&mut self, def: &StrategyDef, contact: u32, result: &str, actions: &[String], kills: u32) {
+        // An attack on one of the rival's places: won, the place is gone.
+        aliens::assault_result(self, contact, result);
         // Test tooling (`autoplay_capture`): kills of classes a topic needs captured count
         // as captures, so an automatic player can open those topics.
         let mut owned: Vec<String>;
@@ -3007,7 +3012,7 @@ pub fn autoplay_with(
     c: Campaign,
     days: f64,
 ) -> Campaign {
-    autoplay_run(def, &Autoplay { rules, fleet: 1, capture: false }, c, days)
+    autoplay_run(def, &Autoplay { rules, fleet: 1, capture: false, assault: false }, c, days)
 }
 
 /// How the automatic player plays (`--strategy-soak` options).
@@ -3019,6 +3024,9 @@ pub struct Autoplay<'a> {
     /// Test tooling: kills of classes a topic needs captured count as captures
     /// ([`Campaign::autoplay_capture`]).
     pub capture: bool,
+    /// Attack the rival's nearest outpost (else base) every 10 days with the free craft,
+    /// when at least two are free (`alien_bases.assault`).
+    pub assault: bool,
 }
 
 /// The automatic player with its options (see [`Autoplay`]).
@@ -3078,6 +3086,27 @@ pub fn autoplay_run(def: &StrategyDef, o: &Autoplay, mut c: Campaign, days: f64)
             }
             if c.bases[0].jobs.is_empty() && def.items[i].prod_time > 0.0 {
                 let _ = c.manufacture(def, 0, Product::Item(i), 2);
+            }
+        }
+        // Every 10 days, with two craft or more free and crewed: attack the rival's
+        // outpost (else base) nearest the first base.
+        if o.assault && (c.hours / 24.0) as u64 % 10 == 0 && !c.bases.is_empty() {
+            let free: Vec<usize> = (0..c.craft.len())
+                .filter(|&k| c.craft[k].away.is_none())
+                .filter(|&k| c.pilots.iter().any(|p| p.craft == Some(k) && p.state == PilotState::Ready))
+                .collect();
+            let home = c.systems[c.bases[0].system].pos;
+            let near = |systems: Vec<usize>| -> Option<usize> {
+                (0..systems.len()).min_by(|&x, &y| {
+                    distance(c.systems[systems[x]].pos, home).total_cmp(&distance(c.systems[systems[y]].pos, home))
+                })
+            };
+            let target = match near(c.aliens.outposts.iter().map(|x| x.system).collect()) {
+                Some(k) => Some(aliens::AlienPlace::Outpost(k)),
+                None => near(c.aliens.bases.iter().map(|x| x.system).collect()).map(aliens::AlienPlace::Base),
+            };
+            if let (Some(t), true) = (target, free.len() >= 2 && c.aliens.assaults.is_empty()) {
+                let _ = c.assault(def, t, &free);
             }
         }
         // The supply chain: surveys, facilities and the demand that drives them.
@@ -3403,7 +3432,7 @@ mod tests {
         // coming, one a day.
         let c = Campaign::new(&d, 0, 1);
         assert_eq!(c.craft.len(), 2);
-        let c = autoplay_run(&d, &Autoplay { rules: None, fleet: 4, capture: false }, c, 3.0);
+        let c = autoplay_run(&d, &Autoplay { rules: None, fleet: 4, capture: false, assault: false }, c, 3.0);
         let coming = c.deliveries.iter().filter(|x| matches!(x.product, Product::Hull(_))).count();
         assert!(c.craft.len() + coming >= 4, "{} flying, {coming} coming", c.craft.len());
     }

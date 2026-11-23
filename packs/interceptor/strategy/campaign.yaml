@@ -313,6 +313,11 @@ raids:
   # Sent only by the raid planner (alien_bases.raids): at a corporate outpost or a platform.
   outpost_attack: {name: Alien strike on an outpost, mission: defend_corporate_outpost, faction: alien, every: 30d, chance: 0%, target: system, speed: 1600}
   opp_attack: {name: Alien strike on a platform, mission: defend_opp, faction: alien, every: 30d, chance: 0%, target: system, speed: 1600}
+  # The player's attacks on the rival's places (alien_bases.assault) and the rival's scouts:
+  # used by the planner only.
+  assault_alien_outpost: {name: Alien outpost, mission: attack_alien_outpost, faction: alien, every: 30d, chance: 0%, target: system, speed: 0}
+  assault_alien_base: {name: Alien base, mission: attack_alien_base, faction: alien, every: 30d, chance: 0%, target: system, speed: 0}
+  alien_scout: {name: Alien scouts, mission: deep_space_encounter, faction: alien, every: 30d, chance: 0%, target: system, speed: 1600}
   # Sent after a freighter near the rival's places (RQ-S-23): escort the convoy to save it.
   freighter_attack: {name: Alien raiders after a freighter, mission: defend_freighter_convoy, faction: alien, every: 30d, chance: 0%, target: system, speed: 1600}
   pirates: {name: Pirate squadron, mission: ambush_pirate_squadron, faction: pirate, every: 8d, chance: 35%, target: system, speed: 459, requires: day >= 10}
@@ -361,6 +366,16 @@ alien_bases:
     escorts:
       - {class: shade, tech: 3, after_month: 5, kinds: [base, outpost], chance: 25%}
       - {class: phantasm, tech: 3, chance: 25%, per_level: 5%}
+  # The player attacks the rival's places with these battles; a win removes the place.
+  assault: {base: assault_alien_base, outpost: assault_alien_outpost}
+  # Every 5 days an A base with 5 or more ships queued sends up to 3 (AlienType1) as a scout
+  # to a free system without an outpost within rand[15,000, 25,000) (unknowns §3.4, VERIFIED;
+  # what the scouts do there is not traced: they look and go home).
+  scouts: {every: 5d, min_queued: 5, ships: 3, raid: alien_scout, range: [15000, 25000]}
+  # A build every 40 + rand[0, 12) h; a Hangar while fewer than 2 with 75 - 10n % (the module
+  # tree's first step, §3.4, VERIFIED); 3 queued ships a hangar (VERIFIED); one hangar to
+  # start (DERIVED). The other modules and the stage are not modelled (nothing reads the stage).
+  growth: {every: [40h, 52h], start_hangars: 1, max_hangars: 2, chance: 75%, per_hangar: -10%, queue_per_hangar: 3}
   harass: {every: 6h, every_per_level: -1, outpost_radius: 4000, base_radius: 2000, chance: 50%, chance_per_level: 5%}
   outpost_income: 455625
   income_after: 638.4h

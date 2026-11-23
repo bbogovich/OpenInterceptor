@@ -45,6 +45,8 @@ OPTIONS:
     --strategy-soak <D> Play the strategy layer automatically for D days and report
     --soak-fleet <N>    With --strategy-soak: keep N craft, buying one while fewer are
                         flying or on order (default: the campaign's starting craft)
+    --soak-assault      With --strategy-soak: attack the rival's nearest outpost (else
+                        base) every 10 days with the free craft
     --soak-capture      With --strategy-soak: count a won battle's first destroyed
                         ship of each class a topic needs captured as captured (test
                         tooling: the game itself never does this)
@@ -120,6 +122,8 @@ pub struct Options {
     pub soak_fleet: Option<usize>,
     /// `--soak-capture`: the strategy soak counts kills of capturable classes as captures.
     pub soak_capture: bool,
+    /// `--soak-assault`: the strategy soak attacks the rival's places.
+    pub soak_assault: bool,
     pub seconds: Option<f32>,
     pub soak_pilot: Option<crate::soak::SoakPilot>,
     pub frames: Option<u32>,
@@ -189,6 +193,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
                 o.soak_fleet = Some(value("--soak-fleet")?.parse().map_err(|_| "--soak-fleet needs a number of craft")?)
             }
             "--soak-capture" => o.soak_capture = true,
+            "--soak-assault" => o.soak_assault = true,
             "--seconds" => {
                 let v = value("--seconds")?;
                 o.seconds = Some(v.parse().map_err(|_| format!("--seconds needs a number, not '{v}'"))?);

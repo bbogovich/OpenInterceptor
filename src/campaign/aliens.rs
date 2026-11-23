@@ -35,6 +35,12 @@ pub struct AlienBase {
     /// Campaign hour it queues its next ship.
     pub next_queue: f64,
     pub founded: f64,
+    /// Its hangars (`growth:`; each holds `queue_per_hangar` queued ships) and the hour of
+    /// its next build.
+    pub hangars: u32,
+    pub next_build: f64,
+    /// The hour of its next scout check (`scouts:`).
+    pub next_scout: f64,
 }
 
 /// An alien outpost on the map.
@@ -68,6 +74,106 @@ pub struct AlienState {
     pub sizes: Vec<RaidSize>,
     /// Raids hunting a freighter (RQ-S-23).
     pub hunts: Vec<Hunt>,
+    /// The player's attacks under way on the rival's places.
+    pub assaults: Vec<Assault>,
+    /// Scout flights out (their contacts).
+    pub scouts: Vec<u32>,
+}
+
+/// The player's attack on an alien base (`base`) or outpost in `system`: its contact sits
+/// at the place; a won battle there removes it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Assault {
+    pub contact: u32,
+    pub base: bool,
+    pub system: usize,
+}
+
+/// One of the rival's places on the map, for [`Campaign::assault`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AlienPlace {
+    Base(usize),
+    Outpost(usize),
+}
+
+impl Campaign {
+    /// Sends craft against one of the rival's places (`alien_bases.assault`): a contact of
+    /// the base or outpost raid sits at the place, and the craft intercept it as any
+    /// contact; a won battle there removes the place (and with an outpost its
+    /// technicians: the Doomsday work slows).
+    pub fn assault(&mut self, def: &StrategyDef, place: AlienPlace, craft: &[usize]) -> Result<u32, String> {
+        let a = def.alien_bases.as_ref().ok_or("this campaign's rival holds no places")?;
+        let (is_base, k) = match place {
+            AlienPlace::Base(k) => (true, k),
+            AlienPlace::Outpost(k) => (false, k),
+        };
+        let system =
+            if is_base { c_system(&self.aliens.bases, k) } else { self.aliens.outposts.get(k).map(|o| o.system) }
+                .ok_or("no such place")?;
+        let raid = if is_base { a.assault_base.as_deref() } else { a.assault_outpost.as_deref() };
+        let r = raid.and_then(|id| def.raids.iter().position(|x| x.id == id)).ok_or("no raid to attack it with")?;
+        let id = self.next_contact;
+        self.next_contact += 1;
+        let pos = self.systems[system].pos;
+        self.contacts.push(Contact {
+            id,
+            raid: r,
+            pos,
+            dest: pos,
+            target_base: None,
+            detected: true,
+            route: Vec::new(),
+            plan: None,
+        });
+        self.aliens.assaults.push(Assault { contact: id, base: is_base, system });
+        if let Err(e) = self.intercept(def, id, craft) {
+            self.contacts.retain(|x| x.id != id);
+            self.aliens.assaults.retain(|x| x.contact != id);
+            return Err(e);
+        }
+        Ok(id)
+    }
+}
+
+fn c_system(bases: &[AlienBase], k: usize) -> Option<usize> {
+    bases.get(k).map(|b| b.system)
+}
+
+/// A battle at a place the player attacked: won, the place is gone; otherwise the attack
+/// is over and may be made again. Called from
+/// `battle_result`; returns whether `contact` was an assault.
+pub fn assault_result(c: &mut Campaign, contact: u32, result: &str) -> bool {
+    let Some(k) = c.aliens.assaults.iter().position(|x| x.contact == contact) else { return false };
+    let s = c.aliens.assaults.remove(k);
+    if result != "win" {
+        // The attack failed or broke off: its contact goes (the player may attack again).
+        c.contacts.retain(|x| x.id != contact);
+        return true;
+    }
+    let name = c.systems[s.system].name.clone();
+    if s.base {
+        c.aliens.bases.retain(|b| b.system != s.system);
+        c.log(format!("The alien base at {name} is destroyed"));
+    } else {
+        c.aliens.outposts.retain(|o| o.system != s.system);
+        c.log(format!("The alien outpost at {name} is destroyed"));
+    }
+    true
+}
+
+/// A contact that reaches its destination unopposed and is not a strike: an assault's
+/// contact (it waits for the player), a scout (it has looked and goes home). Returns
+/// whether it was one.
+pub fn quiet_arrival(c: &mut Campaign, contact: u32) -> bool {
+    if c.aliens.assaults.iter().any(|x| x.contact == contact) {
+        return true;
+    }
+    if let Some(k) = c.aliens.scouts.iter().position(|x| *x == contact) {
+        c.aliens.scouts.remove(k);
+        c.contacts.retain(|x| x.id != contact);
+        return true;
+    }
+    false
 }
 
 /// A raid's ships and escort (`alien_bases.raids.sizes`, `escorts`), for its battle.
@@ -199,13 +305,43 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
         c.aliens.piece_clock = now;
         schedule_raid(c, a);
     }
-    // Ship queues: each A base one ship a period, up to the cap.
+    // Ship queues: each A base one ship a period, up to the cap (with `growth`, its
+    // hangars × `queue_per_hangar`).
     for b in 0..c.aliens.bases.len() {
+        let cap = match &a.growth {
+            Some(g) => c.aliens.bases[b].hangars * g.queue_per_hangar,
+            None => a.queue_max,
+        };
         let base = &mut c.aliens.bases[b];
         while base.variant == 1 && now >= base.next_queue {
             base.next_queue += a.queue_every as f64;
-            if base.queued < a.queue_max {
+            if base.queued < cap {
                 base.queued += 1;
+            }
+        }
+    }
+    // Base growth: a build every 40 - 52 h; a hangar while fewer than the most, with
+    // 75 - 10n % (the module tree's first step, unknowns §3.4).
+    if let Some(g) = &a.growth {
+        for b in 0..c.aliens.bases.len() {
+            while now >= c.aliens.bases[b].next_build {
+                let wait = g.every[0] + c.roll() * (g.every[1] - g.every[0]);
+                c.aliens.bases[b].next_build += wait.max(1.0) as f64;
+                let n = c.aliens.bases[b].hangars;
+                if n < g.max && c.roll() < g.chance + g.per_hangar * n as f32 {
+                    c.aliens.bases[b].hangars += 1;
+                }
+            }
+        }
+    }
+    // Scouts from A bases with enough ships queued.
+    if let Some(sc) = &a.scouts {
+        for b in 0..c.aliens.bases.len() {
+            while now >= c.aliens.bases[b].next_scout {
+                c.aliens.bases[b].next_scout += sc.every as f64;
+                if c.aliens.bases[b].variant == 1 && c.aliens.bases[b].queued >= sc.min_queued {
+                    send_scout(c, def, sc, b);
+                }
             }
         }
     }
@@ -259,6 +395,40 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
     }
 }
 
+/// Sends a scout flight from base `b` (`0x57d439`): up to `ships` of its queue to a
+/// random free system without an outpost `range` away (as the crow flies).
+fn send_scout(c: &mut Campaign, def: &StrategyDef, sc: &crate::content::aliens::Scouts, b: usize) {
+    let Some(r) = sc.raid.as_deref().and_then(|id| def.raids.iter().position(|x| x.id == id)) else { return };
+    let from = c.systems[c.aliens.bases[b].system].pos;
+    let far = below(c, sc.range[0], sc.range[1]);
+    let pool: Vec<usize> = free_systems(c)
+        .into_iter()
+        .filter(|&s| !c.outposts.iter().any(|o| o.system == s))
+        .filter(|&s| distance(c.systems[s].pos, from) <= far)
+        .collect();
+    if pool.is_empty() {
+        return;
+    }
+    let s = pool[((c.roll() * pool.len() as f32) as usize).min(pool.len() - 1)];
+    let ships = sc.ships.min(c.aliens.bases[b].queued);
+    c.aliens.bases[b].queued -= ships;
+    let id = c.next_contact;
+    c.next_contact += 1;
+    let dest = c.systems[s].pos;
+    c.contacts.push(Contact {
+        id,
+        raid: r,
+        pos: from,
+        dest,
+        target_base: None,
+        detected: false,
+        route: Vec::new(),
+        plan: None,
+    });
+    c.aliens.sizes.push(RaidSize { contact: id, ships, escort: None });
+    c.aliens.scouts.push(id);
+}
+
 /// The harassment check's period: (6 − d) hours by default, at least one.
 fn harass_every(c: &Campaign, a: &AlienBasesDef) -> f32 {
     (a.harass_every[0] + a.harass_every[1] * c.difficulty as f32).max(1.0)
@@ -301,12 +471,18 @@ fn found_base(c: &mut Campaign, a: &AlienBasesDef, variant: u8) -> bool {
     }
     let s = pool[((c.roll() * pool.len() as f32) as usize).min(pool.len() - 1)];
     let now = c.hours;
+    let hangars = a.growth.as_ref().map_or(0, |g| g.start);
+    let first_build = a.growth.as_ref().map_or(f64::MAX, |g| now + g.every[0] as f64);
+    let first_scout = a.scouts.as_ref().map_or(f64::MAX, |s| now + s.every as f64);
     c.aliens.bases.push(AlienBase {
         system: s,
         variant,
         queued: 0,
         next_queue: now + a.queue_every as f64,
         founded: now,
+        hangars,
+        next_build: first_build,
+        next_scout: first_scout,
     });
     c.aliens.last_founded = now;
     true
@@ -814,5 +990,92 @@ mod tests {
         step(&mut c, &d, &mut ev);
         let id = c.contacts.last().unwrap().id;
         assert_eq!(size_of(&c, id).unwrap().ships, 3);
+    }
+
+    #[test]
+    fn the_player_attacks_and_removes_the_rivals_places() {
+        let (d, mut c) = rival("");
+        let mut d = d;
+        let a = d.alien_bases.as_mut().unwrap();
+        (a.assault_outpost, a.assault_base) = (Some("raid".into()), Some("raid".into()));
+        let mut ev = Vec::new();
+        step(&mut c, &d, &mut ev);
+        let techs = technicians(&c, &d);
+        let target = c.aliens.outposts[0].system;
+        // Two craft go; the place's contact sits at the outpost.
+        let id = c.assault(&d, AlienPlace::Outpost(0), &[0, 1]).unwrap();
+        let k = c.contacts.iter().find(|x| x.id == id).unwrap();
+        assert_eq!((k.pos, k.detected), (c.systems[target].pos, true));
+        assert!(quiet_arrival(&mut c, id), "it waits for the player, striking nothing");
+        // Lost: the attack is over, the outpost stands.
+        c.battle_result(&d, id, "lose", &[], 0);
+        assert!(c.contacts.iter().all(|x| x.id != id) && c.aliens.assaults.is_empty());
+        assert_eq!(c.aliens.outposts.len(), 2);
+        // Won: the outpost is gone and its technicians with it (the plans' work slows).
+        let id = c.assault(&d, AlienPlace::Outpost(0), &[]).unwrap_or_else(|_| {
+            c.contacts.push(Contact {
+                id: 77,
+                raid: 0,
+                pos: [0.0; 2],
+                dest: [0.0; 2],
+                target_base: None,
+                detected: true,
+                route: Vec::new(),
+                plan: None,
+            });
+            c.aliens.assaults.push(Assault { contact: 77, base: false, system: target });
+            77
+        });
+        c.battle_result(&d, id, "win", &[], 2);
+        assert!(c.aliens.outposts.iter().all(|o| o.system != target));
+        assert!(technicians(&c, &d) < techs);
+        // A base likewise.
+        let b = c.aliens.bases[0].system;
+        c.contacts.push(Contact {
+            id: 78,
+            raid: 0,
+            pos: [0.0; 2],
+            dest: [0.0; 2],
+            target_base: None,
+            detected: true,
+            route: Vec::new(),
+            plan: None,
+        });
+        c.aliens.assaults.push(Assault { contact: 78, base: true, system: b });
+        c.battle_result(&d, 78, "win", &[], 4);
+        assert!(c.aliens.bases.iter().all(|x| x.system != b));
+    }
+
+    #[test]
+    fn bases_grow_hangars_and_send_scouts() {
+        let (d, mut c) = rival(
+            "  growth: {every: [40h, 52h], start_hangars: 1, max_hangars: 2, chance: 100%, per_hangar: 0%, queue_per_hangar: 3}\n  scouts: {every: 5d, min_queued: 5, ships: 3, raid: raid, range: [15000, 25000]}\n",
+        );
+        assert!(d.alien_bases.as_ref().unwrap().growth.is_some());
+        let mut ev = Vec::new();
+        step(&mut c, &d, &mut ev);
+        assert_eq!(c.aliens.bases[0].hangars, 1);
+        // One hangar: at most 3 queued.
+        c.hours = 30.0;
+        step(&mut c, &d, &mut ev);
+        assert_eq!(c.aliens.bases[0].queued, 3);
+        // After the first build (40 - 52 h) a second hangar: 6.
+        c.hours = 60.0;
+        step(&mut c, &d, &mut ev);
+        assert_eq!(c.aliens.bases[0].hangars, 2);
+        c.hours = 90.0;
+        step(&mut c, &d, &mut ev);
+        assert_eq!(c.aliens.bases[0].queued, 6);
+        assert_eq!(c.aliens.bases[0].hangars, 2, "no more than the most");
+        // The 5-day check with 6 queued sends 3 as a scout.
+        let n = c.contacts.len();
+        c.aliens.next_raid = f64::MAX;
+        c.hours = 121.0;
+        step(&mut c, &d, &mut ev);
+        assert!(c.contacts.len() > n && !c.aliens.scouts.is_empty());
+        let id = c.aliens.scouts[0];
+        assert_eq!(size_of(&c, id).map(|s| s.ships), Some(3));
+        assert!(quiet_arrival(&mut c, id), "a scout looks and goes home");
+        assert!(c.contacts.iter().all(|x| x.id != id));
     }
 }
