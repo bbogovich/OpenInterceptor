@@ -65,6 +65,9 @@ pub enum Tab {
     Report(u8),
 }
 
+/// The map's icon kinds (`markers:`), in `StrategyScreen::marker_tex` order.
+const MARKER_KINDS: [&str; 5] = ["base", "alien_base", "alien_outpost", "freighter", "contact"];
+
 /// The six status reports' list sources, in the original's order (screens 32-37).
 pub const REPORTS: [&str; 6] =
     ["report_income", "report_finance", "report_alien", "report_xcom", "report_outpost", "report_player"];
@@ -145,6 +148,8 @@ enum Act {
     DismantleBase,
     /// Fire a story event now (debugger).
     FireEvent(usize),
+    /// Join the off-screen battle against a contact and fly it (RQ-C-21).
+    JoinBattle(u32),
     /// Move job `j` of the current base's queue up, or cancel it.
     RaiseJob(usize),
     CancelJob(usize),
@@ -193,6 +198,7 @@ impl Row {
             Act::FireEvent(_) => "Fire now",
             Act::CancelJob(_) => "Cancel",
             Act::Intercept(_) => "Intercept",
+            Act::JoinBattle(_) => "Join the battle",
             Act::Survey(_) => "Survey",
             Act::StationResearch(..) => "Start",
         };
@@ -335,6 +341,9 @@ pub struct StrategyScreen {
     base_pics: (Vec<String>, u32),
     /// The map's outpost marker this frame (`outpost_marker`), if it has one.
     outpost_tex: Option<Texture2D>,
+    /// The map's icons this frame (`markers:`), by kind: base, alien base, alien outpost,
+    /// freighter, contact.
+    marker_tex: [Option<Texture2D>; 5],
     /// New bases' prices by base type (`Campaign::base_price`), cached for the info panel:
     /// recomputed only when the selected system or the research known changes, so the
     /// per-frame draw neither allocates nor needs the campaign mutably.
@@ -541,6 +550,7 @@ impl StrategyScreen {
             base_pics: (Vec::new(), 1),
             knob_frame: 0.0,
             outpost_tex: None,
+            marker_tex: [None, None, None, None, None],
             base_prices: Vec::new(),
             base_prices_key: None,
             minimap: false,
@@ -687,9 +697,11 @@ impl StrategyScreen {
                     let research = b.research.map(|t| def.research[t].name.clone()).unwrap_or("nothing".into());
                     let mark = if i == base { "*" } else { " " };
                     let state = if b.ready_at > c.hours { " (under construction)".to_string() } else { String::new() };
+                    let max = def.base_types[b.base_type].hull;
+                    let hull = if max > 0.0 { format!("; hull {:.0}/{max:.0}", b.hull) } else { String::new() };
                     rows.push(Row::new(
                         format!(
-                            "{mark} {} - {}{state}: {} modules ({building} building); researching {research}",
+                            "{mark} {} - {}{state}: {} modules ({building} building); researching {research}{hull}",
                             b.name,
                             c.systems[b.system].name,
                             b.modules.len()
@@ -870,9 +882,20 @@ impl StrategyScreen {
                     let state = if cr.away.is_some() { " (away)" } else { "" };
                     let fit: Vec<&str> = cr.fit.iter().map(|(_, i)| def.items[*i].name.as_str()).collect();
                     let fit = if fit.is_empty() { "standard fit".to_string() } else { fit.join(", ") };
+                    // Its battle damage (`craft_damage`, #134): hull and the weakest shield
+                    // and armour, as percentages.
+                    let condition = match cr.condition {
+                        Some(v) => format!(
+                            "; hull {:.0}%, shields {:.0}%, armour {:.0}%",
+                            v[0] * 100.0,
+                            v[1].min(v[2]) * 100.0,
+                            v[3].min(v[4]) * 100.0
+                        ),
+                        None => String::new(),
+                    };
                     rows.push(
                         Row::new(
-                            format!("{} at {} - {pilot}{state} [{fit}]", cr.name, c.bases[cr.base].name),
+                            format!("{} at {} - {pilot}{state} [{fit}]{condition}", cr.name, c.bases[cr.base].name),
                             Act::AssignPilot(k),
                         )
                         .with("Fit best", Act::FitBest(k))
@@ -925,7 +948,13 @@ impl StrategyScreen {
             Tab::Contacts => {
                 for k in c.contacts.iter().filter(|k| k.detected) {
                     let to = k.target_base.map(|b| format!(" -> {}", c.bases[b].name)).unwrap_or_default();
-                    rows.push(Row::new(format!("{}{to}", def.raids[k.raid].name), Act::Intercept(k.id)));
+                    // A contact fought off-screen offers to join its battle (RQ-C-21).
+                    let row = if c.fighting(k.id) {
+                        Row::new(format!("{}{to} - battle in progress", def.raids[k.raid].name), Act::JoinBattle(k.id))
+                    } else {
+                        Row::new(format!("{}{to}", def.raids[k.raid].name), Act::Intercept(k.id))
+                    };
+                    rows.push(row);
                 }
                 if rows.is_empty() {
                     rows.push(Row::new("No contacts on the sensors".into(), Act::None));
@@ -1102,6 +1131,17 @@ impl StrategyScreen {
     }
 
     fn act(&mut self, def: &StrategyDef, act: Act) {
+        // Joining an off-screen battle: its simulation stops and the battle is flown, as
+        // when an interception arrives (RQ-C-21, `Campaign::join_offscreen`).
+        if let Act::JoinBattle(id) = act {
+            if self.campaign.join_offscreen(def, id) {
+                self.battle = Some(id);
+                self.sel = Some(Sel::Contact(id));
+            } else {
+                self.say("That battle is over");
+            }
+            return;
+        }
         let base = self.base.min(self.campaign.bases.len().saturating_sub(1));
         let c = &mut self.campaign;
         let r = match act {
@@ -1153,6 +1193,7 @@ impl StrategyScreen {
             Act::Survey(s) => c.survey(def, base, s),
             Act::BuildFacility(t, s) => c.build_facility(def, t, s),
             Act::StationResearch(f, t) => c.start_station_research(def, f, t),
+            Act::JoinBattle(_) => Ok(()), // handled above
             Act::Intercept(id) => {
                 let ready: Vec<usize> =
                     (0..c.craft.len()).filter(|&k| c.craft[k].base == base && c.craft[k].away.is_none()).collect();
@@ -1629,14 +1670,22 @@ impl StrategyScreen {
                 Some(k) => {
                     let to = k.target_base.map(|b| format!(" Heading for {}.", c.bases[b].name)).unwrap_or_default();
                     let ready = c.craft.iter().filter(|cr| cr.base == base && cr.away.is_none()).count();
-                    (
-                        def.raids[k.raid].name.clone(),
-                        format!(
-                            "A hostile contact.{to} {ready} craft ready at {}.",
-                            c.bases.get(base).map_or("-", |b| b.name.as_str())
-                        ),
-                        vec![("Intercept".into(), Act::Intercept(id))],
-                    )
+                    if c.fighting(id) {
+                        (
+                            def.raids[k.raid].name.clone(),
+                            format!("A battle is being fought.{to} Join it to fly it yourself."),
+                            vec![("Join the battle".into(), Act::JoinBattle(id))],
+                        )
+                    } else {
+                        (
+                            def.raids[k.raid].name.clone(),
+                            format!(
+                                "A hostile contact.{to} {ready} craft ready at {}.",
+                                c.bases.get(base).map_or("-", |b| b.name.as_str())
+                            ),
+                            vec![("Intercept".into(), Act::Intercept(id))],
+                        )
+                    }
                 }
                 None => ("Contact lost".into(), String::new(), Vec::new()),
             },
@@ -1733,6 +1782,13 @@ impl StrategyScreen {
                 }
                 if input.clicked {
                     if let Some(sel) = self.pick(input.mouse, s, origin, 22.0) {
+                        // A second click on the selected contact acts on it — intercept, or
+                        // join its battle (screens without an info panel, the CSD).
+                        if self.sel == Some(sel) && matches!(sel, Sel::Contact(_)) {
+                            if let Some(a) = self.info(def).2.first().map(|(_, a)| *a) {
+                                self.act(def, a);
+                            }
+                        }
                         self.sel = Some(sel);
                         if let Sel::System(sys) = sel {
                             self.system = Some(sys);
@@ -1955,6 +2011,7 @@ impl StrategyScreen {
         self.art = false;
         self.map_round = false;
         self.levels.0.clear();
+        self.marker_tex = [None, None, None, None, None];
         let layout_def = ctx
             .content
             .rules
@@ -2361,6 +2418,11 @@ impl StrategyScreen {
                             .outpost_marker
                             .clone()
                             .and_then(|m| self.image_keyed(ctx, &m, screen.pack, m.starts_with("original:")));
+                        for (k, kind) in MARKER_KINDS.iter().enumerate() {
+                            let img = wd.markers.iter().find(|(n, _)| n == kind).map(|(_, v)| v.clone());
+                            self.marker_tex[k] =
+                                img.and_then(|m| self.image_keyed(ctx, &m, screen.pack, m.starts_with("original:")));
+                        }
                         if self.level > wd.zoom_levels.len() {
                             self.level = 0;
                         }
@@ -2507,6 +2569,14 @@ impl StrategyScreen {
             "money" | "funds" => format!("${}", money(c.money)),
             "score" => format!("{:.0}", c.score),
             "base" => c.bases.get(self.base).map(|b| b.name.clone()).unwrap_or_default(),
+            // The current base's hull (RQ-S-16): "HULL 5,400 / 6,000"; empty without one.
+            "base_hull" => c
+                .bases
+                .get(self.base)
+                .map(|b| (b.hull, def.base_types[b.base_type].hull))
+                .filter(|(_, max)| *max > 0.0)
+                .map(|(h, max)| format!("HULL {} / {}", money(h as f64), money(max as f64)))
+                .unwrap_or_default(),
             "speed" => def.clock.labels.get(self.speed).cloned().unwrap_or_default(),
             "selection" => self.info(def).0,
             other => format!("?{other}"),
@@ -2966,9 +3036,11 @@ impl StrategyScreen {
     /// The map's hover labels (D-39, `app::maplabel`): the systems and bases inside a
     /// box around the cursor (and inside the round map), one at a time, upper-cased in
     /// the labels' sheet font, centred above the object and kept inside the circle.
+    #[allow(clippy::too_many_arguments)]
     fn draw_map_labels(
         &self,
         ui: &Ui,
+        def: &StrategyDef,
         cfg: &crate::content::screens::MapLabels,
         layout: &crate::hud::Layout,
         at: &dyn Fn([f32; 2]) -> Vec2,
@@ -3001,6 +3073,34 @@ impl StrategyScreen {
                 let building = if b.ready_at > c.hours { " BUILDING" } else { "" };
                 queued.push((format!("{}{building}", b.name.to_uppercase()), d, cfg.base_rise, cfg.base_colour));
             }
+        }
+        // The rest of the map's objects, in the original's label colours (RQ-UI-19): the
+        // rival's known places and contacts RGB(200,100,50), freighters as X-COM plans
+        // RGB(0,120,0), battles RGB(200,200,200). (The texts are DERIVED.)
+        let rgb = |r: u8, g: u8, b: u8| [r as f32 / 255.0, g as f32 / 255.0, b as f32 / 255.0, 1.0];
+        let mut other = |text: String, p: [f32; 2], colour: [f32; 4]| {
+            let d = to_design(at(p));
+            if maplabel::in_box(d, cursor, cfg.box_size as f32) {
+                queued.push((text, d, cfg.base_rise, colour));
+            }
+        };
+        for ab in c.aliens.bases.iter().filter(|b| crate::campaign::aliens::known(c, def, b.system)) {
+            other("ALIEN BASE".into(), c.systems[ab.system].pos, rgb(200, 100, 50));
+        }
+        for o in c.aliens.outposts.iter().filter(|o| crate::campaign::aliens::known(c, def, o.system)) {
+            other("ALIEN OUTPOST".into(), c.systems[o.system].pos, rgb(200, 100, 50));
+        }
+        for f in c.freighters_in_flight(def) {
+            other("FREIGHTER".into(), f.pos, rgb(0, 120, 0));
+        }
+        for kk in c.contacts.iter().filter(|kk| kk.detected) {
+            let text = if c.fighting(kk.id) {
+                "ATTACK IN PROGRESS".to_string()
+            } else {
+                def.raids[kk.raid].name.to_uppercase()
+            };
+            let colour = if c.fighting(kk.id) { rgb(200, 200, 200) } else { rgb(200, 100, 50) };
+            other(text, kk.pos, colour);
         }
         if queued.is_empty() {
             return;
@@ -3416,14 +3516,86 @@ impl StrategyScreen {
                 ui.text_in(&sys.name, p.x + star + 4.0, p.y - 6.0, 16.0 * k, text_c);
             }
         }
+        // The fast counter (every 4 ticks) blinks the markers (RQ-UI-21).
+        let step = (get_time() * 15.0) as u64;
+        let icon = |t: &Texture2D, p: Vec2, dy: f32| {
+            let (w, h) = (t.width() * k, t.height() * k);
+            let params = DrawTextureParams { dest_size: Some(vec2(w, h)), ..Default::default() };
+            draw_texture_ex(t, p.x - w / 2.0, p.y - h / 2.0 + dy, WHITE, params);
+        };
         for (i, b) in c.bases.iter().enumerate() {
             let p = at(c.systems[b.system].pos);
             if !inside(p) {
                 continue;
             }
-            let col = if i == self.base { Color::new(0.3, 1.0, 0.4, 1.0) } else { Color::new(0.2, 0.7, 0.3, 1.0) };
-            let q = star + 4.0;
-            draw_rectangle_lines(p.x - q, p.y - q, q * 2.0, q * 2.0, 2.0, col);
+            match &self.marker_tex[0] {
+                // The base icon (the original's 902) and, while it is built, a progress bar
+                // under it: 15 x 5, red, filled green by the time elapsed (RQ-UI-19).
+                Some(t) => {
+                    icon(t, p, 0.0);
+                    if b.ready_at > c.hours {
+                        let total = def.base_types[b.base_type].build_time as f64;
+                        let done = (1.0 - (b.ready_at - c.hours) / total.max(1.0)).clamp(0.0, 1.0) as f32;
+                        let (x, y, w, h) = (p.x - 7.5 * k, p.y + 10.0 * k, 15.0 * k, 5.0 * k);
+                        draw_rectangle(x, y, w, h, Color::from_rgba(150, 0, 0, 255));
+                        draw_rectangle(x, y, w * done, h, Color::from_rgba(0, 150, 0, 255));
+                    }
+                }
+                None => {
+                    let col =
+                        if i == self.base { Color::new(0.3, 1.0, 0.4, 1.0) } else { Color::new(0.2, 0.7, 0.3, 1.0) };
+                    let q = star + 4.0;
+                    draw_rectangle_lines(p.x - q, p.y - q, q * 2.0, q * 2.0, 2.0, col);
+                }
+            }
+        }
+        // The rival's places the player knows of (RQ-UI-19): outposts' blinking marker under
+        // the star (917; on 3 of every 6 steps), bases' icon (903).
+        if !self.minimap {
+            let red = Color::from_rgba(220, 60, 40, 255);
+            for o in &c.aliens.outposts {
+                let p = at(c.systems[o.system].pos);
+                if !inside(p) || !crate::campaign::aliens::known(c, def, o.system) || step % 6 >= 3 {
+                    continue;
+                }
+                match &self.marker_tex[2] {
+                    Some(t) => icon(t, p, star + 2.0 * k + t.height() * k / 2.0),
+                    None => draw_rectangle(p.x - 3.5 * k, p.y + star + 2.0 * k, 7.0 * k, 5.0 * k, red),
+                }
+            }
+            for ab in &c.aliens.bases {
+                let p = at(c.systems[ab.system].pos);
+                if !inside(p) || !crate::campaign::aliens::known(c, def, ab.system) {
+                    continue;
+                }
+                match &self.marker_tex[1] {
+                    Some(t) => icon(t, p, 0.0),
+                    None => draw_poly_lines(p.x, p.y, 4, star + 5.0, 0.0, 2.0, red),
+                }
+            }
+            // Freighters on their way with a load (the X-COM plan icon).
+            for f in c.freighters_in_flight(def) {
+                let p = at(f.pos);
+                if !inside(p) {
+                    continue;
+                }
+                match &self.marker_tex[3] {
+                    Some(t) => icon(t, p, 0.0),
+                    None => {
+                        draw_rectangle(p.x - 2.5 * k, p.y - 2.5 * k, 5.0 * k, 5.0 * k, Color::new(0.5, 0.9, 1.0, 1.0))
+                    }
+                }
+            }
+            // Battles in progress (RQ-UI-19): a translucent red square, 5 of every 10 steps.
+            if step % 10 < 5 {
+                for o in &c.offscreen {
+                    let Some(kk) = c.contacts.iter().find(|kk| kk.id == o.contact) else { continue };
+                    let p = at(kk.pos);
+                    let q = 7.5 * k;
+                    draw_rectangle(p.x - q, p.y - q, 2.0 * q, 2.0 * q, Color::from_rgba(255, 50, 50, 25));
+                    draw_rectangle_lines(p.x - q, p.y - q, 2.0 * q, 2.0 * q, 1.0, Color::from_rgba(100, 100, 100, 255));
+                }
+            }
         }
         // Outposts: a marker under the star (the original's 916, 5 x 5; its offset DERIVED).
         if !self.minimap {
@@ -3451,7 +3623,7 @@ impl StrategyScreen {
         }
         // Labels the original's way: only near the cursor, upper-cased, taking turns.
         if let (Some((cfg, layout)), false) = (&self.map_labels, self.minimap) {
-            self.draw_map_labels(ui, cfg, layout, &at, centre, radius);
+            self.draw_map_labels(ui, def, cfg, layout, &at, centre, radius);
         }
         for kk in c.contacts.iter().filter(|kk| kk.detected) {
             let mut from = at(kk.pos);
@@ -3464,11 +3636,20 @@ impl StrategyScreen {
             if !inside(p) {
                 continue;
             }
-            draw_triangle(vec2(p.x, p.y - 7.0), vec2(p.x - 6.0, p.y + 5.0), vec2(p.x + 6.0, p.y + 5.0), RED);
+            match &self.marker_tex[4] {
+                // The alien plan icon (608).
+                Some(t) => icon(t, p, 0.0),
+                None => {
+                    draw_triangle(vec2(p.x, p.y - 7.0), vec2(p.x - 6.0, p.y + 5.0), vec2(p.x + 6.0, p.y + 5.0), RED)
+                }
+            }
             if self.sel == Some(Sel::Contact(kk.id)) {
                 draw_circle_lines(p.x, p.y, 12.0, 2.0, YELLOW);
             }
-            ui.text_in(&def.raids[kk.raid].name, p.x + 8.0, p.y + 14.0, 14.0 * k, Color::new(1.0, 0.5, 0.5, 1.0));
+            // With the original's labels its name shows on hover only.
+            if self.map_labels.is_none() {
+                ui.text_in(&def.raids[kk.raid].name, p.x + 8.0, p.y + 14.0, 14.0 * k, Color::new(1.0, 0.5, 0.5, 1.0));
+            }
         }
         let stages = def.logistics.as_ref().map_or(0, |l| l.stages.len());
         for (f, fac) in c.logistics.facilities.iter().enumerate() {

@@ -251,6 +251,9 @@ pub struct WidgetDef {
     /// A `map`'s picture for an opened system with a base: `[x-com, enemy]` portraits
     /// (rows N … N + `portrait_frames` − 1), the enemy one for `enemy_factions`' bases.
     pub base_portraits: Vec<String>,
+    /// A `map`'s icons by object kind (`markers: {base, alien_base, alien_outpost, freighter,
+    /// contact}`; the original's level-0 icons, RQ-UI-19). A missing kind is drawn as a shape.
+    pub markers: Vec<(String, String)>,
     /// A `map`'s marker under a star with the player's outpost (the original: 916).
     pub outpost_marker: Option<String>,
     /// A `graph`'s fixed y range and its steps (`y_range: [0, 18000]`, `y_steps: 18`, the
@@ -449,6 +452,11 @@ impl WidgetDef {
             panel: g.str("panel").map(str::to_string),
             months: g.list("months"),
             base_portraits: g.list("base_portraits"),
+            markers: g
+                .map("markers")
+                .iter()
+                .filter_map(|(k, n)| n.as_str().map(|v| (k.clone(), v.to_string())))
+                .collect(),
             outpost_marker: g.str("outpost_marker").map(str::to_string),
             y_range: match g.nums("y_range").as_deref() {
                 Some([lo, hi]) if hi > lo => Some([*lo as f64, *hi as f64]),
@@ -793,6 +801,7 @@ pub fn schema() -> Ty {
                     f("months", Ty::List(Box::new(Ty::Text)), "a graph's month names, January first"),
                     f("panel", Ty::Name, "the panel the widget belongs to (hide(panel) / show(panel))"),
                     f("outpost_marker", Ty::Asset, "a map's marker under a star with an outpost"),
+                    f("markers", Ty::Dict(Box::new(Ty::Asset)), "a map's icons: base, alien_base, alien_outpost, freighter, contact"),
                     f("y_range", Ty::Numbers(2), "a graph's fixed y range (default: fitted to the values)"),
                     f("y_steps", Ty::Num, "a graph's y grid steps (fixed: default 18; fitted: about 6)"),
                     f("base_portraits", Ty::List(Box::new(Ty::Asset)), "a map's level-2 picture of a system with a base: x-com, enemy"),

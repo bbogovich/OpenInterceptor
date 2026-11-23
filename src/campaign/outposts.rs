@@ -52,7 +52,52 @@ fn roll(rng: &mut u64, lo: u32, hi: u32) -> u32 {
     lo + ((next_random(rng) * (hi - lo + 1) as f32) as u32).min(hi - lo)
 }
 
+/// An outpost freighter on its way to a base with a load (`shipments:`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FreighterFlight {
+    /// Index into `Campaign::outposts` (whose freighter it is) and into `bases`.
+    pub outpost: usize,
+    pub base: usize,
+    /// Campaign hours it left and arrives (before unloading).
+    pub depart: f64,
+    pub arrive: f64,
+    /// Where it is now on the map.
+    pub pos: [f32; 2],
+}
+
 impl Campaign {
+    /// The outpost freighters flying a load to a base now (RQ-S-21), derived from the
+    /// deliveries they carry: a delivery in flight arrives at `arrive + unload`, and its
+    /// freighter is the outpost's whose `freighter_free` matches that trip. (The trip home
+    /// is not shown.) One entry per freighter.
+    pub fn freighters_in_flight(&self, def: &StrategyDef) -> Vec<FreighterFlight> {
+        let Some(ship) = def.shipments.as_ref() else { return Vec::new() };
+        let now = self.hours;
+        let mut out: Vec<FreighterFlight> = Vec::new();
+        for d in &self.deliveries {
+            if d.arrive_at >= QUEUED || d.arrive_at <= now || d.base >= self.bases.len() {
+                continue;
+            }
+            let to = self.systems[self.bases[d.base].system].pos;
+            let found = (0..self.outposts.len()).find(|&o| {
+                let trip = distance(self.systems[self.outposts[o].system].pos, to) as f64 / ship.speed as f64;
+                (self.outposts[o].freighter_free - (d.arrive_at + ship.refuel as f64 + trip)).abs() < 1e-6
+            });
+            let Some(o) = found.filter(|o| !out.iter().any(|f| f.outpost == *o)) else { continue };
+            let from = self.systems[self.outposts[o].system].pos;
+            let trip = distance(from, to) as f64 / ship.speed as f64;
+            let arrive = d.arrive_at - ship.unload as f64;
+            let depart = arrive - trip;
+            if now >= arrive {
+                continue; // unloading at the base
+            }
+            let t = if trip > 0.0 { ((now - depart) / trip).clamp(0.0, 1.0) as f32 } else { 1.0 };
+            let pos = [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t];
+            out.push(FreighterFlight { outpost: o, base: d.base, depart, arrive, pos });
+        }
+        out
+    }
+
     /// Credits a score of `v` to system `sys` (when it has an outpost) or to the pool, on
     /// the player's side when positive and the aliens' when negative, and to the
     /// campaign's running totals.
@@ -374,6 +419,10 @@ mod tests {
         c.buy(&d, 0, Product::Hull(rocket), 1).unwrap();
         assert!(c.deliveries.iter().all(|x| x.arrive_at >= QUEUED), "queued at the outposts");
         c.load_freighters(&d);
+        // In flight: one freighter, at the outpost when it leaves, halfway after 1.5 h.
+        let f = c.freighters_in_flight(&d);
+        assert_eq!(f.len(), 1);
+        assert_eq!((f[0].depart, f[0].arrive, f[0].pos), (0.0, 3.0, c.systems[1].pos));
         // The first trip: two lasers (8 of 10 units), arriving after 3 h + 0.5 h unloading.
         let loaded: Vec<&Delivery> = c.deliveries.iter().filter(|x| x.arrive_at < QUEUED).collect();
         assert_eq!(loaded.len(), 1);
@@ -381,7 +430,10 @@ mod tests {
         // Back after unloading, refuelling and the 3 h home: 3.5 + 1 + 3.
         assert_eq!(c.outposts[0].freighter_free, 7.5);
         let stock = c.stock_of(laser);
-        c.advance(&d, 4.0);
+        c.advance(&d, 1.5);
+        let p = c.freighters_in_flight(&d)[0].pos;
+        assert!((p[0] - 1500.0).abs() < 1.0, "{p:?}");
+        c.advance(&d, 2.5);
         assert_eq!(c.stock_of(laser), stock + 2, "the first two arrived");
         // Later trips bring the rest, then the hull alone.
         c.advance(&d, 48.0);
