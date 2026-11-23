@@ -619,6 +619,8 @@ pub struct ModuleDef {
     pub requires: Option<Expr>,
     /// What is lost with it when a raid wrecks it (`on_destroyed: [craft, pilots, stock]`).
     pub on_destroyed: Vec<Loss>,
+    /// Its part in an auto-resolved battle at its base (`auto_resolve:`).
+    pub auto_resolve: Option<super::autoresolve::Weights>,
 }
 
 /// A consequence of losing a module (`base_modules.<id>.on_destroyed`): what no longer
@@ -671,6 +673,8 @@ pub struct BaseType {
     pub repair_boost: Vec<(String, f32)>,
     /// Hull points an unopposed strike takes.
     pub strike_damage: f32,
+    /// Its station in an auto-resolved battle (`auto_resolve:`); `None`: no station.
+    pub auto_resolve: Option<super::autoresolve::StationDef>,
 }
 
 /// `manufacture:` — production by outpost technicians (RQ-S-09, README §2.5): capacity is
@@ -852,6 +856,10 @@ pub struct StrategyDef {
     pub incomes: Vec<Flow>,
     pub expenses: Vec<Flow>,
     pub pilots: Option<PilotRules>,
+    /// The original's hourly auto-resolve (`auto_resolve:`); `None`: one roll of odds.
+    pub auto_resolve: Option<super::autoresolve::AutoResolveDef>,
+    /// Battle damage stays on craft (`craft_damage:`); `None`: craft return whole.
+    pub craft_damage: Option<super::autoresolve::CraftDamage>,
     pub scores: Vec<(String, f32)>,
     /// The monthly evaluation (R-STR-009): the first whose condition holds rates the
     /// month and runs its actions (a funding cut, a warning, a bonus).
@@ -1356,6 +1364,7 @@ impl StrategyDef {
                         }
                     })
                     .collect(),
+                auto_resolve: super::autoresolve::Weights::parse(g),
             })
             .collect();
         let base_types: Vec<BaseType> = of(defs, "base_types")
@@ -1379,6 +1388,7 @@ impl StrategyDef {
                 repair_min_step: g.node("repair").map(Get).and_then(|r| r.num("min_step")).unwrap_or(0.0),
                 repair_boost: g.node("repair").map(Get).map(|r| pairs(r, "boost")).unwrap_or_default(),
                 strike_damage: g.num("strike_damage").unwrap_or(0.0),
+                auto_resolve: super::autoresolve::StationDef::parse(g),
             })
             .collect();
         let manufacture = global("manufacture").map(|n| {
@@ -1676,6 +1686,8 @@ impl StrategyDef {
             incomes,
             expenses,
             pilots,
+            auto_resolve: super::autoresolve::AutoResolveDef::parse(global("auto_resolve").as_ref().map(Get)),
+            craft_damage: super::autoresolve::CraftDamage::parse(global("craft_damage").as_ref().map(Get)),
             scores,
             evaluations,
             delivery_loss: economy
@@ -2049,6 +2061,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                     Ty::List(Box::new(Ty::Enum(&["craft", "pilots", "stock"]))),
                     "lost when a raid wrecks it: craft over the hangar room, pilots over the quarters, stock over the store",
                 ),
+                f("auto_resolve", super::autoresolve::Weights::schema(), "its part in an auto-resolved battle at its base"),
             ])),
             "base modules",
         ),
@@ -2083,6 +2096,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                     "hull repair",
                 ),
                 f("strike_damage", Ty::Num, "hull points an unopposed strike takes"),
+                f("auto_resolve", super::autoresolve::StationDef::schema(), "its station in an auto-resolved battle"),
             ])),
             "base types",
         ),
@@ -2206,6 +2220,8 @@ fn sections_core() -> Vec<super::schema::Field> {
             ]),
             "pilot rules",
         ),
+        f("auto_resolve", super::autoresolve::AutoResolveDef::schema(), "the original's hourly auto-resolve (absent: one roll of odds)"),
+        f("craft_damage", super::autoresolve::CraftDamage::schema(), "battle damage stays on craft and is repaired a day at a time"),
         f("scores", nums(), "mission score names (score(x) in outcomes): points"),
         f(
             "evaluations",

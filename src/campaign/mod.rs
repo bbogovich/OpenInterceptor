@@ -22,6 +22,7 @@
 //! That keeps the state a plain tree the compiler is happy to mutate, and makes saving
 //! it ([`save`]) a matter of writing numbers.
 
+pub mod autoresolve;
 pub mod logistics;
 pub mod outposts;
 pub mod save;
@@ -146,6 +147,9 @@ pub struct Craft {
     pub away: Option<(u32, [f32; 2])>,
     /// On a lane map: the systems still to pass through (to the contact, or home).
     pub route: Vec<[f32; 2]>,
+    /// Battle damage it carries (`craft_damage`): `[hull, shield fore, aft, armour fore,
+    /// aft]` as fractions of the maxima; `None`: whole.
+    pub condition: Option<[f32; 5]>,
 }
 
 /// An enemy flight on the map.
@@ -298,6 +302,8 @@ pub struct Campaign {
     pub pool_scores: [f64; 2],
     /// Battles won against each raid (`won(<raid>#<n>)` research triggers).
     pub raid_wins: Vec<u32>,
+    /// Off-screen battles under way (`auto_resolve:`, the original's hourly simulation).
+    pub offscreen: Vec<autoresolve::Offscreen>,
 }
 
 /// The activity grid's size: 16 × 16 cells over the galaxy (the original's, 3,750 map units
@@ -553,6 +559,7 @@ impl Campaign {
             system_scores: Vec::new(),
             pool_scores: [0.0, 0.0],
             raid_wins: Vec::new(),
+            offscreen: Vec::new(),
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -702,6 +709,7 @@ impl Campaign {
             base,
             fit: Vec::new(),
             away: None,
+            condition: None,
         });
     }
 
@@ -1780,6 +1788,38 @@ impl Campaign {
                 }
             }
         }
+        // Off-screen battles: rounds due by now; a finished one hands its result back.
+        if let Some(ar) = def.auto_resolve.as_ref() {
+            let mut k = 0;
+            while k < self.offscreen.len() {
+                let mut o = self.offscreen[k].clone();
+                let mut rng = self.rng;
+                let done = o.step(ar, now, &mut || next_random(&mut rng));
+                self.rng = rng;
+                match done {
+                    Some(out) => {
+                        self.offscreen.remove(k);
+                        self.offscreen_result(def, out, events);
+                    }
+                    None => {
+                        self.offscreen[k] = o;
+                        k += 1;
+                    }
+                }
+            }
+        }
+        // Battle damage on craft at home mends a little every hour (`craft_damage`).
+        if let Some(cd) = def.craft_damage {
+            let mend = cd.repair_per_day * (dt / 24.0) as f32;
+            for c in self.craft.iter_mut().filter(|c| c.away.is_none()) {
+                if let Some(v) = c.condition.as_mut() {
+                    v.iter_mut().for_each(|x| *x = (*x + mend).min(1.0));
+                    if v.iter().all(|x| *x >= 1.0) {
+                        c.condition = None;
+                    }
+                }
+            }
+        }
         // The month: maintenance, upkeep and salaries; the report; new recruits.
         if now >= self.next_month {
             self.next_month += MONTH;
@@ -1852,7 +1892,8 @@ impl Campaign {
         }
         // Contacts move; sensors find them; unopposed arrivals hit their targets.
         let mut arrived = Vec::new();
-        for c in &mut self.contacts {
+        let fought: Vec<u32> = self.offscreen.iter().map(|o| o.contact).collect();
+        for c in self.contacts.iter_mut().filter(|c| !fought.contains(&c.id)) {
             let step = def.raids[c.raid].speed * dt as f32;
             match c.route.first().copied() {
                 Some(next) => {
@@ -1920,7 +1961,11 @@ impl Campaign {
             }
             match self.contacts.iter().find(|c| c.id == id) {
                 Some(c) => {
-                    if travel(&mut pos, c.pos, speed) && !events.iter().any(|e| matches!(e, Event::Battle { .. })) {
+                    // A contact already being fought off-screen raises no new interception.
+                    if travel(&mut pos, c.pos, speed)
+                        && !fought.contains(&id)
+                        && !events.iter().any(|e| matches!(e, Event::Battle { .. }))
+                    {
                         events.push(Event::Battle { contact: id });
                     }
                     self.craft[k].away = Some((id, pos));
@@ -2423,8 +2468,204 @@ impl Campaign {
         self.log(format!("Battle with {raid_name}: {result}"));
     }
 
+    /// Starts the original's hourly simulation against `contact` with its interception
+    /// party (`auto_resolve:`): the party's craft with their fits, condition and pilots
+    /// against the raid's mission's hostile roles (each at a count rolled in its range,
+    /// pilots rolled as recruits), the mission's friendly roles with the party, and the
+    /// targeted base's station when its type has one. The battle then runs in game time
+    /// ([`autoresolve`]); its result comes back through [`Campaign::battle_result`].
+    pub fn start_offscreen(
+        &mut self,
+        def: &StrategyDef,
+        rules: &crate::content::rules::Ruleset,
+        contact: u32,
+    ) -> Result<(), String> {
+        let ar = def.auto_resolve.as_ref().ok_or("this campaign has no auto_resolve")?;
+        let c = self.contacts.iter().find(|c| c.id == contact).ok_or("no such contact")?.clone();
+        let mission = rules
+            .missions
+            .iter()
+            .find(|m| m.id == def.raids[c.raid].mission)
+            .ok_or_else(|| format!("no mission '{}'", def.raids[c.raid].mission))?;
+        let party = self.battle_party(contact);
+        if party.is_empty() {
+            return Err("no craft can engage".into());
+        }
+        let mine = rules.ship_id(&def.hulls[self.craft[party[0]].hull].id).map(|id| rules.ship(id).faction);
+        // Pilot stats by name: a craft's pilot, or a recruit rolled for an enemy.
+        let stats_of = |p: &Pilot| -> Vec<(String, f32)> {
+            def.pilots
+                .as_ref()
+                .map_or(Vec::new(), |r| r.stats.iter().map(|(n, _)| n.clone()).zip(p.stats.iter().copied()).collect())
+        };
+        let mut people: Vec<Vec<(String, f32)>> = Vec::new();
+        // (side, craft, class, fit, condition, index into `people`)
+        type Planned = (u8, Option<usize>, String, Loadout, Option<[f32; 5]>, Option<usize>);
+        let mut plan: Vec<Planned> = Vec::new();
+        for &k in &party {
+            let pilot = self.pilots.iter().find(|p| p.craft == Some(k)).map(stats_of);
+            let who = pilot.map(|s| {
+                people.push(s);
+                people.len() - 1
+            });
+            plan.push((
+                0,
+                Some(k),
+                def.hulls[self.craft[k].hull].id.clone(),
+                self.loadout(def, k),
+                self.craft[k].condition,
+                who,
+            ));
+        }
+        for role in &mission.roles {
+            let Some(first) = role.classes.iter().find_map(|c| rules.ship_id(c)) else { continue };
+            let faction =
+                role.faction.as_deref().and_then(|f| rules.faction_id(f)).unwrap_or(rules.ship(first).faction);
+            let side = match mine {
+                Some(me) if rules.hostile(me, faction) => 1,
+                Some(me) if me == faction => 0,
+                _ => continue, // neutrals stay out of it
+            };
+            let n = role.count.0
+                + ((self.roll() * (role.count.1.saturating_sub(role.count.0) + 1) as f32) as u32)
+                    .min(role.count.1.saturating_sub(role.count.0));
+            for _ in 0..n {
+                let class = role.classes
+                    [((self.roll() * role.classes.len() as f32) as usize).min(role.classes.len() - 1)]
+                .clone();
+                let p = self.make_pilot(def);
+                people.push(stats_of(&p));
+                plan.push((side, None, class, Loadout::default(), None, Some(people.len() - 1)));
+            }
+        }
+        // One stat lookup per pilot (a boxed closure: the entries borrow them as
+        // `&dyn Fn`, so each needs a home that outlives the entries).
+        type Lookup = Box<dyn Fn(&str) -> f32>;
+        let lookups: Vec<Lookup> = people
+            .iter()
+            .map(|s| {
+                let s = s.clone();
+                Box::new(move |k: &str| s.iter().find(|(n, _)| n == k).map_or(0.0, |(_, v)| *v)) as Lookup
+            })
+            .collect();
+        let entries: Vec<autoresolve::Entry> = plan
+            .iter()
+            .map(|(side, craft, class, l, cond, who)| autoresolve::Entry {
+                side: *side,
+                craft: *craft,
+                class: class.as_str(),
+                beams: &l.beams,
+                missiles: &l.missiles,
+                fitted: (l.shields, l.armor),
+                condition: *cond,
+                pilot: who.map(|w| lookups[w].as_ref()),
+            })
+            .collect();
+        let station = match c.target_base {
+            Some(b) => {
+                let mut rng = self.rng;
+                let st = autoresolve::Offscreen::station_of(def, self, b, &mut || next_random(&mut rng));
+                self.rng = rng;
+                st
+            }
+            None => None,
+        };
+        let outcomes =
+            mission.outcomes.iter().map(|(r, a)| (r.clone(), a.iter().map(|x| x.display()).collect())).collect();
+        let o = autoresolve::Offscreen::start(ar, rules, contact, &entries, station, outcomes, self.hours);
+        self.log(format!("Battle with {} under way", def.raids[c.raid].name));
+        self.offscreen.push(o);
+        Ok(())
+    }
+
+    /// A flown battle's damage back on craft `k` (`craft_damage`): `[hull, shield fore,
+    /// aft, armour fore, aft]` as fractions.
+    pub fn set_condition(&mut self, def: &StrategyDef, k: usize, v: [f32; 5]) {
+        if def.craft_damage.is_some() && k < self.craft.len() {
+            self.craft[k].condition = v.iter().any(|x| *x < 1.0).then_some(v);
+        }
+    }
+
+    /// Is an off-screen battle being fought against `contact`?
+    pub fn fighting(&self, contact: u32) -> bool {
+        self.offscreen.iter().any(|o| o.contact == contact)
+    }
+
+    /// The player joins the off-screen battle against `contact` in real time (RQ-C-21,
+    /// the original's "exited due to realtime resolution"): the simulation stops, its
+    /// damage stays on the craft (destroyed craft are lost), and the battle is flown.
+    pub fn join_offscreen(&mut self, def: &StrategyDef, contact: u32) -> bool {
+        let Some(k) = self.offscreen.iter().position(|o| o.contact == contact) else { return false };
+        let o = self.offscreen.remove(k);
+        let out = o.outcome();
+        self.apply_craft_states(def, &out.craft);
+        true
+    }
+
+    /// Writes battle states back onto the craft: a condition, or the craft and its pilot
+    /// lost (the original deletes both).
+    fn apply_craft_states(&mut self, def: &StrategyDef, states: &[(usize, Option<[f32; 5]>)]) {
+        let mut lost = Vec::new();
+        for &(k, state) in states {
+            if k >= self.craft.len() {
+                continue;
+            }
+            match state {
+                Some(v) if def.craft_damage.is_some() => {
+                    self.craft[k].condition = v.iter().any(|x| *x < 1.0).then_some(v);
+                }
+                Some(_) => {}
+                None => lost.push(k),
+            }
+        }
+        lost.sort_unstable();
+        for &k in lost.iter().rev() {
+            if let Some(p) = self.pilots.iter().position(|p| p.craft == Some(k)) {
+                self.pilots[p].state = PilotState::Dead;
+                self.pilots[p].craft = None;
+                let t = format!("{} was killed", self.pilots[p].name);
+                self.log(t);
+            }
+            let t = format!("{} was destroyed", self.craft[k].name);
+            self.log(t);
+            self.remove_craft(k);
+        }
+    }
+
+    /// A finished off-screen battle: wrecked station modules, the craft, then the
+    /// mission's outcome through [`Campaign::battle_result`].
+    fn offscreen_result(&mut self, def: &StrategyDef, out: autoresolve::Outcome, events: &mut Vec<Event>) {
+        if let Some(b) = self.contacts.iter().find(|c| c.id == out.contact).and_then(|c| c.target_base) {
+            for &m in &out.wrecked {
+                if b < self.bases.len() && m < self.bases[b].modules.len() && !self.bases[b].modules[m].wrecked {
+                    self.wreck_module(def, b, m, events);
+                }
+            }
+            // The hub keeps the battle's hull damage (repaired over time, RQ-S-16).
+            if let (Some(h), true) = (out.station_hull, b < self.bases.len()) {
+                if def.base_types[self.bases[b].base_type].hull > 0.0 {
+                    self.bases[b].hull = h;
+                }
+            }
+        }
+        self.apply_craft_states(def, &out.craft);
+        // Craft that came through fly home (battle_result sends the party home).
+        let result = if out.station_lost { "lose" } else { out.result.as_str() };
+        self.battle_result(def, out.contact, result, &out.actions, out.kills);
+        let t = format!("Auto-resolved battle: {}", result.to_uppercase());
+        self.log(t.clone());
+        events.push(Event::Notice(t, NoticeKind::Other));
+    }
+
     fn remove_craft(&mut self, k: usize) {
         self.craft.remove(k);
+        for u in self.offscreen.iter_mut().flat_map(|o| o.units.iter_mut()) {
+            u.craft = match u.craft {
+                Some(c) if c == k => None,
+                Some(c) if c > k => Some(c - 1),
+                other => other,
+            };
+        }
         for p in &mut self.pilots {
             p.craft = match p.craft {
                 Some(c) if c == k => None,
@@ -2592,9 +2833,41 @@ pub fn autoplay_to_chapter(def: &StrategyDef, mut c: Campaign, step: usize, max_
 }
 
 /// [`autoplay`] continuing an existing campaign until it is `days` old.
-pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign {
+pub fn autoplay_from(def: &StrategyDef, c: Campaign, days: f64) -> Campaign {
+    autoplay_with(def, None, c, days)
+}
+
+/// [`autoplay_from`] with the battle rules: with them and an `auto_resolve:` section,
+/// every interception is fought by the original's hourly simulation instead of the
+/// alternating results; and a campaign left without craft buys the cheapest hull it
+/// can and crews it (D-24).
+pub fn autoplay_with(
+    def: &StrategyDef,
+    rules: Option<&crate::content::rules::Ruleset>,
+    mut c: Campaign,
+    days: f64,
+) -> Campaign {
     let mut battles = c.story.battles_won;
     while c.hours < days * 24.0 {
+        // No craft left: buy the cheapest hull available and put a ready pilot in it
+        // (hiring one when nobody is free).
+        let hull_coming = c.deliveries.iter().any(|d| matches!(d.product, Product::Hull(_)));
+        if c.craft.is_empty() && !c.bases.is_empty() && !hull_coming {
+            let mut hulls: Vec<usize> = (0..def.hulls.len()).collect();
+            hulls.sort_by(|&a, &b| def.hulls[a].cost.total_cmp(&def.hulls[b].cost));
+            // The first the campaign can buy (`find` stops at the first order placed).
+            let _ = hulls.into_iter().find(|&h| c.buy(def, 0, Product::Hull(h), 1).is_ok());
+        }
+        for k in 0..c.craft.len() {
+            if c.pilots.iter().any(|p| p.craft == Some(k)) {
+                continue;
+            }
+            let free = c.pilots.iter().position(|p| p.craft.is_none() && p.state == PilotState::Ready);
+            let free = free.or_else(|| (!c.recruits.is_empty() && c.hire(def, 0).is_ok()).then(|| c.pilots.len() - 1));
+            if let Some(p) = free {
+                c.assign(p, Some(k));
+            }
+        }
         for b in 0..c.bases.len() {
             if c.bases[b].research.is_none() {
                 if let Some(&t) = c.researchable(def).first() {
@@ -2650,8 +2923,14 @@ pub fn autoplay_from(def: &StrategyDef, mut c: Campaign, days: f64) -> Campaign 
                 Event::Survey { survey } => c.survey_result(def, survey, None),
                 Event::Battle { contact } => {
                     battles += 1;
-                    let result = if battles % 3 == 0 { "retreat" } else { "win" };
-                    c.battle_result(def, contact, result, &["salvage".into()], 2);
+                    let fought = match (rules, def.auto_resolve.is_some()) {
+                        (Some(r), true) => c.start_offscreen(def, r, contact).is_ok(),
+                        _ => false,
+                    };
+                    if !fought {
+                        let result = if battles % 3 == 0 { "retreat" } else { "win" };
+                        c.battle_result(def, contact, result, &["salvage".into()], 2);
+                    }
                 }
                 _ => {}
             }
@@ -3299,6 +3578,65 @@ mod tests {
     }
 
     #[test]
+    fn battle_damage_stays_on_craft_mends_by_the_day_and_saves() {
+        let text = SAMPLE.to_string() + "craft_damage: {repair_per_day: 10%}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        c.pilots[0].craft = Some(0);
+        c.pilots[1].craft = Some(1);
+        // A flown battle brings craft 0 back at 30 % hull.
+        c.set_condition(&d, 0, [0.3, 1.0, 1.0, 0.5, 0.5]);
+        assert_eq!(c.craft[0].condition, Some([0.3, 1.0, 1.0, 0.5, 0.5]));
+        // An off-screen battle running: it saves and loads with the campaign.
+        c.offscreen.push(autoresolve::Offscreen {
+            contact: 9,
+            units: Vec::new(),
+            station: None,
+            began: 2.0,
+            next_round: 12.0,
+            last_round: 7.0,
+            destroyed: vec!["saucer".into()],
+            wrecked: vec![2],
+            outcomes: vec![("win".into(), vec!["salvage".into()])],
+        });
+        let packs = [save::PackRef { id: "t".into(), version: "1".into() }];
+        let back = save::read(&save::write(&c, "t", &packs), &d, &packs).unwrap();
+        assert_eq!((back.craft[0].condition, back.offscreen.clone()), (c.craft[0].condition, c.offscreen.clone()));
+        c.offscreen.clear();
+        // A day at home: +10 % of each bank.
+        c.advance(&d, 24.0);
+        let v = c.craft[0].condition.unwrap();
+        assert!((v[0] - 0.4).abs() < 1e-4 && (v[3] - 0.6).abs() < 1e-4, "{v:?}");
+        // Joining a running battle in real time (RQ-C-21): it stops, its damage stays.
+        let hurt = autoresolve::Unit {
+            side: 0,
+            craft: Some(0),
+            class: "rocket".into(),
+            hull_max: 100.0,
+            hull: 20.0,
+            shield_max: 10.0,
+            shields: [10.0, 0.0],
+            armor_max: 10.0,
+            armor: [10.0, 10.0],
+            beam: 1.0,
+            missile: 0.0,
+            rounds: 0,
+            offence: 0.5,
+            attack: 0.0,
+            alive: true,
+        };
+        c.offscreen.push(autoresolve::Offscreen { contact: 4, units: vec![hurt], ..back.offscreen[0].clone() });
+        assert!(c.fighting(4) && c.join_offscreen(&d, 4) && !c.fighting(4));
+        assert_eq!(c.craft[0].condition, Some([0.2, 1.0, 0.0, 1.0, 1.0]));
+        // A craft destroyed off-screen is lost with its pilot.
+        c.apply_craft_states(&d, &[(1, None)]);
+        assert_eq!(c.craft.len(), 1);
+        assert_eq!(c.pilots[1].state, PilotState::Dead);
+    }
+
+    #[test]
     fn a_seen_contact_may_turn_on_the_base_that_saw_it() {
         // A probe heading for system b, reacting with certainty; the home base at a sees
         // 500 (hub) + 2,500 (radar) = 3,000 map units.
@@ -3395,6 +3733,29 @@ mod tests {
         c.battle_result(&d, 99, "killed", &[], 0);
         assert_eq!(c.craft.len(), before - 1);
         assert_ne!(c.pilots[1].state, PilotState::Ready);
+    }
+
+    /// RQ-C-18 end to end: the default campaign given the hourly auto-resolve fights its
+    /// interceptions off-screen in game time and keeps flying (D-24).
+    #[test]
+    fn interceptions_are_fought_off_screen_by_the_hour() {
+        let content = crate::content::Content::load(&crate::content::ContentConfig {
+            pack_dirs: crate::content::checkout_dirs(),
+            no_original: true,
+            campaign: Some("default".into()),
+            ..Default::default()
+        })
+        .unwrap();
+        let mut def = content.rules.strategy.clone().unwrap();
+        let doc = crate::formats::yaml::parse("model: hourly\noffence: {gunnery: 1, divisor: 100}\n").unwrap();
+        def.auto_resolve = crate::content::autoresolve::AutoResolveDef::parse(Some(crate::content::schema::Get(&doc)));
+        def.craft_damage = Some(crate::content::autoresolve::CraftDamage { repair_per_day: 0.1 });
+        let c = super::autoplay_with(&def, Some(&content.rules), Campaign::new(&def, 1, 11), 120.0);
+        let fought = c.messages.iter().filter(|m| m.text.starts_with("Auto-resolved battle")).count();
+        assert!(fought >= 3, "{fought} off-screen battles");
+        assert!(c.messages.iter().any(|m| m.text.contains("under way")));
+        // Its losses are real: craft destroyed in them are gone with their pilots.
+        assert!(c.messages.iter().any(|m| m.text.ends_with("was destroyed")) || c.craft.len() == 3);
     }
 
     #[test]

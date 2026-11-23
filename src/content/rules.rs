@@ -402,6 +402,8 @@ pub struct ShipClass {
     pub pilot_grade: Option<u8>,
     /// A higher grade later in a campaign (`grade_rise:`; RQ-C-23).
     pub grade_rise: Option<GradeRise>,
+    /// Its base attack `C` and defence `D` in an auto-resolved battle (`auto_resolve:`).
+    pub auto_resolve: Option<super::autoresolve::Weights>,
 }
 
 /// `grade_rise: {from_month: 2, chance: 50%, per_month: 2%, grade: 2}`: in a campaign
@@ -1512,6 +1514,8 @@ pub fn build_with(
         "salvage_fits",
         "manufacture",
         "pilots",
+        "auto_resolve",
+        "craft_damage",
         "scores",
         "evaluations",
         "economy",
@@ -2871,6 +2875,7 @@ fn ship_class(
         towable: g.bool("towable").unwrap_or(false),
         cargo: g.bool("cargo").unwrap_or(false),
         pilot_grade: g.num("pilot_grade").map(|n| n.clamp(0.0, 255.0) as u8),
+        auto_resolve: super::autoresolve::Weights::parse(g),
         grade_rise: g.node("grade_rise").map(|n| {
             let r = Get(n);
             GradeRise {

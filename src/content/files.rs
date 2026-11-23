@@ -315,6 +315,7 @@ fn ship() -> Ty {
         f("cargo", Ty::Bool, "a cargo container: counted by the cargo(role) mission query"),
         f("behaviour", name(), "AI behaviour id"),
         f("pilot_grade", Ty::Num, "AI ships of this class: their pilot's grade (flight.pilot_grades)"),
+        f("auto_resolve", super::autoresolve::Weights::schema(), "campaign auto-resolve: base attack C and defence D"),
         f(
             "grade_rise",
             Ty::Struct(vec![
