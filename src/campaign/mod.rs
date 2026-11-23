@@ -307,6 +307,9 @@ pub struct Campaign {
     pub offscreen: Vec<autoresolve::Offscreen>,
     /// The rival's bases and outposts (`alien_bases:`).
     pub aliens: aliens::AlienState,
+    /// Test tooling only (`--soak-capture`, never saved): a won battle's first destroyed
+    /// ship of each class that some topic needs `captured(<class>)` counts as captured.
+    pub autoplay_capture: bool,
 }
 
 /// The activity grid's size: 16 × 16 cells over the galaxy (the original's, 3,750 map units
@@ -575,6 +578,7 @@ impl Campaign {
             raid_wins: Vec::new(),
             offscreen: Vec::new(),
             aliens: Default::default(),
+            autoplay_capture: false,
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -2357,6 +2361,28 @@ impl Campaign {
     /// `retreat`, `killed`); `actions` the outcome's campaign actions as written
     /// (`score(x)`, `money(n)`, `salvage`, `set_flag(x)`, `lose(class)`, …).
     pub fn battle_result(&mut self, def: &StrategyDef, contact: u32, result: &str, actions: &[String], kills: u32) {
+        // Test tooling (`autoplay_capture`): kills of classes a topic needs captured count
+        // as captures, so an automatic player can open those topics.
+        let mut owned: Vec<String>;
+        let actions = if self.autoplay_capture && result == "win" {
+            owned = actions.to_vec();
+            let wanted = |class: &str| {
+                let ev = format!("captured({class})");
+                def.research.iter().any(|t| t.unlock_on.contains(&ev) || t.complete_on.contains(&ev))
+            };
+            let mut seen: Vec<String> = Vec::new();
+            for a in actions {
+                if let Some(class) = a.strip_prefix("destroyed(").and_then(|x| x.strip_suffix(')')) {
+                    if wanted(class) && !seen.iter().any(|s| s == class) {
+                        seen.push(class.to_string());
+                        owned.push(format!("captured({class})"));
+                    }
+                }
+            }
+            owned.as_slice()
+        } else {
+            actions
+        };
         let party = self.battle_party(contact);
         let raid_name =
             self.contacts.iter().find(|c| c.id == contact).map(|c| def.raids[c.raid].name.clone()).unwrap_or_default();
@@ -2913,15 +2939,34 @@ pub fn autoplay_from(def: &StrategyDef, c: Campaign, days: f64) -> Campaign {
 pub fn autoplay_with(
     def: &StrategyDef,
     rules: Option<&crate::content::rules::Ruleset>,
-    mut c: Campaign,
+    c: Campaign,
     days: f64,
 ) -> Campaign {
+    autoplay_run(def, &Autoplay { rules, fleet: 1, capture: false }, c, days)
+}
+
+/// How the automatic player plays (`--strategy-soak` options).
+pub struct Autoplay<'a> {
+    /// The battle rules: with them and `auto_resolve:` interceptions are fought off-screen.
+    pub rules: Option<&'a crate::content::rules::Ruleset>,
+    /// The craft it keeps: it buys a hull while fewer are flying or on order.
+    pub fleet: usize,
+    /// Test tooling: kills of classes a topic needs captured count as captures
+    /// ([`Campaign::autoplay_capture`]).
+    pub capture: bool,
+}
+
+/// The automatic player with its options (see [`Autoplay`]).
+pub fn autoplay_run(def: &StrategyDef, o: &Autoplay, mut c: Campaign, days: f64) -> Campaign {
+    let rules = o.rules;
+    c.autoplay_capture = o.capture;
     let mut battles = c.story.battles_won;
     while c.hours < days * 24.0 {
-        // No craft left: buy the cheapest hull available and put a ready pilot in it
-        // (hiring one when nobody is free).
-        let hull_coming = c.deliveries.iter().any(|d| matches!(d.product, Product::Hull(_)));
-        if c.craft.is_empty() && !c.bases.is_empty() && !hull_coming {
+        // Fewer craft than the fleet (counting hulls on order): buy the cheapest hull
+        // available, one a day, and put a ready pilot in each craft (hiring one when
+        // nobody is free).
+        let coming = c.deliveries.iter().filter(|d| matches!(d.product, Product::Hull(_))).count();
+        if c.craft.len() + coming < o.fleet && !c.bases.is_empty() {
             let mut hulls: Vec<usize> = (0..def.hulls.len()).collect();
             hulls.sort_by(|&a, &b| def.hulls[a].cost.total_cmp(&def.hulls[b].cost));
             // The first the campaign can buy (`find` stops at the first order placed).
@@ -2939,7 +2984,12 @@ pub fn autoplay_with(
         }
         for b in 0..c.bases.len() {
             if c.bases[b].research.is_none() {
-                if let Some(&t) = c.researchable(def).first() {
+                // Event-opened topics first (the saucer examinations and the like): the
+                // story waits on them.
+                let open = c.researchable(def);
+                let pick =
+                    open.iter().copied().find(|&t| !def.research[t].unlock_on.is_empty()).or(open.first().copied());
+                if let Some(t) = pick {
                     c.start_research(def, b, t).unwrap();
                 }
             }
@@ -3216,6 +3266,51 @@ mod tests {
         // Unknown items and tables are load errors.
         let bad = text.replace("goodies: always", "goodies: never");
         assert!(build(&bad).1.iter().any(|e| e.contains("no goodies table 'never'")));
+    }
+
+    /// `--soak-capture` and `--soak-fleet` (test tooling): a won battle's kill of a class
+    /// some topic needs captured counts as the capture; the automatic player keeps its fleet.
+    #[test]
+    fn soak_tooling_captures_and_keeps_the_fleet() {
+        let text = SAMPLE.replace(
+            "  plasma: {size: 1000, requires: research(basics), unlocks: [items.plasma]}",
+            "  plasma: {size: 1000, unlock_on: [\"captured(saucer)\"]}",
+        );
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let plasma = d.topic("plasma").unwrap();
+        let contact = |id| Contact {
+            id,
+            raid: 0,
+            pos: [0.0, 0.0],
+            dest: [0.0, 0.0],
+            target_base: None,
+            detected: true,
+            route: Vec::new(),
+            plan: None,
+        };
+        // Off: a destroyed saucer opens nothing.
+        let mut c = Campaign::new(&d, 0, 1);
+        c.contacts.push(contact(1));
+        c.battle_result(&d, 1, "win", &["destroyed(saucer)".into()], 1);
+        assert!(!c.researchable(&d).contains(&plasma));
+        // On: it counts as captured; a lost battle never does.
+        let mut c = Campaign::new(&d, 0, 1);
+        c.autoplay_capture = true;
+        c.contacts.push(contact(2));
+        c.battle_result(&d, 2, "lose", &["destroyed(saucer)".into()], 0);
+        assert!(!c.researchable(&d).contains(&plasma));
+        c.contacts.push(contact(3));
+        c.battle_result(&d, 3, "win", &["destroyed(saucer)".into()], 1);
+        assert!(c.researchable(&d).contains(&plasma));
+        // The fleet: with 4 wanted and 2 flying, hulls are ordered until 4 are flying or
+        // coming, one a day.
+        let c = Campaign::new(&d, 0, 1);
+        assert_eq!(c.craft.len(), 2);
+        let c = autoplay_run(&d, &Autoplay { rules: None, fleet: 4, capture: false }, c, 3.0);
+        let coming = c.deliveries.iter().filter(|x| matches!(x.product, Product::Hull(_))).count();
+        assert!(c.craft.len() + coming >= 4, "{} flying, {coming} coming", c.craft.len());
     }
 
     #[test]
