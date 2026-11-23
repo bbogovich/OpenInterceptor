@@ -1513,6 +1513,8 @@ pub fn build_with(
         "outposts",
         "salvage_fits",
         "manufacture",
+        "shipments",
+        "speed_by_mass",
         "pilots",
         "auto_resolve",
         "craft_damage",

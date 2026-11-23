@@ -23,6 +23,10 @@ outposts:
   start: [1, 1]
   min_opps: 3
 
+# Purchases and finished goods are carried from the colonies by their freighters: 100 units a
+# load (a ship fills one), 300 map units an hour, an hour to unload and two to refuel.
+shipments: {capacity: 100, speed: 300, unload: 1h, refuel: 2h}
+
 expenses:
   fuel: {name: Fuel and stores, every: 7d, amount: 4000 * craft}
 
