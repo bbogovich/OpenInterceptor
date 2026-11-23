@@ -9,7 +9,7 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 so it is not in the count from macOS.
 
 **Difficulty fix (app 0.22.36)** two more: `campaign::tests::a_save_names_its_difficulty_before_it_is_read`
-and `campaign::tests::content_resolves_per_level_values_at_the_chosen_level`.
+and `campaign::tests::content_resolves_per_level_values_at_the_chosen_level` (the default campaign's saucer scout aims 0.15 at cadet and 0.6 at its last level). The app-side reload is manual test MT-6-37.
 
 **#139 (app 0.22.34)** five more in `campaign::aliens::tests`:
 `the_rival_starts_with_a_bases_that_queue_ships_and_outposts_that_pay` (and its save section),
