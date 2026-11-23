@@ -92,6 +92,7 @@ names it. Difficulty level ids are constants as well (`difficulty >= veteran`).
 | `construction_attacks(s)` | number | [Construction strikes](#construction-strikes) suffered by the facilities built in system `s`. |
 | `base_distance(s)` | number | Map units from system `s` to the player's nearest base, in a straight line; 1 000 000 000 with no base (app 0.19.0). |
 | `alien_tech` | number | App NEXT: the rival's tech level, 1 – 3 ([`strategist.economy`](story.md#strategist); 1 without it). |
+| `alien_bases`, `alien_outposts` | number | App NEXT: the rival's bases and outposts on the map ([`alien_bases`](#alien_bases); 0 without it). |
 | `centre_distance(s)` | number | App NEXT: map units from system `s` to the map's centre — a generated map's middle, else the middle of the systems' bounding box. `interceptor`'s bases must be within 30,000 (5 ly) of it (**verified**). |
 
 Systems are named by their map id (`ajax`, `nebula_haven`) and are checked names like everything
@@ -460,6 +461,45 @@ the OPPs' body classes and richness (random), where new outposts go among the ca
 score, then nearest a base), and the score sign convention. Mission scores by the original's
 `MissionScores` are not read yet: which counter is which event needs the flight layer to report
 kills by type.
+
+### `alien_bases`
+
+`alien_bases:` (app NEXT, RQ-S-23 – 26) — the rival owns **bases** and **outposts** on the map, kept
+and saved with the campaign, as the original's alien strategist (unknowns §3, §12.1, **verified**).
+Without the section its raids follow their own `every` / `chance` schedules.
+
+* **Bases.** `start.bases` are founded at the start — variant **A** — at least `base_distance`
+  from every player base; every later base is variant **B**. Only A bases queue ships (one every
+  `queue.every`, up to `queue.max`), so only they send raids.
+* **Expansion.** Every `expansion.every` (20 h) a B base is founded when there are fewer than
+  `max_bases`, `min_gap` has passed since the last, and one of the original's triggers holds:
+  3 × bases < outposts, bases − ⌊d / 2⌋ < player bases, or ⌊month / 8⌋ > bases. Every
+  `refound.every` (5 d), with no base left, one is founded, a second with `second` +
+  `second_per_level` × d, and with `grow` + `grow_per_level` × d the outposts grow.
+* **Outposts.** `start.outposts` at the start (old enough to pay at once); every `outposts.every`
+  (25 d) more within `outpost_range` of an alien base: before month 4 one with 50 %, later
+  rand[0, min(⌊month / 8⌋, 3)), one whenever there are fewer than 2.
+* **The raid planner.** It sends the raids named in `raids.base`, `raids.outpost` and `raids.opp`
+  — their own schedules no longer roll. The next raid comes rand[from, to) days later by the
+  `interval` row for the month (`[[below month, from, to], …]`); it goes at a random player base
+  with the `base_chance` row's chance + `base_per_level` × d (the first `base` raid whose
+  `requires` holds), else with `outpost_chance` at a corporate outpost or one of its platforms
+  (`opp`, when a random one of 20 places holds one), else with `outpost_only_chance` at an
+  outpost; the richest outpost with `richest` + `richest_per_level` × d, else a random one. The
+  nearest A base with `min_queued` ships queued sends it, from its own system, and the ships leave
+  the queue; with none, no raid.
+* **Harassment** (RQ-S-23). Every `harass.every` + `every_per_level` × d hours each freighter in
+  flight within `outpost_radius` of an alien outpost or `base_radius` of a base is attacked with
+  `chance` + `chance_per_level` × d: its cargo is lost.
+* **Income.** `outpost_income`: what each outpost older than `income_after` pays the treasury per
+  [`strategist.economy`](story.md#strategist) income period (with two or more outposts).
+
+`interceptor` has the original's numbers: two A bases, 20 h, 8 bases, 12.5 days, 25 days, 6 h,
+the raid intervals 9 – 12 … 6 – 9 days, 5 / 25 / 40 + 5d %, 45 %, 25 %, 40 + 10d %, 4,000 / 2,000
+and 50 + 5d %; *derived*: two starting outposts, 15,000-unit distances, a queue of 6 (3 × two
+hangars), 3 ships a raid, 455,625 per outpost, the freighter's lost cargo; its planner raids are
+`heavy_base_attack` / `base_attack`, `outpost_attack` and `opp_attack`. `--strategy-soak` prints
+the rival's places.
 
 ### `auto_resolve` and `craft_damage`
 

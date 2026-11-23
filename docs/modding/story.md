@@ -130,6 +130,7 @@ usually loses the campaign.
 | `start_when` | condition | at once | When work begins (logged: *Intelligence: the rival's … has begun*). |
 | `every` | time | `7d` | How often a shipment is rolled once work has begun. |
 | `chance` | fraction | 100 % | The chance per roll that a shipment leaves (`{per_level: …}` allowed). |
+| `work` | number | 0 | App NEXT, with [`alien_bases`](strategy.md#alien_bases): each piece takes this many outpost-hours of work — the rival's outposts work on it together — and is shipped (the plan's `raid`, from an alien base) when done; `every` and `chance` then do not apply. 0 = the rolls. `interceptor` keeps the rolls: the original's work per piece (100,000 … 30,000 by level, unknowns §12.2) would take years at the unit the RE reads, so the unit is being checked. |
 | `raid` | raid id | none | The [raid](strategy.md#raids) a shipment flies as: a contact on the map, detected, intercepted and fought like any raid. Without it the plan grows only through the `plan(…)` action. |
 | `warnings` | list of `{at, do}` | none | Actions run once when progress passes `at` (a fraction), in order. |
 | `complete` | actions | none | Actions run when the last component arrives (usually `defeat(<ending>)`). |
@@ -193,8 +194,11 @@ directly. `interceptor` starts at 0.7, `Think.ini`'s `StartingAggression` (D-25,
 | `spend_every`, `research_per_downlink`, `downlinks` | time, number, number | 20 h, 20000, 0 | Each period up to `research_per_downlink` × `downlinks` / 7 (/ 14 with none) moves from the research fund into research. |
 | `tech_levels` | list of `[to 2, to 3]` per difficulty level | none | Research money at which the tech level rises to 2 and to 3. |
 
-Conditions read the level as `alien_tech` (1 – 3). `interceptor` follows the original (README
-§6.1, **verified**): the fallback income (the aliens' outposts are not modelled), `Think.ini`'s
+Conditions read the level as `alien_tech` (1 – 3). With [`alien_bases`](strategy.md#alien_bases)
+and its `outpost_income` (app NEXT) the rival's outposts pay instead, each once old enough; with one
+outpost or none the `income` formula applies. `interceptor` follows the original (README
+§6.1, **verified**): its outposts pay (455,625 each a period, *derived*: the README's example
+outpost), else the fallback 125,000 × (difficulty + 1), `Think.ini`'s
 ratios, 20,000 per downlink and the thresholds 1.0M / 1.5M (Beginner) … 0.5M / 0.9M (Superhuman);
 its 3 alien downlinks and the missing aggression adjustment of the split are *derived*.
 
