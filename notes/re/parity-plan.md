@@ -43,7 +43,7 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #129 probe types: raids' kinds, kind(<kind>) opens topics 6/10/17 | 0.22.30 |
 | #135 RQ-S-12 alien messages by month and chance, RQ-S-13 scheduled side missions, RQ-S-14 alien treasury and tech, RQ-S-15 MacArthur 24-48 h, D-25 aggression 0.7/0.5, Doomsday counts §12.2 (DEV-101); alien bases → #139 | 0.22.31 |
 | #134 RQ-C-18 hourly auto-resolve (`campaign::autoresolve`), RQ-C-19 the station's part (modules, hull quarters, return fire), RQ-C-20 craft damage persists (`craft_damage`), RQ-C-21 join API, D-24 (autoplay fights off-screen and rebuys craft) | 0.22.32 |
-| #139 alien bases and outposts (`alien_bases:`, `campaign::aliens`): A/B bases, ship queues, the raid planner, 20 h expansion, 5 d re-founding, 25 d outposts, outpost income, RQ-S-23 harassment, plan piece work (`plans.<id>.work`, not enabled in `interceptor`: unit in question) | NEXT |
+| #139 alien bases and outposts (`alien_bases:`, `campaign::aliens`): A/B bases, ship queues, the raid planner, 20 h expansion, 5 d re-founding, 25 d outposts, outpost income, RQ-S-23 harassment, plan piece work (`plans.<id>.work`, not enabled in `interceptor`: unit in question) | 0.22.34 |
 | #137 RQ-S-19/21 deliveries by outpost freighter (100 units, 135 units/h), RQ-S-22 map speed by mass, RQ-S-28 versioned save sections (DEV-103) | 0.22.33 |
 
 ## Issues
