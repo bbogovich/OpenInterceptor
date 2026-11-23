@@ -495,7 +495,7 @@ queue ships (`0x57e51e`), so only A bases can launch raids (`0x573998` needs ≥
 
 ### 12.2 Doomsday pieces (`0x57b6xx`, table 0x67c568, 6 ints per difficulty)
 
-| d | total pieces | work per piece (outpost-hours) | fund cap | type 1 | type 2 | type 3 |
+| d | total pieces | work per piece (technician-hours) | fund cap | type 1 | type 2 | type 3 |
 |---|---|---|---|---|---|---|
 | 0 | 25 | 100,000 | 250,000 | 8 | 8 | 9 |
 | 1 | 25 | 80,000 | 200,000 | 9 | 8 | 8 |
