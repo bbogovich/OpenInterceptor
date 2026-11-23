@@ -100,6 +100,8 @@ pub struct CampaignCarry {
     pub month: u32,
     /// The craft's battle damage (`craft_damage`): fractions of hull and banks.
     pub condition: Option<[f32; 5]>,
+    /// A planned raid's ships and escort (`alien_bases.raids.sizes`).
+    pub size: Option<(u32, Option<String>)>,
 }
 
 /// What the app should do after a screen's frame.
@@ -716,24 +718,32 @@ pub async fn run(options: Options) {
                 }
             }
             Next::CampaignBattle { mission, ship, loadout, stances, stand_in, carry } => {
-                let CampaignCarry { pilot, month, condition } = *carry;
+                let CampaignCarry { pilot, month, condition, size } = *carry;
                 // Keep the strategy screen (and its campaign) while the battle is flown.
                 let old = std::mem::replace(&mut screen, Screen::Launcher(launcher::Launcher::new(&ctx)));
                 if let Screen::Strategy(s) = old {
                     ctx.campaign = Some(s);
                 }
-                let started = match &stand_in {
-                    // The mission's own copy with the campaign object in it.
-                    Some(si) => ctx
+                // The mission's own copy: with the campaign object standing in, and sized
+                // for a planned raid.
+                let started = match (&stand_in, &size) {
+                    (None, None) => flight::FlightSession::start_mission(&mut ctx, &mission, ship.as_deref()),
+                    _ => ctx
                         .content
                         .rules
                         .missions
                         .iter()
                         .find(|m| m.id == mission)
                         .ok_or(format!("no mission '{mission}'"))
-                        .and_then(|m| m.with_stand_in(si))
+                        .and_then(|m| match &stand_in {
+                            Some(si) => m.with_stand_in(si),
+                            None => Ok(m.clone()),
+                        })
+                        .map(|m| match &size {
+                            Some((n, e)) => m.with_size(*n, e.as_deref()),
+                            None => m,
+                        })
                         .and_then(|m| flight::FlightSession::start_mission_def(&mut ctx, m, ship.as_deref())),
-                    None => flight::FlightSession::start_mission(&mut ctx, &mission, ship.as_deref()),
                 };
                 match started {
                     Ok(mut f) => {

@@ -862,6 +862,7 @@ impl StrategyScreen {
                         let what = match j.product {
                             Product::Item(i) => def.items[i].name.clone(),
                             Product::Hull(h) => def.hulls[h].id.clone(),
+                            Product::Pilot(_) => "pilot".into(),
                         };
                         let row = Row::new(
                             format!("   queued: {} x {what} ({:.0} units left on this one)", j.count, j.left),
@@ -918,6 +919,7 @@ impl StrategyScreen {
                         PilotState::Ready => "ready".to_string(),
                         PilotState::Injured(h) => format!("injured, {:.0} days", (h - c.hours) / 24.0),
                         PilotState::Dead => "killed".into(),
+                        PilotState::Arriving => "on the way".into(),
                     };
                     let training = if p.training { ", training" } else { "" };
                     // Their stats, by the campaign's stat names: flying 52, gunnery 40 …
@@ -1224,7 +1226,14 @@ impl StrategyScreen {
         let pilot = self.campaign.battle_pilot(def, k);
         let condition = self.campaign.craft[k].condition;
         let month = (self.campaign.hours / crate::campaign::MONTH).max(0.0) as u32;
-        let carry = Box::new(super::CampaignCarry { pilot, month, condition });
+        // A planned raid's size and escort (`alien_bases.raids.sizes`).
+        let size = match pending {
+            PendingBattle::Contact(id) => {
+                crate::campaign::aliens::size_of(&self.campaign, id).map(|s| (s.ships, s.escort.clone()))
+            }
+            _ => None,
+        };
+        let carry = Box::new(super::CampaignCarry { pilot, month, condition, size });
         Next::CampaignBattle { mission, ship: Some(ship), loadout, stances: self.stances(def), stand_in, carry }
     }
 
