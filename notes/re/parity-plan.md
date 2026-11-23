@@ -42,7 +42,7 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #132 RQ-S-08 base price 0.75 x template, 29-day build, placement 5,850 / 30,000; RQ-S-09 technician pool (10 + 10 per OPP); RQ-S-16 hull 6,000 repairing max(5, 2/min) (DEV-100) | 0.22.29 |
 | #129 probe types: raids' kinds, kind(<kind>) opens topics 6/10/17 | 0.22.30 |
 | #135 RQ-S-12 alien messages by month and chance, RQ-S-13 scheduled side missions, RQ-S-14 alien treasury and tech, RQ-S-15 MacArthur 24-48 h, D-25 aggression 0.7/0.5, Doomsday counts §12.2 (DEV-101); alien bases → #139 | 0.22.31 |
-| #134 RQ-C-18 hourly auto-resolve (`campaign::autoresolve`), RQ-C-19 the station's part (modules, hull quarters, return fire), RQ-C-20 craft damage persists (`craft_damage`), RQ-C-21 join API, D-24 (autoplay fights off-screen and rebuys craft) | NEXT |
+| #134 RQ-C-18 hourly auto-resolve (`campaign::autoresolve`), RQ-C-19 the station's part (modules, hull quarters, return fire), RQ-C-20 craft damage persists (`craft_damage`), RQ-C-21 join API, D-24 (autoplay fights off-screen and rebuys craft) | 0.22.32 |
 
 ## Issues
 
