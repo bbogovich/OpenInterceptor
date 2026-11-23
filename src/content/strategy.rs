@@ -358,6 +358,10 @@ pub struct Item {
     pub rounds: u32,
     /// A shield or armour: the protection it gives when fitted ([`protection_of`]).
     pub protection: f32,
+    /// Mass it adds to a craft when fitted (RQ-S-22).
+    pub mass: f32,
+    /// A fitted engine's speed factor on the strategic map (the original: × 1.15, × 1.4).
+    pub strategic_factor: f32,
 }
 
 /// The protection an item of `kind` gives when fitted: shield points per facing for a
@@ -600,6 +604,8 @@ pub struct Hull {
     /// Slot kind → count.
     pub slots: Vec<(String, u32)>,
     pub requires: Option<Expr>,
+    /// Mass, for `speed_by_mass` (RQ-S-22); 0 = use `speed`.
+    pub mass: f32,
 }
 
 /// `base_modules.<id>`.
@@ -675,6 +681,19 @@ pub struct BaseType {
     pub strike_damage: f32,
     /// Its station in an auto-resolved battle (`auto_resolve:`); `None`: no station.
     pub auto_resolve: Option<super::autoresolve::StationDef>,
+}
+
+/// `shipments:` — deliveries carried by the outposts' freighters (RQ-S-19/21, unknowns §2):
+/// purchases and finished manufacture queue as shipments; an idle freighter at an outpost
+/// loads them in order into `capacity` units (a hull fills it), flies to the base at
+/// `speed` map units an hour, unloads for `unload` and refuels for `refuel` hours, and flies
+/// home.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ShipmentRules {
+    pub capacity: f32,
+    pub speed: f32,
+    pub unload: f32,
+    pub refuel: f32,
 }
 
 /// `manufacture:` — production by outpost technicians (RQ-S-09, README §2.5): capacity is
@@ -839,6 +858,12 @@ pub struct StrategyDef {
     pub star_classes: Vec<StarClass>,
     pub research: Vec<Topic>,
     pub research_model: ResearchModel,
+    /// Deliveries by outpost freighter (`shipments:`), if the campaign has them.
+    pub shipments: Option<ShipmentRules>,
+    /// Strategic speed by mass (`speed_by_mass: [[mass bound, map units a second], …]`,
+    /// RQ-S-22): a craft whose hull has a `mass` moves at its band's speed × 3600 an hour,
+    /// times its fitted engines' best `strategic_factor`. Empty: hull `speed`.
+    pub speed_by_mass: Vec<[f32; 2]>,
     /// Production by outpost technicians (`manufacture:`), if the campaign has it.
     pub manufacture: Option<ManufactureRules>,
     /// Outposts as campaign objects (`outposts:`), if the campaign has them.
@@ -1311,6 +1336,8 @@ impl StrategyDef {
                 requires: cond(req_text(g, &TECH).as_deref(), &format!("items.{id}.requires"), errors),
                 rounds: g.num("rounds").unwrap_or(1.0).max(1.0) as u32,
                 protection: protection_of(g.str("kind").unwrap_or("goods"), g).unwrap_or(0.0),
+                mass: g.num("mass").unwrap_or(0.0),
+                strategic_factor: g.num("strategic_factor").unwrap_or(1.0),
             })
             .collect();
         let hulls: Vec<Hull> = of(defs, "hulls")
@@ -1334,6 +1361,7 @@ impl StrategyDef {
                     speed: g.num("speed").unwrap_or(1000.0).max(1.0),
                     slots,
                     requires: cond(req_text(g, &TECH).as_deref(), &format!("hulls.{id}.requires"), errors),
+                    mass: g.num("mass").unwrap_or(0.0),
                 }
             })
             .collect();
@@ -1391,6 +1419,35 @@ impl StrategyDef {
                 auto_resolve: super::autoresolve::StationDef::parse(g),
             })
             .collect();
+        let shipments = global("shipments").map(|n| {
+            let g = Get(&n);
+            ShipmentRules {
+                capacity: g.num("capacity").unwrap_or(100.0).max(1.0),
+                speed: g.num("speed").unwrap_or(135.0).max(1.0),
+                unload: hours(g, "unload").unwrap_or(0.5),
+                refuel: hours(g, "refuel").unwrap_or(1.0),
+            }
+        });
+        let speed_by_mass: Vec<[f32; 2]> = global("speed_by_mass")
+            .and_then(|n| {
+                n.as_seq().map(|rows| {
+                    rows.iter()
+                        .filter_map(|r| {
+                            match r
+                                .as_seq()?
+                                .iter()
+                                .filter_map(|v| v.as_str()?.trim().parse().ok())
+                                .collect::<Vec<f32>>()
+                                .as_slice()
+                            {
+                                [m, v] => Some([*m, *v]),
+                                _ => None,
+                            }
+                        })
+                        .collect()
+                })
+            })
+            .unwrap_or_default();
         let manufacture = global("manufacture").map(|n| {
             let g = Get(&n);
             ManufactureRules {
@@ -1676,6 +1733,8 @@ impl StrategyDef {
             research_model,
             outposts,
             manufacture,
+            shipments,
+            speed_by_mass,
             items,
             hulls,
             modules,
@@ -1951,6 +2010,17 @@ fn sections_core() -> Vec<super::schema::Field> {
             "research topics",
         ),
         f(
+            "shipments",
+            Ty::Struct(vec![
+                f("capacity", Ty::Num, "cargo units a freighter holds (100)"),
+                f("speed", Ty::Num, "a freighter's map units an hour (135)"),
+                f("unload", Ty::Qty(Unit::Time), "unloading time (30 min)"),
+                f("refuel", Ty::Qty(Unit::Time), "refuelling time (1 h)"),
+            ]),
+            "deliveries carried by the outposts' freighters",
+        ),
+        f("speed_by_mass", Ty::List(Box::new(Ty::Numbers(2))), "[mass bound, map units a second] bands, rising"),
+        f(
             "manufacture",
             Ty::Struct(vec![
                 f("per_outpost", Ty::Num, "technicians an outpost gives (10)"),
@@ -2026,6 +2096,8 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("requires", expr(), "available when this holds"),
                 f("rounds", Ty::Num, "missiles: rounds one missile slot holds"),
                 f("protection", Ty::Num, "shield: points per facing; armor: armour points"),
+                f("mass", Ty::Num, "mass it adds when fitted (speed_by_mass)"),
+                f("strategic_factor", Ty::Num, "an engine's strategic speed factor"),
             ])),
             "equipment and goods",
         ),
@@ -2036,6 +2108,7 @@ fn sections_core() -> Vec<super::schema::Field> {
                 f("prod_time", Ty::Num, "work units to manufacture"),
                 f("upkeep", Ty::Num, "per month"),
                 f("speed", Ty::Num, "map units per hour"),
+                f("mass", Ty::Num, "mass, for speed_by_mass (0: speed)"),
                 f("slots", nums(), "slot kind: count"),
                 f("components", nums(), "logistics: components a main base builds one from"),
                 f("requires", expr(), "available when this holds"),

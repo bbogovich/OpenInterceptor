@@ -142,9 +142,11 @@ research:
 
 hulls:
   # One shield and one armour slot beside the original's mount counts (DERIVED).
-  lightning: {inherit: original:GameSettings.ini/Ship_IntType1, speed: 3000, slots: {shield: 1, armor: 1}}   # speed DERIVED
-  firestar: {inherit: original:GameSettings.ini/Ship_IntType2, speed: 3600, slots: {shield: 1, armor: 1}}
-  avenger: {inherit: original:GameSettings.ini/Ship_IntType3, speed: 4200, slots: {shield: 1, armor: 1}}
+  # Strategic speed by mass (RQ-S-22, unknowns §2.3, VERIFIED): the hulls' base masses; with
+  # speed_by_mass below, `speed` is only a fallback.
+  lightning: {inherit: original:GameSettings.ini/Ship_IntType1, speed: 3000, mass: 6700, slots: {shield: 1, armor: 1}}
+  firestar: {inherit: original:GameSettings.ini/Ship_IntType2, speed: 3600, mass: 12700, slots: {shield: 1, armor: 1}}
+  avenger: {inherit: original:GameSettings.ini/Ship_IntType3, speed: 4200, mass: 22700, slots: {shield: 1, armor: 1}}
 
 # Missile racks: rounds per missile slot, the launchers' Rounds (VERIFIED,
 # GameSettings.ini *Launcher; flight README §5.2: Rounds fills the mount).
@@ -159,6 +161,17 @@ items:
   cloaking_torpedo: {rounds: 2}
   doppelganger: {rounds: 1}
   nova_bomb: {rounds: 1}
+  # Fitted mass and engines (RQ-S-22, unknowns §2.3): a shield adds 250, engines 2 / 3 move a
+  # craft x 1.15 / x 1.4 (VERIFIED); armour 150 / 300 / 450 (the RE's "about 150 - 450":
+  # DERIVED). Missiles' masses per round (table 0x65f210) are not read.
+  shield_type1: {mass: 250}
+  shield_type2: {mass: 250}
+  shield_type3: {mass: 250}
+  armor_type1: {mass: 150}
+  armor_type2: {mass: 300}
+  armor_type3: {mass: 450}
+  engine_type2: {strategic_factor: 1.15}
+  engine_type3: {strategic_factor: 1.4}
   # Artefacts: recovered by salvage only (no price, so never in the market).
   aereon_corpse: {name: Aereon corpse, kind: artefact}
   ethereal_corpse: {name: Ethereal corpse, kind: artefact}
@@ -237,6 +250,15 @@ base_types:
     # chart's SD (DERIVED; the original's is the generator's current pool).
     auto_resolve: {shields: 500, defence: 1000, offence: [0.65, 0.95], evasion: [0.65, 0.95], return_fire: [25, 124]}
 
+# Deliveries by the outposts' freighters (RQ-S-19/21, unknowns §2.1 - §2.2, VERIFIED): bought
+# and manufactured goods queue at the outposts; an idle freighter loads 100 units (a ship fills
+# it), flies at 0.0375 units a second (135 an hour, its 157,000 mass), unloads 30 minutes and
+# refuels an hour. Its return trip home is DERIVED.
+shipments: {capacity: 100, speed: 135, unload: 30min, refuel: 1h}
+
+# Map speed by mass (unknowns §2.3, VERIFIED): [upper mass bound, map units a second].
+speed_by_mass: [[7001, 0.1875], [15001, 0.165], [25001, 0.15], [50001, 0.135], [75001, 0.075], [100000, 0.06], [1000000000, 0.0375]]
+
 # Manufacturing by the outposts' technicians (RQ-S-09, README §2.5, VERIFIED): 10 per outpost
 # and 10 per OPP; a job gains a work unit (the INI's ProdTime is in technician-hours) per
 # technician-hour.
@@ -267,26 +289,28 @@ outposts:
 
 # Alien and pirate activity (DERIVED: the alien strategist replaces these rolls in Stage 5).
 raids:
+  # speed: the fleet's slowest ship by mass (§2.3, VERIFIED) x the plan's random 0.75 - 0.95
+  # (its middle 0.85: DERIVED): wraith 574, spectre 505, alien freighters 115, pirates 459.
   # salvage_items: the artefacts a won battle may recover besides the destroyed ships' fits
   # (salvage_fits): the alien corpses (AlienCorpseGoodies, VERIFIED; which raid yields which
   # race is DERIVED).
   # Alien flights seen by a base's sensors turn on that base with 25 + 10 x level %
   # (react_on_detect; strategy README §6.3: the chance VERIFIED, the re-tasking DERIVED).
-  alien_probe: {name: Alien probe, mission: destroy_alien_probe, faction: alien, every: 3d, chance: 60%, target: system, speed: 1500, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
+  alien_probe: {name: Alien probe, mission: destroy_alien_probe, faction: alien, every: 3d, chance: 60%, target: system, speed: 574, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
                 kinds: [communications_probe, comm_jammer_probe, ecm_probe, intel_probe, intel_jammer_probe, hunter_probe, sensor_probe]}
-  deep_space_contact: {name: Alien squadron, mission: deep_space_encounter, faction: alien, every: 4d, chance: 50%, target: system, speed: 1800, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
+  deep_space_contact: {name: Alien squadron, mission: deep_space_encounter, faction: alien, every: 4d, chance: 50%, target: system, speed: 505, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
                    salvage_items: [{item: sectoid_corpse, goodies: alien_corpse}, {item: muton_corpse, goodies: alien_corpse}, {item: aereon_corpse, goodies: alien_corpse},
                      {item: ethereal_corpse, goodies: alien_corpse}, {item: psilord_corpse, goodies: alien_corpse}]}
-  base_attack: {name: Alien strike on a base, mission: xcom_base_defense, faction: alien, every: 7d, chance: 40%, target: base, speed: 1600, requires: day >= 14, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
+  base_attack: {name: Alien strike on a base, mission: xcom_base_defense, faction: alien, every: 7d, chance: 40%, target: base, speed: 505, requires: day >= 14, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
                    salvage_items: [{item: sectoid_corpse, goodies: alien_corpse}, {item: muton_corpse, goodies: alien_corpse}, {item: aereon_corpse, goodies: alien_corpse},
                      {item: ethereal_corpse, goodies: alien_corpse}, {item: psilord_corpse, goodies: alien_corpse}]}
-  heavy_base_attack: {name: Alien assault on a base, mission: xcom_base_defense_heavy, faction: alien, every: 10d, chance: 30%, target: base, speed: 1600, requires: day >= 60, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
+  heavy_base_attack: {name: Alien assault on a base, mission: xcom_base_defense_heavy, faction: alien, every: 10d, chance: 30%, target: base, speed: 505, requires: day >= 60, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]},
                    salvage_items: [{item: sectoid_corpse, goodies: alien_corpse}, {item: muton_corpse, goodies: alien_corpse}, {item: aereon_corpse, goodies: alien_corpse},
                      {item: ethereal_corpse, goodies: alien_corpse}, {item: psilord_corpse, goodies: alien_corpse}]}
-  alien_freighters: {name: Alien freighter convoy, mission: ambush_alien_freighters, faction: alien, every: 6d, chance: 40%, target: system, speed: 1200, requires: day >= 20, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]}}
+  alien_freighters: {name: Alien freighter convoy, mission: ambush_alien_freighters, faction: alien, every: 6d, chance: 40%, target: system, speed: 115, requires: day >= 20, react_on_detect: {per_level: [25%, 35%, 45%, 55%, 65%]}}
   # The Doomsday component convoys: launched by the plan (plans.doomsday), not by the roll.
-  doomsday_convoy: {name: Alien Doomsday convoy, mission: ambush_alien_freighters_escorted, faction: alien, every: 30d, chance: 0%, target: system, speed: 1200}
-  pirates: {name: Pirate squadron, mission: ambush_pirate_squadron, faction: pirate, every: 8d, chance: 35%, target: system, speed: 2000, requires: day >= 10}
+  doomsday_convoy: {name: Alien Doomsday convoy, mission: ambush_alien_freighters_escorted, faction: alien, every: 30d, chance: 0%, target: system, speed: 115}
+  pirates: {name: Pirate squadron, mission: ambush_pirate_squadron, faction: pirate, every: 8d, chance: 35%, target: system, speed: 459, requires: day >= 10}
 
 # Off-screen battles (RQ-C-18/20; flight README §13, VERIFIED): the original's hourly
 # simulation - the first round 5 h in, then hourly; a side's score rand % 50 + 50 x its share

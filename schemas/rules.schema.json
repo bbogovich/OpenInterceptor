@@ -1156,6 +1156,13 @@
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
         }}},
+    "shipments": {"description": "deliveries carried by the outposts' freighters", "type": "object", "additionalProperties": false, "properties": {
+        "capacity": {"description": "cargo units a freighter holds (100)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "speed": {"description": "a freighter's map units an hour (135)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "unload": {"description": "unloading time (30 min)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "refuel": {"description": "refuelling time (1 h)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+      }},
+    "speed_by_mass": {"description": "[mass bound, map units a second] bands, rising", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}},
     "manufacture": {"description": "production by outpost technicians", "type": "object", "additionalProperties": false, "properties": {
         "per_outpost": {"description": "technicians an outpost gives (10)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
         "per_opp": {"description": "technicians each of its OPPs adds (10)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
@@ -1202,6 +1209,8 @@
           "requires": {"description": "available when this holds", "type": "string"},
           "rounds": {"description": "missiles: rounds one missile slot holds", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "protection": {"description": "shield: points per facing; armor: armour points", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "mass": {"description": "mass it adds when fitted (speed_by_mass)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "strategic_factor": {"description": "an engine's strategic speed factor", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -1211,6 +1220,7 @@
           "prod_time": {"description": "work units to manufacture", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "upkeep": {"description": "per month", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "speed": {"description": "map units per hour", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "mass": {"description": "mass, for speed_by_mass (0: speed)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "slots": {"description": "slot kind: count", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
           "components": {"description": "logistics: components a main base builds one from", "type": "object", "additionalProperties": {"anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}},
           "requires": {"description": "available when this holds", "type": "string"},

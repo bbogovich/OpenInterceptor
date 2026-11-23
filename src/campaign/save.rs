@@ -25,6 +25,22 @@ use crate::formats::yaml::{self, Node, Value as Y};
 /// The save format version.
 pub const FORMAT: u32 = 1;
 
+/// The save's subsystems and their versions (RQ-S-28, after the original's tagged chunks,
+/// unknowns §12.6): written as `sections:`; a save whose section has another version is
+/// refused with a message naming it, instead of being half read. Raise a section's version
+/// when its layout changes in a way older readers would misread.
+pub const SECTIONS: [(&str, u32); 9] = [
+    ("player", 1),
+    ("bases", 2),
+    ("craft", 1),
+    ("pilots", 1),
+    ("contacts", 1),
+    ("deliveries", 1),
+    ("outposts", 1),
+    ("history", 1),
+    ("story", 2),
+];
+
 /// A pack a save was made with.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PackRef {
@@ -412,6 +428,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
     };
     let doc = map(vec![
         ("save", n(FORMAT as f64)),
+        ("sections", map(SECTIONS.iter().map(|(k, v)| (*k, n(*v as f64))).collect())),
         ("campaign", s(campaign_id)),
         ("packs", seq(packs.iter().map(|p| map(vec![("id", s(&p.id)), ("version", s(&p.version))])).collect())),
         ("hours", n(c.hours)),
@@ -575,6 +592,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
                         ("system", n(o.system as f64)),
                         ("funding", n(o.funding as f64)),
                         ("founded", n(o.founded)),
+                        ("freighter_free", n(o.freighter_free)),
                         ("opps", seq(o.opps.iter().map(|(k, r)| nums(&[*k as f64, *r as f64])).collect())),
                     ])
                 })
@@ -637,6 +655,17 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         .collect();
     let doc = yaml::parse(text).map_err(|e| format!("save: {e}"))?;
     let g = Get(&doc);
+    // Each subsystem's version must be the one this app reads (saves made before the
+    // sections were versioned have none and load as before).
+    if let Some(sec) = g.node("sections").map(Get) {
+        for (name, version) in SECTIONS {
+            if let Some(v) = sec.num(name) {
+                if v as u32 != version {
+                    return Err(format!("save: its {name} section is version {v}; this app reads version {version}"));
+                }
+            }
+        }
+    }
     // Field readers with bounds checks against the rules now loaded.
     let bad = |what: &str| format!("save: {what} does not match the loaded rules (was a mod changed?)");
     let f = |g: Get, k: &str| g.str(k).and_then(|t| t.parse::<f64>().ok()).unwrap_or(0.0);
@@ -868,6 +897,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
                     system: (f(g, "system") as usize).min(systems_len.saturating_sub(1)),
                     funding: f(g, "funding") as f32,
                     founded: f(g, "founded"),
+                    freighter_free: f(g, "freighter_free"),
                     opps: g
                         .node("opps")
                         .and_then(|n| n.as_seq())
@@ -1111,6 +1141,9 @@ mod tests {
         assert_eq!(header(&text).unwrap().0, "default");
         let back = read(&text, &d, &packs).unwrap();
         assert_eq!(back, c, "everything round-trips");
+        // A section of another version is refused, naming it (RQ-S-28).
+        let newer = text.replace("story: 2", "story: 3");
+        assert!(read(&newer, &d, &packs).unwrap_err().contains("story section is version 3"));
         // And the game continues identically from the save.
         let (mut a, mut b) = (c.clone(), back);
         a.advance(&d, 300.0);

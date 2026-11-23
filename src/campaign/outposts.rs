@@ -31,6 +31,8 @@ pub struct Outpost {
     pub founded: f64,
     /// Its OPPs: `(body class 1 – 3, richness 0 – 4)`.
     pub opps: Vec<(u8, u8)>,
+    /// The hour its freighter is back and idle at the outpost (`shipments:`).
+    pub freighter_free: f64,
 }
 
 impl Outpost {
@@ -76,13 +78,85 @@ impl Campaign {
         self.outposts.iter().map(|o| rules.per_outpost + rules.per_opp * o.opps.len() as f32).sum()
     }
 
+    /// The outposts' freighters (RQ-S-21, unknowns §2.1 – §2.2): each one idle at its
+    /// outpost loads the queued deliveries in order into `capacity` units — a hull fills the
+    /// freighter (only an empty one), an item takes `size` × count units and a stack that
+    /// does not fit is split — all for the first one's base; then it flies there at `speed`,
+    /// unloads, refuels and flies home (DERIVED: the return trip). The idle freighter nearest
+    /// the base goes first (DERIVED: the exe takes them in list order).
+    pub fn load_freighters(&mut self, def: &StrategyDef) {
+        let Some(rules) = def.shipments.clone() else { return };
+        loop {
+            let Some(first) = self.deliveries.iter().position(|d| d.arrive_at >= QUEUED) else { return };
+            let base = self.deliveries[first].base;
+            let to = self.systems[self.bases[base].system].pos;
+            let now = self.hours;
+            let Some(o) =
+                (0..self.outposts.len()).filter(|&o| self.outposts[o].freighter_free <= now).min_by(|&a, &b| {
+                    let d = |o: usize| distance(self.systems[self.outposts[o].system].pos, to);
+                    d(a).total_cmp(&d(b))
+                })
+            else {
+                return;
+            };
+            let trip = distance(self.systems[self.outposts[o].system].pos, to) as f64 / rules.speed as f64;
+            let arrive = now + trip + rules.unload as f64;
+            let mut room = rules.capacity;
+            let mut k = first;
+            while k < self.deliveries.len() && room > 0.0 {
+                let d = &self.deliveries[k];
+                if d.arrive_at < QUEUED || d.base != base {
+                    k += 1;
+                    continue;
+                }
+                match d.product {
+                    Product::Hull(_) => {
+                        // A ship takes the whole freighter, and only an empty one.
+                        if room == rules.capacity {
+                            self.deliveries[k].arrive_at = arrive;
+                            room = 0.0;
+                        }
+                        break;
+                    }
+                    Product::Item(i) => {
+                        let size = def.items[i].size.max(1e-3);
+                        let fits = ((room + 1e-3) / size).floor().min(d.count as f32) as u32;
+                        if fits == 0 {
+                            break;
+                        }
+                        if fits < d.count {
+                            // Split: the rest waits for the next trip.
+                            let mut rest = self.deliveries[k].clone();
+                            rest.count -= fits;
+                            self.deliveries[k].count = fits;
+                            self.deliveries.insert(k + 1, rest);
+                        }
+                        self.deliveries[k].arrive_at = arrive;
+                        room -= fits as f32 * size;
+                    }
+                }
+                k += 1;
+            }
+            if room == rules.capacity {
+                return; // nothing could be loaded
+            }
+            self.outposts[o].freighter_free = arrive + rules.refuel as f64 + trip;
+        }
+    }
+
     /// Founds an outpost in system `sys`: funding `start_funding`, one OPP per planet of the
     /// system (at least `min_opps`, at most 20), each of a random body class and richness
     /// (DERIVED: the original's per-body classes are not read).
     pub fn found_outpost(&mut self, rules: &OutpostRules, sys: usize) {
         let n = (self.systems[sys].planets as u32).max(rules.min_opps).min(20);
         let opps = (0..n).map(|_| (roll(&mut self.rng, 1, 3) as u8, roll(&mut self.rng, 0, 4) as u8)).collect();
-        self.outposts.push(Outpost { system: sys, funding: rules.start_funding, founded: self.hours, opps });
+        self.outposts.push(Outpost {
+            system: sys,
+            funding: rules.start_funding,
+            founded: self.hours,
+            opps,
+            freighter_free: 0.0,
+        });
     }
 
     /// Systems an outpost may be founded in, best first: open, no outpost yet, not a black
@@ -210,7 +284,7 @@ mod tests {
         // Three class-2, richness-2 OPPs at Veteran: 225 × 2,700 × 0.75 = 455,625.
         let (d, mut c) = with_outposts("");
         let rules = d.outposts.clone().unwrap();
-        c.outposts.push(Outpost { system: 1, funding: 0.75, founded: 0.0, opps: vec![(2, 2); 3] });
+        c.outposts.push(Outpost { system: 1, funding: 0.75, founded: 0.0, opps: vec![(2, 2); 3], freighter_free: 0.0 });
         assert_eq!(c.outposts[0].income(&rules, 10.0), 0.0, "too young to pay");
         assert_eq!(c.outposts[0].income(&rules, 700.0), 455_625.0);
         let before = c.money;
@@ -245,7 +319,7 @@ mod tests {
     #[test]
     fn scores_go_to_systems_with_outposts_else_to_the_pool() {
         let (_, mut c) = with_outposts("");
-        c.outposts.push(Outpost { system: 1, funding: 0.75, founded: 0.0, opps: vec![(1, 0)] });
+        c.outposts.push(Outpost { system: 1, funding: 0.75, founded: 0.0, opps: vec![(1, 0)], freighter_free: 0.0 });
         c.credit_score(100.0, Some(1));
         c.credit_score(-40.0, Some(1));
         c.credit_score(50.0, Some(0));
@@ -258,7 +332,7 @@ mod tests {
     fn a_bad_month_lowers_funding_and_withdraws_and_a_good_one_grows() {
         let (d, mut c) =
             with_outposts(", growth: {per_level: [[1, 4], [1, 4], [0, 2], [1, 1], [1, 1]], max_per_month: 3, max: 16}");
-        c.outposts.push(Outpost { system: 1, funding: 0.04, founded: 0.0, opps: vec![(1, 0)] });
+        c.outposts.push(Outpost { system: 1, funding: 0.04, founded: 0.0, opps: vec![(1, 0)], freighter_free: 0.0 });
         // The aliens dominate system 1: e far below −1000, a step of −21.
         c.credit_score(-5000.0, Some(1));
         let money = c.money;
@@ -272,11 +346,88 @@ mod tests {
         assert_eq!(c.pool_scores, [0.0, 0.0], "scores reset each month");
         // Funding never passes the ceiling.
         let rules = d.outposts.clone().unwrap();
-        c.outposts.push(Outpost { system: 2, funding: 0.94, founded: 0.0, opps: vec![(1, 0)] });
+        c.outposts.push(Outpost { system: 2, funding: 0.94, founded: 0.0, opps: vec![(1, 0)], freighter_free: 0.0 });
         c.credit_score(5000.0, Some(2));
         c.outpost_month(&d);
         let o = c.outposts.iter().find(|o| o.system == 2).unwrap();
         assert!(o.funding <= rules.max_funding);
+    }
+
+    #[test]
+    fn freighters_carry_queued_deliveries_in_order() {
+        // One outpost at system b (3,000 units from the base at a), freighters of 10
+        // units at 1,000 units an hour; items of size 4.
+        let text = SAMPLE.replace(
+            "  laser: {kind: beam, cost: 1000, sell_price: 500}",
+            "  laser: {kind: beam, cost: 1000, sell_price: 500, size: 4}",
+        )
+            + "outposts: {yield_table: [[100]]}\nshipments: {capacity: 10, speed: 1000, unload: 30min, refuel: 1h}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        c.outposts.push(Outpost { system: 1, funding: 0.75, founded: 0.0, opps: vec![(1, 0)], freighter_free: 0.0 });
+        let laser = d.item("laser").unwrap();
+        let rocket = d.hull("rocket").unwrap();
+        // Five lasers (20 units: two loads split 2 + 2 + 1), then a hull (a load of its own).
+        c.buy(&d, 0, Product::Item(laser), 5).unwrap();
+        c.buy(&d, 0, Product::Hull(rocket), 1).unwrap();
+        assert!(c.deliveries.iter().all(|x| x.arrive_at >= QUEUED), "queued at the outposts");
+        c.load_freighters(&d);
+        // The first trip: two lasers (8 of 10 units), arriving after 3 h + 0.5 h unloading.
+        let loaded: Vec<&Delivery> = c.deliveries.iter().filter(|x| x.arrive_at < QUEUED).collect();
+        assert_eq!(loaded.len(), 1);
+        assert_eq!((loaded[0].count, loaded[0].arrive_at), (2, 3.5));
+        // Back after unloading, refuelling and the 3 h home: 3.5 + 1 + 3.
+        assert_eq!(c.outposts[0].freighter_free, 7.5);
+        let stock = c.stock_of(laser);
+        c.advance(&d, 4.0);
+        assert_eq!(c.stock_of(laser), stock + 2, "the first two arrived");
+        // Later trips bring the rest, then the hull alone.
+        c.advance(&d, 48.0);
+        assert_eq!(c.stock_of(laser), stock + 5);
+        assert!(c.deliveries.is_empty(), "{:?}", c.deliveries);
+    }
+
+    #[test]
+    fn a_ship_with_no_bay_is_refunded() {
+        let text = SAMPLE.to_string() + "outposts: {yield_table: [[100]]}\nshipments: {capacity: 100, speed: 100000}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        c.outposts.push(Outpost { system: 1, funding: 0.75, founded: 0.0, opps: vec![(1, 0)], freighter_free: 0.0 });
+        let rocket = d.hull("rocket").unwrap();
+        // Fill the hangar (the hub houses 4; the sample starts with 2 craft).
+        while (c.craft.iter().filter(|k| k.base == 0).count() as u32) < c.hangar(&d, 0) {
+            c.add_craft(&d, rocket, 0);
+        }
+        let craft = c.craft.len();
+        c.buy(&d, 0, Product::Hull(rocket), 1).unwrap();
+        let money = c.money;
+        c.advance(&d, 3.0);
+        assert_eq!(c.craft.len(), craft, "no room: not delivered");
+        assert_eq!(c.money, money + d.hulls[rocket].cost as f64, "refunded");
+    }
+
+    #[test]
+    fn strategic_speed_follows_mass_bands_and_engines() {
+        let table = [[7001.0, 0.1875], [15001.0, 0.165], [100000.0, 0.06], [f32::MAX, 0.0375]];
+        assert_eq!(speed_band(&table, 6700.0), 0.1875);
+        assert_eq!(speed_band(&table, 12700.0), 0.165);
+        assert_eq!(speed_band(&table, 157000.0), 0.0375, "freighters: the slowest band");
+        let text = SAMPLE
+            .replace("speed: 1000, slots: {beam: 2}}", "speed: 1000, mass: 6700, slots: {beam: 2, engine: 1}}")
+            .replace("items:\n", "items:\n  engine2: {kind: engine, strategic_factor: 1.15, mass: 0}\n")
+            + "speed_by_mass: [[7001, 0.1875], [15001, 0.165]]\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        assert!((c.craft_speed(&d, 0) - 0.1875 * 3600.0).abs() < 1e-3);
+        let e = d.item("engine2").unwrap();
+        c.craft[0].fit.push(("engine".into(), e));
+        assert!((c.craft_speed(&d, 0) - 0.1875 * 3600.0 * 1.15).abs() < 1e-2);
     }
 
     #[test]

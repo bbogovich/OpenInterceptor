@@ -372,6 +372,15 @@ impl MonthRecord {
     }
 }
 
+/// A delivery's `arrive_at` while it waits at the outposts for a freighter (`shipments:`).
+pub const QUEUED: f64 = 1e18;
+
+/// The speed (map units a second) of `mass` in a `speed_by_mass` table: the first band
+/// whose bound it does not pass, else the last.
+pub fn speed_band(table: &[[f32; 2]], mass: f32) -> f32 {
+    table.iter().find(|[bound, _]| mass <= *bound).or(table.last()).map_or(0.0, |[_, v]| *v)
+}
+
 /// Hours in a campaign month (reports, salaries, maintenance).
 pub const MONTH: f64 = 720.0;
 
@@ -986,6 +995,21 @@ impl Campaign {
         out
     }
 
+    /// A craft's map speed, map units an hour (RQ-S-22): with `speed_by_mass` and a hull
+    /// `mass`, the band of its mass (hull + fitted items, a missile's per round) × 3600 ×
+    /// its fitted engines' best `strategic_factor`; else the hull's `speed`.
+    pub fn craft_speed(&self, def: &StrategyDef, k: usize) -> f32 {
+        let cr = &self.craft[k];
+        let hull = &def.hulls[cr.hull];
+        if def.speed_by_mass.is_empty() || hull.mass <= 0.0 {
+            return hull.speed;
+        }
+        let fitted = cr.fit.iter().map(|(_, i)| &def.items[*i]);
+        let mass = hull.mass + fitted.clone().map(|it| it.mass * it.rounds.max(1) as f32).sum::<f32>();
+        let factor = fitted.map(|it| it.strategic_factor).fold(1.0f32, f32::max);
+        speed_band(&def.speed_by_mass, mass) * 3600.0 * factor
+    }
+
     /// The map's centre: a generated map's middle (the original's (30000, 30000) on its
     /// 60,000-unit map), else the middle of the systems' bounding box.
     pub fn map_centre(&self, def: &StrategyDef) -> [f32; 2] {
@@ -1422,7 +1446,7 @@ impl Campaign {
             product,
             base,
             count,
-            arrive_at: self.hours + def.delivery as f64,
+            arrive_at: if def.shipments.is_some() { QUEUED } else { self.hours + def.delivery as f64 },
             held: false,
         });
         Ok(())
@@ -1645,7 +1669,12 @@ impl Campaign {
                     if job.count == 0 {
                         self.bases[b].jobs.remove(0);
                     }
-                    self.receive(def, b, product, 1);
+                    // With shipments the output is carried from an outpost (RQ-S-21).
+                    if def.shipments.is_some() {
+                        self.deliveries.push(Delivery { product, base: b, count: 1, arrive_at: QUEUED, held: false });
+                    } else {
+                        self.receive(def, b, product, 1);
+                    }
                 }
             }
             // What the base left over goes on to the next (the technician pool).
@@ -1700,8 +1729,29 @@ impl Campaign {
                     continue;
                 }
             }
+            // A ship with no bay free is sent back and refunded (RQ-S-19, README §2.6).
+            if let (Product::Hull(h), true) = (d.product, def.shipments.is_some()) {
+                let craft_here = self.craft.iter().filter(|c| c.base == d.base).count() as u32;
+                let room = self.hangar(def, d.base).saturating_sub(craft_here);
+                if room < d.count {
+                    let back = d.count - room;
+                    let refund = def.hulls[h].cost as f64 * back as f64;
+                    self.money += refund;
+                    let t = format!(
+                        "{}: no hangar bay for {back} x {}; returned, {refund:.0} refunded",
+                        self.bases[d.base].name, def.hulls[h].id
+                    );
+                    notice(self, t, NoticeKind::Delivery, events);
+                    d.count = room;
+                    if room == 0 {
+                        continue;
+                    }
+                }
+            }
             self.receive(def, d.base, d.product, d.count);
         }
+        // The outposts' freighters load what is queued (RQ-S-21).
+        self.load_freighters(def);
         // Incomes and expenses.
         for k in 0..self.next_flow.len() {
             if now >= self.next_flow[k] {
@@ -1948,7 +1998,7 @@ impl Campaign {
         // Interceptions fly to their contacts; meeting one is a battle.
         for k in 0..self.craft.len() {
             let Some((id, mut pos)) = self.craft[k].away else { continue };
-            let speed = def.hulls[self.craft[k].hull].speed * dt as f32;
+            let speed = self.craft_speed(def, k) * dt as f32;
             // Lane stops first (to the contact's system, or home).
             if let Some(next) = self.craft[k].route.first().copied() {
                 if travel(&mut pos, next, speed) {
@@ -3228,7 +3278,13 @@ mod tests {
         let rules = d.outposts.clone().unwrap();
         c.outposts.clear();
         for s in [1, 2] {
-            c.outposts.push(super::outposts::Outpost { system: s, funding: 0.75, founded: 0.0, opps: vec![(1, 0); 2] });
+            c.outposts.push(super::outposts::Outpost {
+                system: s,
+                funding: 0.75,
+                founded: 0.0,
+                opps: vec![(1, 0); 2],
+                freighter_free: 0.0,
+            });
         }
         let _ = rules;
         assert_eq!(c.technicians(d.manufacture.as_ref().unwrap()), 60.0);
