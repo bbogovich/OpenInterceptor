@@ -396,7 +396,8 @@ empty one; an item takes `size` × count units and a stack that does not fit is 
 waiting for the next trip — all bound for the first one's base. It flies there at `speed` map
 units an hour (default 135), takes `unload` (30 min) to unload and `refuel` (1 h) to refuel, and
 flies home. A ship arriving at a base with no free hangar bay is sent back and its price
-refunded. `interceptor` follows the original (unknowns §2.1 – §2.2, **verified**; the freighter's
+refunded. A hired pilot (app NEXT) is a shipment too: one cargo unit, "on the way" until a
+freighter lands them at the first base, lost with a lost delivery. `interceptor` follows the original (unknowns §2.1 – §2.2, **verified**; the freighter's
 0.0375 units a second is its 157,000 mass); the return trip home and taking the idle freighter
 nearest the base first are *derived*. Hired pilots and transfers between bases are not shipped
 yet. `default`: 300 units an hour, an hour to unload and two to refuel.
@@ -488,16 +489,29 @@ Without the section its raids follow their own `every` / `chance` schedules.
   outpost; the richest outpost with `richest` + `richest_per_level` × d, else a random one. The
   nearest A base with `min_queued` ships queued sends it, from its own system, and the ships leave
   the queue; with none, no raid.
+* **Sizes and escorts** (app NEXT). `raids.sizes: {<kind>: [[from, to), ...]}` gives a raid's ships
+  by target kind (`base`, `outpost`, `opp`, `freighter`) and difficulty level, capped by the ships
+  queued (all of them leave the queue; without a table it takes `min_queued`). `raids.escorts`
+  (`[{class, tech, after_month, kinds, chance, per_level}, ...]`): the first rule whose alien tech
+  level, month and target kind apply and whose roll wins adds one ship of `class`. The battle
+  uses them: its mission's first enemy role flies that many, the escort joins.
 * **Harassment** (RQ-S-23). Every `harass.every` + `every_per_level` × d hours each freighter in
   flight within `outpost_radius` of an alien outpost or `base_radius` of a base is attacked with
-  `chance` + `chance_per_level` × d: its cargo is lost.
+  `chance` + `chance_per_level` × d: since app NEXT a raid (`raids.freighter`, `sizes.freighter`
+  ships) sets out after it from the nearest alien place and follows it — intercept the raid to
+  save the freighter; if it comes within an hour's flight the cargo is lost; if the freighter lands
+  first the raid turns back. Without `raids.freighter` the cargo is lost at once.
 * **Income.** `outpost_income`: what each outpost older than `income_after` pays the treasury per
   [`strategist.economy`](story.md#strategist) income period (with two or more outposts).
 
 `interceptor` has the original's numbers: two A bases, 20 h, 8 bases, 12.5 days, 25 days, 6 h,
 the raid intervals 9 – 12 … 6 – 9 days, 5 / 25 / 40 + 5d %, 45 %, 25 %, 40 + 10d %, 4,000 / 2,000
 and 50 + 5d %; *derived*: two starting outposts, 15,000-unit distances, a queue of 6 (3 × two
-hangars), 3 ships a raid, 455,625 per outpost, the freighter's lost cargo; its planner raids are
+hangars), 455,625 per outpost, where a freighter's hunters come from; since app NEXT its raid sizes
+(unknowns §11.3: a base [5, 7) … [9, 13), an outpost [4, 6) … [7, 10), a platform [3, 5) … [5, 7),
+a freighter rand[1, d / 2 + 2); Beginner's base row held to [5, 7) is *derived*) and escorts at
+tech 3 (a Shade after month 5 at a base or outpost with 25 %, else a Phantasm with 25 + 5d %) are
+the original's (**verified**), and `freighter_attack` hunts freighters; its planner raids are
 `heavy_base_attack` / `base_attack`, `outpost_attack` and `opp_attack`. `--strategy-soak` prints
 the rival's places.
 
