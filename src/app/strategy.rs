@@ -357,6 +357,11 @@ pub struct StrategyScreen {
     socket: usize,
     /// `--hover`: where the map's labels take the cursor to be (design space; testbed).
     pub hover: Option<[f32; 2]>,
+    /// `--map-demo`: every rival place is drawn as known (testbed).
+    reveal_all: bool,
+    /// The freighters in flight this frame (filled once per frame, read by the map and
+    /// its labels; the buffer is reused).
+    flights: Vec<crate::campaign::outposts::FreighterFlight>,
     /// The map is the small overview (no names, no legend).
     minimap: bool,
     /// The base orders apply to.
@@ -542,6 +547,8 @@ impl StrategyScreen {
             map_round: false,
             map_labels: None,
             hover: None,
+            reveal_all: false,
+            flights: Vec::new(),
             socket: 0,
             hidden_panels: Vec::new(),
             levels: (Vec::new(), 1.0),
@@ -2053,6 +2060,7 @@ impl StrategyScreen {
             .filter(|l| l.font.as_deref().and_then(|f| ctx.ui.sheet(f)).is_some())
             .map(|l| (l, screen_px));
         let icons = self.star_icons(ctx, def);
+        self.campaign.freighters_in_flight_into(def, &mut self.flights);
         self.draw_map(&ctx.ui, def, map, s, origin, k, &icons);
         let next = self.draw_top(ctx, def, top, live, k);
         let ui = &ctx.ui;
@@ -2404,6 +2412,7 @@ impl StrategyScreen {
                         let (s, origin) = self.map_view(r);
                         self.map_labels = None;
                         let icons = self.star_icons(ctx, def);
+                        self.campaign.freighters_in_flight_into(def, &mut self.flights);
                         self.draw_map(&ctx.ui, def, r, s, origin, layout.scale * 0.6, &icons);
                         self.minimap = false;
                         self.levels.0 = levels;
@@ -2439,6 +2448,7 @@ impl StrategyScreen {
                             .filter(|l| l.font.as_deref().and_then(|f| ctx.ui.sheet(f)).is_some())
                             .map(|l| (l, layout));
                         let icons = self.star_icons(ctx, def);
+                        self.campaign.freighters_in_flight_into(def, &mut self.flights);
                         self.draw_map(&ctx.ui, def, r, s, origin, layout.scale, &icons);
                     }
                     WidgetKind::Info => {
@@ -3084,13 +3094,16 @@ impl StrategyScreen {
                 queued.push((text, d, cfg.base_rise, colour));
             }
         };
-        for ab in c.aliens.bases.iter().filter(|b| crate::campaign::aliens::known(c, def, b.system)) {
+        for ab in c.aliens.bases.iter().filter(|b| self.reveal_all || crate::campaign::aliens::known(c, def, b.system))
+        {
             other("ALIEN BASE".into(), c.systems[ab.system].pos, rgb(200, 100, 50));
         }
-        for o in c.aliens.outposts.iter().filter(|o| crate::campaign::aliens::known(c, def, o.system)) {
+        for o in
+            c.aliens.outposts.iter().filter(|o| self.reveal_all || crate::campaign::aliens::known(c, def, o.system))
+        {
             other("ALIEN OUTPOST".into(), c.systems[o.system].pos, rgb(200, 100, 50));
         }
-        for f in c.freighters_in_flight(def) {
+        for f in &self.flights {
             other("FREIGHTER".into(), f.pos, rgb(0, 120, 0));
         }
         for kk in c.contacts.iter().filter(|kk| kk.detected) {
@@ -3430,6 +3443,67 @@ impl StrategyScreen {
         }
     }
 
+    /// `--map-demo` (testbed, for screenshots): stages the map's objects next to the first
+    /// base — the rival's first base and outpost moved to the systems nearest it and shown
+    /// as known, a purchase loaded on an outpost freighter and flown part of the way, and a
+    /// contact beside the base fought off-screen.
+    pub fn map_demo(&mut self, ctx: &AppContext) {
+        let Some(def) = ctx.content.rules.strategy.as_ref() else { return };
+        self.reveal_all = true;
+        // A fixed seed: the same map and places every run.
+        self.campaign = Campaign::new(def, self.campaign.difficulty, 1);
+        let c = &mut self.campaign;
+        // Two hours on: the rival starts (its bases and outposts are founded).
+        c.advance(def, 2.0);
+        let Some(home) = c.bases.first().map(|b| b.system) else { return };
+        let here = c.systems[home].pos;
+        let mut near: Vec<usize> = (0..c.systems.len()).filter(|&s| s != home && !c.systems[s].hidden).collect();
+        let dist = |s: usize| {
+            let p = c.systems[s].pos;
+            ((p[0] - here[0]).powi(2) + (p[1] - here[1]).powi(2)).sqrt()
+        };
+        near.sort_by(|a, b| dist(*a).total_cmp(&dist(*b)));
+        if let (Some(b), Some(&s)) = (c.aliens.bases.first_mut(), near.first()) {
+            b.system = s;
+        }
+        if let (Some(o), Some(&s)) = (c.aliens.outposts.first_mut(), near.first()) {
+            o.system = s;
+        }
+        // A purchase on its way, from an outpost two systems away (the others' freighters
+        // kept busy so that one carries it).
+        if let Some(&s) = near.get(1) {
+            for (k, o) in c.outposts.iter_mut().enumerate() {
+                if k == 0 {
+                    o.system = s;
+                } else {
+                    o.freighter_free = f64::MAX;
+                }
+            }
+        }
+        if let Some(i) = (0..def.items.len()).find(|&i| def.items[i].cost > 0.0) {
+            let _ = c.buy(def, 0, Product::Item(i), 1);
+        }
+        c.load_freighters(def);
+        c.hours += 6.0;
+        // A contact beside the base, intercepted and fought off-screen.
+        let id = 9000;
+        c.contacts.push(crate::campaign::Contact {
+            id,
+            raid: 0,
+            pos: [here[0] + 900.0, here[1] - 600.0],
+            dest: here,
+            target_base: None,
+            detected: true,
+            route: Vec::new(),
+            plan: None,
+        });
+        if c.cheat_jump(id).is_ok() {
+            if let Err(e) = c.start_offscreen(def, &ctx.content.rules, id) {
+                self.say(format!("Map demo: {e}"));
+            }
+        }
+    }
+
     /// The star classes' map icons (`star_classes.<id>.icon`), by class index; the
     /// original's are keyed by their corner colour.
     fn star_icons(&mut self, ctx: &AppContext, def: &StrategyDef) -> Vec<Option<Texture2D>> {
@@ -3555,7 +3629,8 @@ impl StrategyScreen {
             let red = Color::from_rgba(220, 60, 40, 255);
             for o in &c.aliens.outposts {
                 let p = at(c.systems[o.system].pos);
-                if !inside(p) || !crate::campaign::aliens::known(c, def, o.system) || step % 6 >= 3 {
+                if !inside(p) || !(self.reveal_all || crate::campaign::aliens::known(c, def, o.system)) || step % 6 >= 3
+                {
                     continue;
                 }
                 match &self.marker_tex[2] {
@@ -3565,7 +3640,7 @@ impl StrategyScreen {
             }
             for ab in &c.aliens.bases {
                 let p = at(c.systems[ab.system].pos);
-                if !inside(p) || !crate::campaign::aliens::known(c, def, ab.system) {
+                if !inside(p) || !(self.reveal_all || crate::campaign::aliens::known(c, def, ab.system)) {
                     continue;
                 }
                 match &self.marker_tex[1] {
@@ -3574,7 +3649,7 @@ impl StrategyScreen {
                 }
             }
             // Freighters on their way with a load (the X-COM plan icon).
-            for f in c.freighters_in_flight(def) {
+            for f in &self.flights {
                 let p = at(f.pos);
                 if !inside(p) {
                     continue;
@@ -3592,7 +3667,7 @@ impl StrategyScreen {
                     let Some(kk) = c.contacts.iter().find(|kk| kk.id == o.contact) else { continue };
                     let p = at(kk.pos);
                     let q = 7.5 * k;
-                    draw_rectangle(p.x - q, p.y - q, 2.0 * q, 2.0 * q, Color::from_rgba(255, 50, 50, 25));
+                    draw_rectangle(p.x - q, p.y - q, 2.0 * q, 2.0 * q, Color::from_rgba(255, 50, 50, 64)); // level 25 (%)
                     draw_rectangle_lines(p.x - q, p.y - q, 2.0 * q, 2.0 * q, 1.0, Color::from_rgba(100, 100, 100, 255));
                 }
             }
@@ -3647,7 +3722,7 @@ impl StrategyScreen {
                 draw_circle_lines(p.x, p.y, 12.0, 2.0, YELLOW);
             }
             // With the original's labels its name shows on hover only.
-            if self.map_labels.is_none() {
+            if self.map_labels.is_none() && !self.minimap {
                 ui.text_in(&def.raids[kk.raid].name, p.x + 8.0, p.y + 14.0, 14.0 * k, Color::new(1.0, 0.5, 0.5, 1.0));
             }
         }

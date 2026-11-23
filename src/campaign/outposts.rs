@@ -71,9 +71,17 @@ impl Campaign {
     /// freighter is the outpost's whose `freighter_free` matches that trip. (The trip home
     /// is not shown.) One entry per freighter.
     pub fn freighters_in_flight(&self, def: &StrategyDef) -> Vec<FreighterFlight> {
-        let Some(ship) = def.shipments.as_ref() else { return Vec::new() };
+        let mut out = Vec::new();
+        self.freighters_in_flight_into(def, &mut out);
+        out
+    }
+
+    /// [`freighters_in_flight`](Self::freighters_in_flight) into a buffer the caller keeps
+    /// (cleared first): the per-frame draw reuses it instead of allocating.
+    pub fn freighters_in_flight_into(&self, def: &StrategyDef, out: &mut Vec<FreighterFlight>) {
+        out.clear();
+        let Some(ship) = def.shipments.as_ref() else { return };
         let now = self.hours;
-        let mut out: Vec<FreighterFlight> = Vec::new();
         for d in &self.deliveries {
             if d.arrive_at >= QUEUED || d.arrive_at <= now || d.base >= self.bases.len() {
                 continue;
@@ -95,7 +103,6 @@ impl Campaign {
             let pos = [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t];
             out.push(FreighterFlight { outpost: o, base: d.base, depart, arrive, pos });
         }
-        out
     }
 
     /// Credits a score of `v` to system `sys` (when it has an outpost) or to the pool, on

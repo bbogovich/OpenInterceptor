@@ -36,6 +36,9 @@ OPTIONS:
                         skin's dialog look)
     --hover <X,Y>       With --strategy: the map's labels act as if the cursor were at
                         X,Y of the screen set's design space (for screenshots)
+    --map-demo          With --strategy (testbed): put the rival's first base and
+                        outpost next to yours, reveal them, send a freighter with a
+                        purchase and start an off-screen battle nearby (screenshots)
     --credits           Show the campaign's credits roll
     --cutscene <ID>     Play a cutscene of the campaign
     --video <REF>       Play a video (original:<file>.smk or a pack path) and quit to the launcher
@@ -99,6 +102,8 @@ pub struct Options {
     pub notice: Option<String>,
     /// `--hover <x,y>`: with `--strategy`, where the map's labels think the cursor is.
     pub hover: Option<[f32; 2]>,
+    /// `--map-demo`: the strategy map's objects staged near the base (testbed).
+    pub map_demo: bool,
     /// `--video <ref>`: play a video first.
     pub video: Option<String>,
     /// `--cutscene <id>`: play a cutscene first.
@@ -148,6 +153,7 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--credits" => o.credits = true,
             "--screen" => o.screen = Some(value("--screen")?),
             "--notice" => o.notice = Some(value("--notice")?),
+            "--map-demo" => o.map_demo = true,
             "--hover" => {
                 let v = value("--hover")?;
                 let p: Vec<f32> = v.split(',').filter_map(|x| x.trim().parse().ok()).collect();
@@ -319,6 +325,7 @@ mod tests {
         assert_eq!(parse(&args("--strategy --notice hello"), None).unwrap().notice.as_deref(), Some("hello"));
         assert_eq!(parse(&args("--strategy --hover 120,200"), None).unwrap().hover, Some([120.0, 200.0]));
         assert!(parse(&args("--hover x"), None).is_err());
+        assert!(parse(&args("--strategy --map-demo"), None).unwrap().map_demo);
         assert!(parse(&args("--frames many"), None).is_err());
         assert!(parse(&args("--help"), None).unwrap().help);
         assert!(!parse(&args("--fullscreen --windowed"), None).unwrap().fullscreen);
