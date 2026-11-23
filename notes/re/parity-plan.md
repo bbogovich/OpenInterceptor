@@ -41,6 +41,7 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #133 RQ-S-10 healing 1/2 a day and training every 5 d, RQ-S-11 salary table, the generator (start rank, rank bonuses, health), D-08 pilot injury in battle, campaign pilot hand-off (RQ-C-10 link), RQ-C-23 grade 2 from month 2 | 0.22.28 |
 | #132 RQ-S-08 base price 0.75 x template, 29-day build, placement 5,850 / 30,000; RQ-S-09 technician pool (10 + 10 per OPP); RQ-S-16 hull 6,000 repairing max(5, 2/min) (DEV-100) | 0.22.29 |
 | #129 probe types: raids' kinds, kind(<kind>) opens topics 6/10/17 | 0.22.30 |
+| #135 RQ-S-12 alien messages by month and chance, RQ-S-13 scheduled side missions, RQ-S-14 alien treasury and tech, RQ-S-15 MacArthur 24-48 h, D-25 aggression 0.7/0.5, Doomsday counts §12.2 (DEV-101); alien bases → #139 | 0.22.31 |
 
 ## Issues
 
@@ -50,7 +51,7 @@ Filed 2026-11-22 as GitHub issues (labels `parity-m1`, `parity-m2`, `parity-m3`,
 |---|---|
 | M1 combat | #113 station hull/shields, #114 alien base hard points and layouts, #115 turret fire control, #116 repair and system damage, #117 shield types and special weapons, #118 AI piloting, #119 AI retreat and Nova, #120 missiles/cloak/PD/hulls, #121 balance report and re-measure |
 | M2 screens | #122 sheet fonts and anchors, #123 CSD readouts and captions, #124 compact lists, #125 sprites and buttons, #126 sounds/tooltips/dial/lamps, #127 dialogs/history/clock, #128 screen content |
-| M3 strategy | #129 research, #130 sensors, #131 outposts, #132 bases, #133 pilots, #134 auto-resolve, #135 aliens, #137 deliveries and saves |
+| M3 strategy | #129 research, #130 sensors, #131 outposts, #132 bases, #133 pilots, #134 auto-resolve, #135 aliens, #137 deliveries and saves, #139 alien bases and outposts |
 | RE | #136 remaining unknowns |
 
 ## Order of work
