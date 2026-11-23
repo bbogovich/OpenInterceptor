@@ -7944,8 +7944,12 @@ sprite button (rows 4 / 5) centred at (619, 466), bottom right, which goes back.
 <li>The time dial's six holes are 20 px hot spots on their <strong>verified</strong> centres. Each hole's lamp
   pair (sprite rows 966 + 2k and 967 + 2k) lights for the current speed; the pairing is
   <strong>derived</strong> from the art.</li>
-<li>The globe in the dial (rows 918 – 929) turns while the clock runs; its rate and place are
-  <strong>derived</strong>.</li>
+<li>The globe in the dial (rows 918 – 965, 48 frames: one full turn) turns while the clock runs,
+  one frame every 4 ticks (3.2 s a turn), centred in the dial's opening at (562, 289); its rate
+  and place are <strong>derived</strong> from the art. (Until app 0.22.47 only the first 12 frames, a quarter
+  turn, were listed, 15 px too low.)</li>
+<li>At the picture level (the last <code>zoom_levels</code> stop) the map's black background is drawn
+  behind the picture as at the other levels, so the scope's art is only a frame.</li>
 <li>The four map-corner lamps (SpritesDLL 1900 – 1909) step every 4 ticks, looping over 10
   frames (<code>notes/re/unknowns-2026-11.md</code> §1.4, <strong>verified</strong>; their top-left placement is
   <strong>derived</strong>).</li>
