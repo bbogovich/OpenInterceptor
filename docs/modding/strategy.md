@@ -437,6 +437,66 @@ score, then nearest a base), and the score sign convention. Mission scores by th
 `MissionScores` are not read yet: which counter is which event needs the flight layer to report
 kills by type.
 
+### `auto_resolve` and `craft_damage`
+
+`auto_resolve:` (app NEXT) — an auto-resolved interception is fought as the original's hourly
+combat simulation (flight README §13, **verified**) instead of one roll of odds; without the section
+(or with `model: odds`) the roll stays (DEV-057). The craft at the contact, with their fits,
+battle damage and pilots, fight the raid's mission's hostile roles (each at a count rolled in its
+range, each with a pilot rolled like a recruit); the mission's friendly roles join the craft, and
+at a targeted base its station (below) fights too. The contact stops while the battle runs.
+
+1. The first round comes `first_round` after the start, then one every `round`.
+2. Each round both sides score `rand % score_random + score_share × N_side / N_all` (N: ships);
+   only the hour's winner attacks. Each of its ships duels a random enemy for as many
+   exchanges as hours have passed (1 – `max_exchanges`), shot for shot — or, when the player's
+   side lost the hour and the station stands, the station (1 – `station_exchanges`).
+3. A shot hits with the shooter's **offence** A — its pilot's stats weighted by `offence` over
+   its divisor; no pilot, 0 — and does its **full** damage: a missile's impact damage with
+   `missile_chance` while rounds last, else its first beam's damage, else `fallback_damage`.
+   It goes through a random shield bank, a random armour bank, then the hull. A craft destroyed
+   is lost with its pilot. No systems are hit and no ship is disabled or captured (the
+   original's simulation has no system hits).
+4. At a station the damage is × frac — from the ship's attack C against the station's defence D,
+   with the station's evasion B deciding the dodge — held to `frac_range`; the station's pool
+   takes it first, then with `module_hit` one of `slots` module places: a module there is
+   wrecked when the hit beats its hit points (that damage never reaches the hull), else the hull.
+   The station fires back with its offence for `return_fire`. The base keeps the hull damage.
+5. It ends when one side is left: the mission's `win` or `lose` outcome applies, plus
+   `destroyed(<class>)` for each enemy killed; `give_up_after` (72 h; an engine safeguard)
+   ends an undecided battle as a retreat.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `model` | `hourly`, `odds` | `hourly` | `odds`: the one roll. |
+| `first_round`, `round` | time | 5 h, 1 h | When the rounds come. |
+| `score_random`, `score_share` | number | 50, 50 | The hour's score. |
+| `max_exchanges`, `station_exchanges` | number | 10, 5 | Most exchanges a duel. |
+| `missile_chance`, `station_missile_chance` | fraction | 2 %, 4 % | A shot is a missile. |
+| `fallback_damage`, `station_fallback_damage` | `[min, max]` | [25, 34], [25, 74] | Damage of a ship with no beam (whole numbers). |
+| `frac_range` | `[min, max]` | [0.25, 1.5] | Station damage factor. |
+| `module_hit`, `slots` | fraction, number | 75 %, 33 | A station hit strikes a module place. |
+| `offence`, `evasion` | `{<stat>: weight, divisor, aggression_penalty}` | — | The ratings; `aggression_penalty: [[above, k], ...]` takes k × Aggressiveness off evasion for the first `above` exceeded. |
+| `system_attack`, `system_defence` | `{<system id>: number}` | none | C and D bonuses for fitted systems. |
+| `give_up_after` | time | 72 h | An undecided battle ends as a retreat (0 = never). |
+
+A ship class's `auto_resolve: {attack, defence}` ([reference](reference.md#ships-and-objects)) is
+its base C and D. A base module's `auto_resolve: {attack, defence, hit_points}` adds to its
+station's C and D and is a module place with those hit points. A base type's
+`auto_resolve: {shields, defence, offence, evasion, return_fire, hull}` gives it a station: its
+pool, base D (1,000), A and B drawn from their ranges per battle, its return fire; its hull is
+the base's own `hull` (as damaged and repaired), else `hull` here.
+
+`craft_damage: {persist: true, repair_per_day: 10%}` (app NEXT) — battle damage stays on a craft
+(flown or off-screen) and mends at home by `repair_per_day` of each bank's maximum a day; a flown
+battle starts the craft with it.
+
+`interceptor` has both with the original's values: the ratings `(0.6 Fly + 0.7 Brav + 0.5 Int +
+0.35 Sta + 0.75 Agg + 0.95 Acc) / 385` and `(0.4 Fly + 0.6 Brav + 0.75 Int + 0.55 Sta + 0.05 Acc −
+k·Agg) / 235`, the hull classes' C and D, the station's module weights, ECM 1's +100 and the
+modules' hit points (**verified**); its station pool (the chart's SD) and the craft repair rate
+(10 % a day) are *derived*.
+
 ### `pilots` and `scores`
 
 `pilots:` — pilot rules.
@@ -756,7 +816,10 @@ systems no lane joins are reached in one straight hop. Endurance and stranding a
    counts — and the player wins with p = P² / (P² + E²). The mission's own outcome actions for
    the rolled `win` or `lose` apply as for a flown battle (DEV-057). A won auto-resolve credits
    the kills of the hostile roles only, each at its smallest count (`balance::hostile_count`,
-   app 0.16.15).
+   app 0.16.15). With an [`auto_resolve:`](#auto_resolve-and-craft_damage) section (app NEXT)
+   the battle is instead **fought off-screen in game time**, as the original's: the result
+   arrives hours later as a notice, the craft keep their damage and lost craft are gone with
+   their pilots.
 4. The battle's debrief comes back to the campaign: the outcome's actions apply —
    `score(<name>)`, `money(<n>)`, `set_flag(<id>)`, `relation(<faction>, <n>)`, `salvage` (money:
    `salvage_per_kill` × kills, and the raid's **id** is recorded, so `salvaged(<raid id>)` holds
@@ -1280,8 +1343,9 @@ goods shipped and 108 delivered, every store within its capacity.
 - **Logistics**: see [Not built yet](#not-built-yet) — fighter pools, depots, third-party
   convoys and facility upgrades are not built. Construction stages are one list for every
   facility type (`logistics.construction_stages`), not a list per type.
-- No designs, bravery, stat effects in battle, or the 3D base view yet. Auto-resolve counts hull classes only (not fitted items or pilots) and does not damage
-  the player's craft (DEV-057).
+- No designs, bravery, stat effects in battle, or the 3D base view yet. Without `auto_resolve:`,
+  auto-resolve counts hull classes only (not fitted items or pilots) and does not damage the
+  player's craft (DEV-057).
 - A store limit applies only at a base type with hub `storage`. The default campaign's Guard base
   has 120 (and supply depots add 150 each); the `interceptor` base type sets none, so its
   `cargo` modules limit nothing — the original hub's cargo capacity is unknown (an open fidelity
