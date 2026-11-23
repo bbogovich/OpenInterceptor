@@ -180,6 +180,10 @@ fn write_story(st: &story::StoryState) -> Node {
         ("battle_pending", s(st.battle_pending)),
         ("research_pending", s(st.research_pending)),
         ("ending", st.ending.map_or(Node::null(0), |e| n(e as f64))),
+        // Delayed firings (-1: none), the next side-mission check and the aliens' economy.
+        ("pending_at", f(&st.pending_at.iter().map(|p| p.unwrap_or(-1.0)).collect::<Vec<_>>())),
+        ("side_next", n(st.side_next)),
+        ("alien", f(&st.alien.to_nums())),
     ])
 }
 
@@ -224,6 +228,15 @@ fn read_story(node: Option<&Node>, def: &StrategyDef) -> Result<story::StoryStat
     st.battles_won = num("battles_won") as u32;
     st.month_wins = num("month_wins") as u32;
     st.battle_pending = g.bool("battle_pending").unwrap_or(false);
+    // (Since app NEXT; older saves keep the new campaign's values.)
+    let pending = nums_of("pending_at");
+    if pending.len() == st.pending_at.len() {
+        st.pending_at = pending.iter().map(|p| (*p >= 0.0).then_some(*p)).collect();
+    }
+    if g.node("side_next").is_some() {
+        st.side_next = num("side_next");
+    }
+    st.alien = story::AlienState::from_nums(&nums_of("alien"), st.alien);
     st.research_pending = g.bool("research_pending").unwrap_or(false);
     st.ending = g.str("ending").and_then(|e| e.parse().ok()).filter(|e| *e < def.story.endings.len());
     Ok(st)

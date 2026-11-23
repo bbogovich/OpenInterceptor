@@ -131,6 +131,12 @@ research:
   alien_structural_component_piece_1: {unlock_on: ["won(doomsday_convoy#1)"]}
   alien_weapon_component_piece_2: {unlock_on: ["won(doomsday_convoy#2)"]}
   alien_drive_component_piece_3: {unlock_on: ["won(doomsday_convoy#3)"]}
+  # The alien messages open only when intercepted (story.yaml, RQ-S-12).
+  alien_message_1: {hidden: true}
+  alien_message_2: {hidden: true}
+  alien_message_3: {hidden: true}
+  alien_message_4: {hidden: true}
+  alien_message_5: {hidden: true}
   # Nova Bomb's five extra prerequisites, which the exe adds to its INI ones (VERIFIED, §4.2).
   nova_bomb: {requires_all: [synthetic_elerium, fusion_missile, advanced_autonomous_targeting_system, enveloping_fusion_torpedo, alien_drive_component_piece_3]}
 

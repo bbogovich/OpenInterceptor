@@ -1418,7 +1418,7 @@
     "events": {"description": "story events", "type": "object", "additionalProperties": {"type": "object", "patternProperties": {"^[a-z_]+[+-]$": {"type": "array"}}, "additionalProperties": false, "properties": {
           "arc": {"description": "the arc it is a step of", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "when": {"description": "when it may fire", "type": "string"},
-          "check": {"description": "how often it is checked", "enum": ["daily", "weekly", "monthly", "after_battle", "on_research"]},
+          "check": {"description": "how often it is checked", "enum": ["daily", "weekly", "monthly", "after_battle", "on_research", "scheduled"]},
           "chance": {"description": "chance per check once when holds", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "do": {"description": "actions", "type": "array", "items": {"type": "string"}},
           "choices": {"description": "a choice for the player", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
@@ -1427,6 +1427,7 @@
               }}},
           "once": {"description": "fires only once (default true)", "type": "boolean"},
           "cooldown": {"description": "repeating events: time between firings", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "delay": {"description": "[min, max]: once it would fire, it fires this much later", "type": "array", "items": {"anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},
           "variants": {"type": "object", "description": "per difficulty level: keys that differ"}
@@ -1486,7 +1487,25 @@
             "up": {"description": "monthly rise while the player is passive", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
             "down": {"description": "monthly fall while the player is winning", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
           }},
-        "calm_after_wins": {"description": "battles won in a month that count as winning", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+        "calm_after_wins": {"description": "battles won in a month that count as winning", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+        "economy": {"description": "the aliens' treasury and tech level", "type": "object", "additionalProperties": false, "properties": {
+            "income_every": {"description": "time between incomes (25 days)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "income": {"description": "the income, an expression (125000 * (difficulty + 1))", "type": "string"},
+            "split_every": {"description": "time between treasury splits (6.25 days)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "ratios": {"description": "research, goods, Doomsday shares of a split", "type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+            "spend_every": {"description": "time between research spending (20 hours)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "research_per_downlink": {"description": "weekly research money per alien downlink", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "downlinks": {"description": "the aliens' downlinks (0: spending halves)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+            "tech_levels": {"description": "research money for tech 2 and 3, per difficulty level", "type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}}
+          }}
+      }},
+    "side_missions": {"description": "the side-mission scheduler", "type": "object", "additionalProperties": false, "properties": {
+        "check_every": {"description": "[min, max] time between checks", "type": "array", "items": {"anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}},
+        "list": {"description": "in order: the first that qualifies fires", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+              "event": {"description": "a scheduled event", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+              "months": {"description": "[first, last] whole months since the start", "type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+              "chance": {"description": "chance when it qualifies", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+            }}}
       }},
     "campaign_end": {"description": "how the campaign ends", "type": "object", "additionalProperties": false, "properties": {
         "victory": {"description": "victories", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {

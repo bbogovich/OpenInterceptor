@@ -1521,6 +1521,7 @@ pub fn build_with(
         "logistics",
         "relations",
         "strategist",
+        "side_missions",
         "campaign_end",
     ]
     .into_iter()

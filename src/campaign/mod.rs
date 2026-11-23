@@ -445,6 +445,7 @@ impl Context for Cx<'_> {
             q::RELATION => Value::Num(c.story.standing(name())),
             q::FIRED => Value::Num(self.def.story.event(name()).map_or(0.0, |e| c.story.fired[e] as f32)),
             q::BATTLES_WON => Value::Num(c.story.battles_won as f32),
+            q::ALIEN_TECH => Value::Num(c.story.alien.tech.max(1) as f32),
             // Logistics: the first argument is a system (by map id, or `system` /
             // `nearest_base`, resolved here to a map id).
             q::DEPOSIT

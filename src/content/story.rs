@@ -55,6 +55,8 @@ pub enum Check {
     Monthly,
     AfterBattle,
     OnResearch,
+    /// Only the side-mission scheduler fires it (`side_missions:`).
+    Scheduled,
 }
 
 /// A choice the player makes when an event fires.
@@ -78,6 +80,43 @@ pub struct EventDef {
     pub cooldown: f32,
     /// The arc it is a step of (index into `arcs`).
     pub arc: Option<usize>,
+    /// `delay: [min, max]` hours: once it would fire, it fires that much later instead
+    /// (the MacArthur's 24 – 48 hours, RQ-S-15).
+    pub delay: Option<[f32; 2]>,
+}
+
+/// One entry of the side-mission scheduler: a `scheduled` event, the months it may fire
+/// in (whole 30-day months since the start), and its chance.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SideMission {
+    pub event: usize,
+    pub months: [f32; 2],
+    pub chance: f32,
+}
+
+/// `side_missions:` (RQ-S-13, strategy README §6.2): checked every `every` hours (a random
+/// time in the range), firing the first qualifying entry of `list` in order.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SideMissions {
+    pub every: [f32; 2],
+    pub list: Vec<SideMission>,
+}
+
+/// `strategist.economy:` — the aliens' treasury and tech level (RQ-S-14, README §6.1): income
+/// every `income_every` hours (`income`, an expression), split every `split_every` hours by
+/// `ratios` (research, goods, Doomsday), research money spent every `spend_every` hours up to
+/// `research_per_downlink` × `downlinks` / 7 (/ 14 with none), and the tech level rising at
+/// `tech_levels` (per difficulty level, `[to 2, to 3]` research money).
+#[derive(Debug, Clone, PartialEq)]
+pub struct AlienEconomy {
+    pub income_every: f32,
+    pub income: Expr,
+    pub split_every: f32,
+    pub ratios: [f32; 3],
+    pub spend_every: f32,
+    pub research_per_downlink: f32,
+    pub downlinks: f32,
+    pub tech_levels: Vec<[f32; 2]>,
 }
 
 /// `arcs.<id>`: events that fire in order.
@@ -189,12 +228,16 @@ pub struct StoryDef {
     pub victory: Vec<(Expr, usize)>,
     pub defeat: Vec<(Expr, usize)>,
     pub encyclopaedia: Vec<Entry>,
+    /// The side-mission scheduler, if the campaign has one.
+    pub side_missions: Option<SideMissions>,
+    /// The aliens' treasury and tech level, if the campaign models them.
+    pub alien_economy: Option<AlienEconomy>,
 }
 
 /// The dictionary sections of the story layer.
 pub const DEF_SECTIONS: [&str; 5] = ["events", "arcs", "plans", "endings", "encyclopaedia"];
 /// Its global sections.
-pub const GLOBALS: [&str; 3] = ["relations", "strategist", "campaign_end"];
+pub const GLOBALS: [&str; 4] = ["relations", "strategist", "campaign_end", "side_missions"];
 
 impl StoryDef {
     pub fn event(&self, id: &str) -> Option<usize> {
@@ -265,10 +308,11 @@ impl StoryDef {
                     "monthly" => Check::Monthly,
                     "after_battle" => Check::AfterBattle,
                     "on_research" => Check::OnResearch,
+                    "scheduled" => Check::Scheduled,
                     "daily" => Check::Daily,
                     other => {
                         errors.push(format!(
-                            "{at}.check: '{other}' is not daily, weekly, monthly, after_battle or on_research"
+                            "{at}.check: '{other}' is not daily, weekly, monthly, after_battle, on_research or scheduled"
                         ));
                         Check::Daily
                     }
@@ -299,6 +343,23 @@ impl StoryDef {
                     once: g.bool("once").unwrap_or(true),
                     cooldown: g.qty("cooldown", Unit::Time).map(|s| s / 3600.0).unwrap_or(0.0),
                     arc: arc.filter(|a| *a != usize::MAX),
+                    delay: match g.node("delay").and_then(|n| n.as_seq()) {
+                        Some([a, b]) => {
+                            let h = |n: &Node| n.as_str().and_then(|t| super::schema::quantity(t, Unit::Time).ok()).map(|s| s / 3600.0);
+                            match (h(a), h(b)) {
+                                (Some(a), Some(b)) => Some([a.min(b), a.max(b)]),
+                                _ => {
+                                    errors.push(format!("{at}.delay: expected [min, max] times"));
+                                    None
+                                }
+                            }
+                        }
+                        Some(_) => {
+                            errors.push(format!("{at}.delay: expected [min, max] times"));
+                            None
+                        }
+                        None => None,
+                    },
                 }
             })
             .collect();
@@ -436,7 +497,92 @@ impl StoryDef {
                 unlock: cond(g.str("unlock"), &format!("encyclopaedia.{id}.unlock"), errors),
             })
             .collect();
-        StoryDef { events, arcs, plans, relations, strategist, endings, victory, defeat, encyclopaedia }
+        let hours_of = |g: Get, k: &str| -> Option<f32> { g.qty(k, Unit::Time).map(|s| s / 3600.0) };
+        let side_missions = global("side_missions").map(|n| {
+            let g = Get(&n);
+            let every = match g.node("check_every").and_then(|n| n.as_seq()) {
+                Some([a, b]) => {
+                    let h = |n: &Node| {
+                        n.as_str().and_then(|t| super::schema::quantity(t, Unit::Time).ok()).map(|s| s / 3600.0)
+                    };
+                    [h(a).unwrap_or(144.0), h(b).unwrap_or(216.0)]
+                }
+                _ => [144.0, 216.0],
+            };
+            let list = g
+                .node("list")
+                .and_then(|n| n.as_seq())
+                .unwrap_or(&[])
+                .iter()
+                .filter_map(|e| {
+                    let e = Get(e);
+                    let id = e.str("event").unwrap_or("");
+                    let Some(k) = events.iter().position(|x| x.id == id) else {
+                        errors.push(format!("side_missions.list: unknown event '{id}'"));
+                        return None;
+                    };
+                    let months = match e.nums("months").as_deref() {
+                        Some([a, b]) => [*a, *b],
+                        _ => [0.0, f32::MAX],
+                    };
+                    Some(SideMission { event: k, months, chance: e.qty("chance", Unit::Fraction).unwrap_or(1.0) })
+                })
+                .collect();
+            SideMissions { every, list }
+        });
+        let alien_economy = global("strategist").and_then(|n| {
+            let g = Get(&n).node("economy").map(Get)?;
+            Some(AlienEconomy {
+                income_every: hours_of(g, "income_every").unwrap_or(600.0).max(1.0),
+                income: match g.str("income").map(|t| script::parse(t, schema)) {
+                    Some(Ok((e, _))) => e,
+                    Some(Err(e)) => {
+                        errors.push(format!("strategist.economy.income: {e}"));
+                        script::parse("0", schema).expect("0 parses").0
+                    }
+                    None => script::parse("125000 * (difficulty + 1)", schema).expect("the default parses").0,
+                },
+                split_every: hours_of(g, "split_every").unwrap_or(150.0).max(1.0),
+                ratios: match g.nums("ratios").as_deref() {
+                    Some([r, gd, d]) => [*r, *gd, *d],
+                    _ => [0.3, 0.4, 0.3],
+                },
+                spend_every: hours_of(g, "spend_every").unwrap_or(20.0).max(1.0),
+                research_per_downlink: g.num("research_per_downlink").unwrap_or(20000.0),
+                downlinks: g.num("downlinks").unwrap_or(0.0),
+                tech_levels: g
+                    .node("tech_levels")
+                    .and_then(|n| n.as_seq())
+                    .unwrap_or(&[])
+                    .iter()
+                    .filter_map(|r| {
+                        match r
+                            .as_seq()?
+                            .iter()
+                            .filter_map(|v| v.as_str()?.trim().parse().ok())
+                            .collect::<Vec<f32>>()
+                            .as_slice()
+                        {
+                            [a, b] => Some([*a, *b]),
+                            _ => None,
+                        }
+                    })
+                    .collect(),
+            })
+        });
+        StoryDef {
+            events,
+            arcs,
+            plans,
+            relations,
+            strategist,
+            endings,
+            victory,
+            defeat,
+            encyclopaedia,
+            side_missions,
+            alien_economy,
+        }
     }
 }
 
@@ -452,7 +598,7 @@ pub fn sections() -> Vec<super::schema::Field> {
                 f("when", Ty::Condition, "when it may fire"),
                 f(
                     "check",
-                    Ty::Enum(&["daily", "weekly", "monthly", "after_battle", "on_research"]),
+                    Ty::Enum(&["daily", "weekly", "monthly", "after_battle", "on_research", "scheduled"]),
                     "how often it is checked",
                 ),
                 f("chance", Ty::Qty(Unit::Fraction), "chance per check once when holds"),
@@ -467,6 +613,11 @@ pub fn sections() -> Vec<super::schema::Field> {
                 ),
                 f("once", Ty::Bool, "fires only once (default true)"),
                 f("cooldown", Ty::Qty(Unit::Time), "repeating events: time between firings"),
+                f(
+                    "delay",
+                    Ty::List(Box::new(Ty::Qty(Unit::Time))),
+                    "[min, max]: once it would fire, it fires this much later",
+                ),
             ])),
             "story events",
         ),
@@ -542,8 +693,42 @@ pub fn sections() -> Vec<super::schema::Field> {
                     "aggression",
                 ),
                 f("calm_after_wins", Ty::Num, "battles won in a month that count as winning"),
+                f(
+                    "economy",
+                    Ty::Struct(vec![
+                        f("income_every", Ty::Qty(Unit::Time), "time between incomes (25 days)"),
+                        f("income", Ty::Text, "the income, an expression (125000 * (difficulty + 1))"),
+                        f("split_every", Ty::Qty(Unit::Time), "time between treasury splits (6.25 days)"),
+                        f("ratios", Ty::Numbers(3), "research, goods, Doomsday shares of a split"),
+                        f("spend_every", Ty::Qty(Unit::Time), "time between research spending (20 hours)"),
+                        f("research_per_downlink", Ty::Num, "weekly research money per alien downlink"),
+                        f("downlinks", Ty::Num, "the aliens' downlinks (0: spending halves)"),
+                        f(
+                            "tech_levels",
+                            Ty::List(Box::new(Ty::Numbers(2))),
+                            "research money for tech 2 and 3, per difficulty level",
+                        ),
+                    ]),
+                    "the aliens' treasury and tech level",
+                ),
             ]),
             "the rival's mood",
+        ),
+        f(
+            "side_missions",
+            Ty::Struct(vec![
+                f("check_every", Ty::List(Box::new(Ty::Qty(Unit::Time))), "[min, max] time between checks"),
+                f(
+                    "list",
+                    Ty::List(Box::new(Ty::Struct(vec![
+                        f("event", Ty::Name, "a scheduled event"),
+                        f("months", Ty::Numbers(2), "[first, last] whole months since the start"),
+                        f("chance", Ty::Qty(Unit::Fraction), "chance when it qualifies"),
+                    ]))),
+                    "in order: the first that qualifies fires",
+                ),
+            ]),
+            "the side-mission scheduler",
         ),
         f(
             "campaign_end",
