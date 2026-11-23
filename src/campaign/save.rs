@@ -29,7 +29,7 @@ pub const FORMAT: u32 = 1;
 /// unknowns §12.6): written as `sections:`; a save whose section has another version is
 /// refused with a message naming it, instead of being half read. Raise a section's version
 /// when its layout changes in a way older readers would misread.
-pub const SECTIONS: [(&str, u32); 9] = [
+pub const SECTIONS: [(&str, u32); 10] = [
     ("player", 1),
     ("bases", 2),
     ("craft", 1),
@@ -39,6 +39,7 @@ pub const SECTIONS: [(&str, u32); 9] = [
     ("outposts", 1),
     ("history", 1),
     ("story", 2),
+    ("aliens", 1),
 ];
 
 /// A pack a save was made with.
@@ -534,6 +535,7 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
         ("pilots", seq(c.pilots.iter().map(pilot).collect())),
         ("recruits", seq(c.recruits.iter().map(pilot).collect())),
         ("offscreen", seq(c.offscreen.iter().map(write_offscreen).collect())),
+        ("aliens", write_aliens(&c.aliens)),
         (
             "contacts",
             seq(c
@@ -855,6 +857,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         return Err(bad("the incomes, expenses or raids"));
     }
     let logistics = read_logistics(g.node("logistics"), def, bases.len(), systems.len())?;
+    let system_count = systems.len();
     Ok(Campaign {
         notices: changed,
         logistics,
@@ -872,6 +875,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         recruits: list("recruits").iter().map(pilot).collect(),
         contacts,
         offscreen: list("offscreen").iter().map(read_offscreen).collect(),
+        aliens: g.node("aliens").map(|n| read_aliens(n, system_count)).unwrap_or_default(),
         deliveries,
         next_flow,
         next_raid,
@@ -1100,6 +1104,63 @@ fn read_offscreen(node: &Node) -> super::autoresolve::Offscreen {
                 (o.str("result").unwrap_or("").to_string(), acts)
             })
             .collect(),
+    }
+}
+
+// --- The rival's bases and outposts (section `aliens`, #139) -----------------------------
+
+/// The rival's places and clocks (`Campaign::aliens`).
+fn write_aliens(a: &super::aliens::AlienState) -> Node {
+    map(vec![
+        ("started", s(a.started)),
+        (
+            "bases",
+            seq(a
+                .bases
+                .iter()
+                .map(|b| nums(&[b.system as f64, b.variant as f64, b.queued as f64, b.next_queue, b.founded]))
+                .collect()),
+        ),
+        ("outposts", seq(a.outposts.iter().map(|o| nums(&[o.system as f64, o.founded])).collect())),
+        ("clocks", nums(&[a.next_expand, a.next_refound, a.next_growth, a.next_raid, a.next_harass, a.last_founded])),
+        ("pieces", seq(a.piece_work.iter().map(|(w, b)| nums(&[*w, *b as f64])).collect())),
+    ])
+}
+
+/// Reads [`write_aliens`] back; places in systems the map no longer has are dropped.
+fn read_aliens(node: &Node, systems: usize) -> super::aliens::AlienState {
+    let g = Get(node);
+    let row =
+        |n: &Node| -> Vec<f64> { n.as_seq().unwrap_or(&[]).iter().filter_map(|x| x.as_str()?.parse().ok()).collect() };
+    let rows =
+        |k: &str| -> Vec<Vec<f64>> { g.node(k).and_then(|n| n.as_seq()).unwrap_or(&[]).iter().map(row).collect() };
+    let at = |v: &[f64], k: usize| v.get(k).copied().unwrap_or(0.0);
+    let clocks = g.node("clocks").map(row).unwrap_or_default();
+    super::aliens::AlienState {
+        started: g.bool("started").unwrap_or(false),
+        bases: rows("bases")
+            .iter()
+            .filter(|v| (at(v, 0) as usize) < systems)
+            .map(|v| super::aliens::AlienBase {
+                system: at(v, 0) as usize,
+                variant: at(v, 1) as u8,
+                queued: at(v, 2) as u32,
+                next_queue: at(v, 3),
+                founded: at(v, 4),
+            })
+            .collect(),
+        outposts: rows("outposts")
+            .iter()
+            .filter(|v| (at(v, 0) as usize) < systems)
+            .map(|v| super::aliens::AlienOutpost { system: at(v, 0) as usize, founded: at(v, 1) })
+            .collect(),
+        next_expand: at(&clocks, 0),
+        next_refound: at(&clocks, 1),
+        next_growth: at(&clocks, 2),
+        next_raid: at(&clocks, 3),
+        next_harass: at(&clocks, 4),
+        last_founded: at(&clocks, 5),
+        piece_work: rows("pieces").iter().map(|v| (at(v, 0), at(v, 1) as u32)).collect(),
     }
 }
 

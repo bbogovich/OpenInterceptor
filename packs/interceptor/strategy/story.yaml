@@ -117,7 +117,8 @@ strategist:
   aggression: {start: 0.7, min: 0.5, max: 1.6, up: 0.1, down: 0.1}
   calm_after_wins: 3
   # The aliens' treasury and tech level (RQ-S-14, README §6.1, VERIFIED): income every 25
-  # days (the fallback 125,000 x (difficulty + 1): the aliens' outposts are not modelled),
+  # days from their outposts (alien_bases.outpost_income), the fallback 125,000 x
+  # (difficulty + 1) while they hold one or none,
   # split every 6.25 days by Think.ini's FinancialAI ratios (research 0.3, goods 0.4, Doomsday
   # 0.3; the aggression adjustment is not modelled), research spending every 20 hours up to
   # 20,000 x downlinks / 7 (3 alien downlinks: DERIVED), tech 2 and 3 at the thresholds.

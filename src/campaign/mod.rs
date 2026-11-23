@@ -22,6 +22,7 @@
 //! That keeps the state a plain tree the compiler is happy to mutate, and makes saving
 //! it ([`save`]) a matter of writing numbers.
 
+pub mod aliens;
 pub mod autoresolve;
 pub mod logistics;
 pub mod outposts;
@@ -304,6 +305,8 @@ pub struct Campaign {
     pub raid_wins: Vec<u32>,
     /// Off-screen battles under way (`auto_resolve:`, the original's hourly simulation).
     pub offscreen: Vec<autoresolve::Offscreen>,
+    /// The rival's bases and outposts (`alien_bases:`).
+    pub aliens: aliens::AlienState,
 }
 
 /// The activity grid's size: 16 × 16 cells over the galaxy (the original's, 3,750 map units
@@ -461,6 +464,8 @@ impl Context for Cx<'_> {
             q::FIRED => Value::Num(self.def.story.event(name()).map_or(0.0, |e| c.story.fired[e] as f32)),
             q::BATTLES_WON => Value::Num(c.story.battles_won as f32),
             q::ALIEN_TECH => Value::Num(c.story.alien.tech.max(1) as f32),
+            q::ALIEN_BASES => Value::Num(c.aliens.bases.len() as f32),
+            q::ALIEN_OUTPOSTS => Value::Num(c.aliens.outposts.len() as f32),
             // Logistics: the first argument is a system (by map id, or `system` /
             // `nearest_base`, resolved here to a map id).
             q::DEPOSIT
@@ -569,6 +574,7 @@ impl Campaign {
             pool_scores: [0.0, 0.0],
             raid_wins: Vec::new(),
             offscreen: Vec::new(),
+            aliens: Default::default(),
         };
         for t in &def.start.research {
             if let Some(i) = def.topic(t) {
@@ -1922,12 +1928,25 @@ impl Campaign {
                 }
             }
         }
+        // The rival's bases and outposts (`alien_bases:`): its planner sends the raids it
+        // names, so their own schedules do not roll.
+        aliens::step(self, def, events);
+        let planned = |id: &str| {
+            def.alien_bases.as_ref().is_some_and(|a| {
+                a.base_raids.iter().any(|r| r == id)
+                    || a.outpost_raid.as_deref() == Some(id)
+                    || a.opp_raid.as_deref() == Some(id)
+            })
+        };
         // Raids: roll, and launch a contact from the map's edge towards a target.
         for r in 0..def.raids.len() {
             if now < self.next_raid[r] {
                 continue;
             }
             self.next_raid[r] += def.raids[r].every as f64;
+            if planned(&def.raids[r].id) {
+                continue;
+            }
             let raid = &def.raids[r];
             // The rival's aggression scales every raid; a faction no longer hostile stops.
             let chance = raid.chance * self.story.aggression;

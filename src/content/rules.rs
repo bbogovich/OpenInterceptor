@@ -1518,6 +1518,7 @@ pub fn build_with(
         "pilots",
         "auto_resolve",
         "craft_damage",
+        "alien_bases",
         "scores",
         "evaluations",
         "economy",

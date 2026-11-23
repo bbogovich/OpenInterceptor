@@ -144,6 +144,10 @@ pub struct PlanDef {
     /// Hours between shipment rolls.
     pub every: f32,
     pub chance: f32,
+    /// With `alien_bases`: each piece takes this much work (outpost-hours; the rival's
+    /// outposts work on it together) and is shipped when done, instead of the
+    /// `every` / `chance` rolls. 0: the rolls.
+    pub work: f32,
     /// The raid (index into the strategy's raids) a shipment flies as.
     pub raid: Option<usize>,
     /// `(fraction, actions)`, in order.
@@ -404,6 +408,7 @@ impl StoryDef {
                     start_when: cond(g.str("start_when"), &format!("{at}.start_when"), errors),
                     every: g.qty("every", Unit::Time).map(|s| s / 3600.0).unwrap_or(168.0).max(1.0),
                     chance: g.qty("chance", Unit::Fraction).unwrap_or(1.0).clamp(0.0, 1.0),
+                    work: g.num("work").unwrap_or(0.0).max(0.0),
                     raid: g.str("raid").and_then(|r| {
                         let k = raids.iter().position(|x| x == r);
                         if k.is_none() {
@@ -636,6 +641,11 @@ pub fn sections() -> Vec<super::schema::Field> {
                 ),
                 f("start_when", Ty::Condition, "when work begins"),
                 f("every", Ty::Qty(Unit::Time), "time between shipment rolls"),
+                f(
+                    "work",
+                    Ty::Num,
+                    "with alien_bases: outpost-hours of work per piece, shipped when done (0: the rolls)",
+                ),
                 f("chance", Ty::Qty(Unit::Fraction), "chance per roll"),
                 f("raid", Ty::Name, "the raid a shipment flies as"),
                 f(

@@ -416,7 +416,12 @@ fn alien_economy(c: &mut Campaign, def: &StrategyDef, now: f64) {
     let Some(e) = &def.story.alien_economy else { return };
     while now >= c.story.alien.next_income {
         c.story.alien.next_income += e.income_every as f64;
-        let income = c.eval(def, &e.income, None) as f64;
+        // With the rival's outposts on the map (`alien_bases.outpost_income`) they pay;
+        // else the economy's own formula (the original's fallback with one outpost or none).
+        let income = match super::aliens::outpost_income(c, def) {
+            Some(v) => v,
+            None => c.eval(def, &e.income, None) as f64,
+        };
         c.story.alien.treasury += income.max(0.0);
     }
     while now >= c.story.alien.next_split {
@@ -524,6 +529,10 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
                 c.story.plan_next[p] = now + plan.every as f64;
                 c.log(format!("Intelligence: the rival's {} has begun", plan.id));
             }
+            continue;
+        }
+        // Pieces built by the rival's outposts (`work`), else rolled for (`every`, `chance`).
+        if super::aliens::plan_work(c, def, p, dt) {
             continue;
         }
         if c.story.plan_done[p] >= plan.total() || now < c.story.plan_next[p] {

@@ -881,6 +881,8 @@ pub struct StrategyDef {
     pub incomes: Vec<Flow>,
     pub expenses: Vec<Flow>,
     pub pilots: Option<PilotRules>,
+    /// The rival's bases and outposts (`alien_bases:`); `None`: raids by their schedules.
+    pub alien_bases: Option<super::aliens::AlienBasesDef>,
     /// The original's hourly auto-resolve (`auto_resolve:`); `None`: one roll of odds.
     pub auto_resolve: Option<super::autoresolve::AutoResolveDef>,
     /// Battle damage stays on craft (`craft_damage:`); `None`: craft return whole.
@@ -1745,6 +1747,7 @@ impl StrategyDef {
             incomes,
             expenses,
             pilots,
+            alien_bases: super::aliens::AlienBasesDef::parse(global("alien_bases").as_ref().map(Get)),
             auto_resolve: super::autoresolve::AutoResolveDef::parse(global("auto_resolve").as_ref().map(Get)),
             craft_damage: super::autoresolve::CraftDamage::parse(global("craft_damage").as_ref().map(Get)),
             scores,
@@ -2293,6 +2296,7 @@ fn sections_core() -> Vec<super::schema::Field> {
             ]),
             "pilot rules",
         ),
+        f("alien_bases", super::aliens::AlienBasesDef::schema(), "the rival's bases and outposts, its raid planner and expansion"),
         f("auto_resolve", super::autoresolve::AutoResolveDef::schema(), "the original's hourly auto-resolve (absent: one roll of odds)"),
         f("craft_damage", super::autoresolve::CraftDamage::schema(), "battle damage stays on craft and is repaired a day at a time"),
         f("scores", nums(), "mission score names (score(x) in outcomes): points"),
