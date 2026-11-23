@@ -141,7 +141,7 @@ scripts/check.sh
 | `--strategy-soak <DAYS>` | Play the campaign's strategy layer without a window for that many days with a simple automatic player, print one line (date, funds, score, bases, craft, topics, battles, messages) and exit (app 0.8.0; [Strategy layer](../modding/strategy.md#trying-a-campaign-out)). Use with `--campaign`. |
 | `--soak-fleet <N>` | With `--strategy-soak` (app 0.22.38): the automatic player keeps N craft, buying a hull (one a day) while fewer are flying or on order; default the campaign's starting craft. It also researches event-opened topics (the saucer examinations) first. |
 | `--soak-capture` | With `--strategy-soak` (app 0.22.38, test tooling): a won battle's first destroyed ship of each class some topic needs `captured(<class>)` counts as captured, so a soak can open those topics. The game itself never does this. |
-| `--soak-assault` | With `--strategy-soak` (app NEXT): every 10 days, with two or more free crewed craft, the automatic player attacks the rival's outpost (else base) nearest its first base. |
+| `--soak-assault` | With `--strategy-soak` (app 0.22.44): every 10 days, with two or more free crewed craft, the automatic player attacks the rival's outpost (else base) nearest its first base. |
 | `--ship <ID>` | Player ship for `--scenario` when the scenario lets you choose. |
 | `--view <VIEW>` | Start view: `cockpit`, `forward`, `left`, `right`, `rear-left`, `rear-right`, `chase`, `chase-manual`. |
 | `--model <NAME>` | Open the model viewer on this model: a ship class id (`comet`) or an original mesh name (`XBASE7`). |

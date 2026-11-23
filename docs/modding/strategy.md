@@ -501,15 +501,15 @@ Without the section its raids follow their own `every` / `chance` schedules.
   ships) sets out after it from the nearest alien place and follows it — intercept the raid to
   save the freighter; if it comes within an hour's flight the cargo is lost; if the freighter lands
   first the raid turns back. Without `raids.freighter` the cargo is lost at once.
-* **Attacks on the rival** (app NEXT). `assault: {base, outpost}` names the raids whose missions
+* **Attacks on the rival** (app 0.22.44). `assault: {base, outpost}` names the raids whose missions
   the player flies against an alien base or outpost (`Campaign::assault`, from the map): a contact
   sits at the place and the chosen craft intercept it as any contact (fly it or auto-resolve it);
   a won battle removes the place — an outpost's technicians with it, so the plans' piece work
   slows — and any other result ends the attack.
-* **Scouts** (app NEXT). `scouts: {every, min_queued, ships, raid, range}`: every `every` an A base
+* **Scouts** (app 0.22.44). `scouts: {every, min_queued, ships, raid, range}`: every `every` an A base
   with `min_queued` ships queued sends up to `ships` of them (`raid`) to a free system without an
   outpost within rand[`range`); arriving unopposed they strike nothing.
-* **Growth** (app NEXT). `growth: {every, start_hangars, max_hangars, chance, per_hangar,
+* **Growth** (app 0.22.44). `growth: {every, start_hangars, max_hangars, chance, per_hangar,
   queue_per_hangar}`: a base builds every rand[`every`) hours; while it has fewer than
   `max_hangars` hangars it adds one with `chance` + `per_hangar` × hangars; its ship queue holds
   `queue_per_hangar` × hangars (instead of `queue.max`).
@@ -523,7 +523,7 @@ hangars), 455,625 per outpost, where a freighter's hunters come from; since app 
 (unknowns §11.3: a base [5, 7) … [9, 13), an outpost [4, 6) … [7, 10), a platform [3, 5) … [5, 7),
 a freighter rand[1, d / 2 + 2); Beginner's base row held to [5, 7) is *derived*) and escorts at
 tech 3 (a Shade after month 5 at a base or outpost with 25 %, else a Phantasm with 25 + 5d %) are
-the original's (**verified**), and `freighter_attack` hunts freighters. Since app NEXT the player
+the original's (**verified**), and `freighter_attack` hunts freighters. Since app 0.22.44 the player
 attacks its places with the `attack_alien_outpost` / `attack_alien_base` missions, its A bases send
 3-ship scouts every 5 days and grow to 2 hangars (75 − 10n %, 3 queued a hangar; **verified**; one
 hangar to start is *derived*); its planner raids are

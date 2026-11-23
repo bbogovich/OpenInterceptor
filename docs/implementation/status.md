@@ -737,7 +737,7 @@ the battle; hired pilots travel as shipments. DEV-105. `interceptor` `--strategy
 seed 7): 90 days 9 battles, 180 days 24, 365 days 57, 3 craft at the end; no freighter passed near
 the rival's places in this seed's year.
 
-**#142** (app NEXT; unknowns §3.4): the player attacks the rival's bases and outposts
+**#142** (app 0.22.44; unknowns §3.4): the player attacks the rival's bases and outposts
 (`alien_bases.assault`, `Campaign::assault`; a win removes the place and its technicians), the A
 bases' scouts, hangar growth and the queue by hangars; `--soak-assault` for soaks. DEV-106. A
 730-day `interceptor` soak (Veteran, `--soak-assault --soak-capture --soak-fleet 6`): the first alien
