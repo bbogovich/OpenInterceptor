@@ -3665,6 +3665,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#save-sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Save sections
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -7059,6 +7070,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#save-sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Save sections
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -8121,6 +8143,14 @@ menu's <em>Load game</em> page (<a href="../presentation/#the-main-menu-and-cred
   workshop when it can, intercepts every contact it sees, alternates battle results). The tests
   build small synthetic strategy layers from one YAML document (<code>content::strategy::tests::build</code>) and also play the real default campaign for six months.</li>
 </ul>
+<h2 id="save-sections">Save sections<a class="headerlink" href="#save-sections" title="Permanent link">&para;</a></h2>
+<p>Since app 0.22.33 (RQ-S-28, after the original's tagged chunks, unknowns §12.6) a save lists its
+subsystems' versions under <code>sections:</code> — <code>player</code>, <code>bases</code>, <code>craft</code>, <code>pilots</code>, <code>contacts</code>,
+<code>deliveries</code>, <code>outposts</code>, <code>history</code>, <code>story</code> (<code>save::SECTIONS</code>). Reading refuses a save whose
+section has another version than this app reads, naming it ("its story section is version 3;
+this app reads version 2"), instead of half reading it; a save from before the sections has none
+and loads as before. A change to a section's layout that older readers would misread raises its
+version. Test: <code>campaign::save::tests</code> (the round trip and a refused version).</p>
 
 
 

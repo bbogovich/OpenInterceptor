@@ -4964,6 +4964,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#shipments-and-speed_by_mass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shipments and speed_by_mass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#manufacture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7122,6 +7133,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#shipments-and-speed_by_mass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shipments and speed_by_mass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#manufacture" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -8249,6 +8271,18 @@ weapon it carries at any level: <em>derived</em>).</p>
 <td>A <code>shield</code>: shield points per facing; an <code>armor</code>: armour points (app 0.15.0). An item that inherits the original's equipment and sets none takes the original's <code>Special</code> (shields) or <code>HitPoints</code> (armour) — <em>derived</em>. In battle a craft flies with the <strong>strongest</strong> fitted shield and the <strong>sum</strong> of its fitted armour, in place of its class's <code>shields</code> / <code>armor</code>; with none fitted it keeps the class's own (which <code>fitted:</code> on the <a href="../reference/#ships-and-objects">ship class</a> may supply).</td>
 </tr>
 <tr>
+<td><code>mass</code></td>
+<td>number</td>
+<td>0</td>
+<td>App NEXT: mass it adds to a craft when fitted (a missile's per round), for <a href="#shipments-and-speed_by_mass"><code>speed_by_mass</code></a>. <code>interceptor</code>: shields 250 (<strong>verified</strong>), armour 150 / 300 / 450 (<em>derived</em>).</td>
+</tr>
+<tr>
+<td><code>strategic_factor</code></td>
+<td>number</td>
+<td>1</td>
+<td>App NEXT: a fitted engine's factor on the craft's map speed (the best one counts). <code>interceptor</code>: Engine Type 2 × 1.15, Type 3 × 1.4 (<strong>verified</strong>).</td>
+</tr>
+<tr>
 <td><code>requires</code></td>
 <td>condition</td>
 <td>none</td>
@@ -8297,6 +8331,12 @@ weapon it carries at any level: <em>derived</em>).</p>
 <td>number</td>
 <td>1000</td>
 <td>Map units per hour on the star map.</td>
+</tr>
+<tr>
+<td><code>mass</code></td>
+<td>number</td>
+<td>0</td>
+<td>App NEXT: with <a href="#shipments-and-speed_by_mass"><code>speed_by_mass</code></a>, the hull's base mass sets its map speed instead of <code>speed</code>. <code>interceptor</code>: 6,700 / 12,700 / 22,700 (<strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>slots</code></td>
@@ -8615,6 +8655,24 @@ flies straight for its target; on a lane map it enters at a system and follows t
 amount (an expression) added or taken every period (<code>every</code>, default 30 days). Each payment is a line in the message log.
 Module <code>maintenance</code>, hull <code>upkeep</code> and pilot <code>salary</code> are charged monthly on their own; use
 <code>expenses</code> for anything else.</p>
+<h3 id="shipments-and-speed_by_mass"><code>shipments</code> and <code>speed_by_mass</code><a class="headerlink" href="#shipments-and-speed_by_mass" title="Permanent link">&para;</a></h3>
+<p><code>shipments: {capacity, speed, unload, refuel}</code> (app 0.22.33, RQ-S-19/21) — purchases and finished
+manufacture are carried from the <a href="#outposts">outposts</a> by their freighters instead of arriving
+after <code>economy.delivery</code>. They queue at the outposts; an idle freighter (one per outpost) loads
+them <strong>in order</strong> into <code>capacity</code> units (default 100) — a hull fills the freighter and only an
+empty one; an item takes <code>size</code> × count units and a stack that does not fit is split, the rest
+waiting for the next trip — all bound for the first one's base. It flies there at <code>speed</code> map
+units an hour (default 135), takes <code>unload</code> (30 min) to unload and <code>refuel</code> (1 h) to refuel, and
+flies home. A ship arriving at a base with no free hangar bay is sent back and its price
+refunded. <code>interceptor</code> follows the original (unknowns §2.1 – §2.2, <strong>verified</strong>; the freighter's
+0.0375 units a second is its 157,000 mass); the return trip home and taking the idle freighter
+nearest the base first are <em>derived</em>. Hired pilots and transfers between bases are not shipped
+yet. <code>default</code>: 300 units an hour, an hour to unload and two to refuel.</p>
+<p><code>speed_by_mass: [[mass bound, map units a second], …]</code> (app 0.22.33, RQ-S-22) — a craft whose hull
+has a <code>mass</code> moves at the speed of the first band its mass (the hull's plus its fitted items')
+does not pass, × 3600 an hour, × its fitted engines' best <code>strategic_factor</code>. <code>interceptor</code>: the
+original's seven bands, 0.1875 … 0.0375 (<strong>verified</strong>, unknowns §2.3), and raids' speeds set from
+their fleets' slowest ship × 0.85 (the original's random 0.75 – 0.95: <em>derived</em>).</p>
 <h3 id="manufacture"><code>manufacture</code><a class="headerlink" href="#manufacture" title="Permanent link">&para;</a></h3>
 <p><code>manufacture: {per_outpost, per_opp}</code> (app 0.22.29, RQ-S-09) — production by the
 <a href="#outposts">outposts</a>' technicians instead of the bases' <code>production_rate</code>: the capacity is
