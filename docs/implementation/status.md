@@ -702,7 +702,7 @@ sending raids from its A bases, the freighter harassment check, the outposts' in
 No B base in the first year: none of the original's triggers holds (5 outposts are fewer than
 3 × 2 bases; ⌊month / 8⌋ first exceeds 2 in month 24).
 
-**#139 follow-up** (app NEXT; unknowns §12.2 corrected): piece work by the rival's **technicians**
+**#139 follow-up** (app 0.22.35; unknowns §12.2 corrected): piece work by the rival's **technicians**
 (10 + 10 per platform per alien outpost) at the 20-hour update; `interceptor`'s Doomsday pieces are
 built that way instead of the convoy rolls. `--strategy-soak 900` (seed 7, rules at Veteran: 70,000
 technician-hours a piece): the plan begins with the first alien message (about day 272); the pieces
