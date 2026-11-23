@@ -2433,3 +2433,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --map-demo` (or let time run until a freighter carries a purchase and a contact is fought off-screen). 2. Hover the base, a freighter, a contact, a battle. 3. Click the contact under attack twice. 4. Open Bases and Equip Ships. 5. Repeat 1 – 4 with `--campaign default` (Ctrl+T layout). |
 | Expected | 1: the base icon (902) with a progress bar while built; freighters (606) on their way; alien places in sensor range (903, 917 blinking); a blinking red square on a battle. 2: the labels name them in the original's colours. 3: the battle is flown from where it stands. 4: Bases shows "HULL x / 6,000"; a damaged craft's row gives its hull, shields and armour. 5: shapes instead of icons; the Contacts list offers "Join the battle"; the Bases list gives the hull. |
 
+### MT-6-39 — Attacking the rival's places
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data; ready craft with pilots at the base. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy --map-demo` (the rival's base is selected). 2. Click the selected alien base again. 3. `--map-demo --screen testbed`: press **Attack** in the info panel. 4. `--campaign default --strategy --map-demo`. |
+| Expected | 1: the status bar reads ALIEN BASE, a yellow ring marks it. 2 and 3: the base's ready craft fly to the place as an interception (a contact appears there); the battle follows on arrival. 4: no rival places, nothing offers Attack. |
+
