@@ -6834,6 +6834,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-37-a-save-loads-at-the-difficulty-it-was-played-at" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-37 — A save loads at the difficulty it was played at
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12516,6 +12527,17 @@
     <span class="md-ellipsis">
       
         MT-6-36 — The view knob, base pictures, Bases' panel buttons and the report axes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-37-a-save-loads-at-the-difficulty-it-was-played-at" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-37 — A save loads at the difficulty it was played at
       
     </span>
   </a>
@@ -20857,6 +20879,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: each click turns the knob and plays the rotary sound; lower left = far view, middle = closer; upper right only with a star selected (its lamp shows unavailable otherwise) and shows the star's animated picture. 2: the base system shows the base picture; the black hole is only centred. 3: previous / next move the module selection; the check mark builds the selected module. 4: income 0 – 18,000 in 18 steps, 22 month columns with names under them and the years between brackets; the alien legend stays inside the panel.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-37-a-save-loads-at-the-difficulty-it-was-played-at">MT-6-37 — A save loads at the difficulty it was played at<a class="headerlink" href="#mt-6-37-a-save-loads-at-the-difficulty-it-was-played-at" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's Interceptor data. No unit test covers it: the reload runs in the app's loop.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. Main menu → Options → Difficulty: <strong>Genius</strong>; New Game. Open an alien base raid's battle or note a <code>per_level</code> value that differs by level (e.g. the Doomsday piece work, 50,000 technician-hours at Genius against 100,000 at Beginner, seen as days between pieces with <code>--strategy-soak</code>; or an alien fighter's turn and speed in a flown battle). Save in slot 1. 2. Main menu → Options → Difficulty: <strong>Beginner</strong>. 3. Load slot 1. 4. Fly the next interception, or open Options.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>3: the campaign loads without an error. 4: the battle plays at Genius (alien pilots as at Genius, the X-COM shields and armour without Beginner's 150 % / 130 %), and Options shows <strong>Genius</strong>: the content was reloaded at the save's level before the save was read. Starting a New Game afterwards in this session uses Genius (the menu's remembered choice in <code>settings.yaml</code> stays Beginner for the next start).</td>
 </tr>
 </tbody>
 </table>
