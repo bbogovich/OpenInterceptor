@@ -6878,6 +6878,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-41-changing-campaign-and-difficulty-in-the-app-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-41 — Changing campaign and difficulty in the app bundle
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12604,6 +12615,17 @@
     <span class="md-ellipsis">
       
         MT-6-40 — The dial globe's turn and the picture level's black scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-41-changing-campaign-and-difficulty-in-the-app-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-41 — Changing campaign and difficulty in the app bundle
       
     </span>
   </a>
@@ -21037,6 +21059,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: the globe turns smoothly through a full rotation in about 3 s, centred in the dial's round opening (not low against its bottom edge); the corner lamps cycle in about 0.7 s. 2: the star's animated picture sits in the middle of a black scope — no grey panel art inside the circle — as at the other zoom levels.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-41-changing-campaign-and-difficulty-in-the-app-bundle">MT-6-41 — Changing campaign and difficulty in the app bundle<a class="headerlink" href="#mt-6-41-changing-campaign-and-difficulty-in-the-app-bundle" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later, the <strong>built bundle</strong> (<code>python3 tools/build_bundle.py</code>), not <code>cargo run</code>; the player's Interceptor data. Run it with <code>open dist/OpenInterceptor-&lt;version&gt;.app</code>, and once more from another working directory (<code>cd /tmp &amp;&amp; &lt;repo&gt;/dist/OpenInterceptor-&lt;version&gt;.app/Contents/MacOS/openinterceptor</code>).</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. On the mission select (Battles and tools), press <strong>D</strong> several times, then <strong>Tab</strong>, then <strong>Tab</strong> again. 2. Main menu → Options: on the Difficulty row press <strong>Right</strong>, then <strong>Left</strong>, then <strong>Left</strong>; on the Campaign row press <strong>Right</strong>. 3. With the app running, rebuild the bundle (<code>python3 tools/build_bundle.py --skip-build --no-settings</code>) and press <strong>D</strong> again.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: each D shows the next level, each Tab the other campaign; no "Could not start". 2: Right goes to the next level, Left to the previous one (wrapping at the ends); after each change the Options page stays open with the same row selected; the Campaign row switches campaign. 3: the level changes (the bundle is swapped in whole). If a reload ever fails, the message names the folders searched and the screen stays where it was.</td>
 </tr>
 </tbody>
 </table>

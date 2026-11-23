@@ -6539,6 +6539,8 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>#144 (app 0.22.48)</strong> three more: <code>cli::tests::folders_are_found_in_an_app_bundle_whatever_the_working_directory</code>,
+<code>app::launcher::tests::options_cycle_both_ways</code> and <code>app::menu::tests::a_reload_keeps_the_options_row</code>.</p>
 <p><strong>#142 (app 0.22.44)</strong> two more: <code>campaign::aliens::tests::the_player_attacks_and_removes_the_rivals_places</code>
 and <code>bases_grow_hangars_and_send_scouts</code>.</p>
 <p><strong>#141 (app 0.22.41)</strong> four more: <code>campaign::aliens::tests::a_raid_from_an_a_base_hunts_a_freighter_and_fights_it</code> (renamed and rewritten in the follow-up: no A base, no raid; 3 ships from the queue; a won battle lets the freighter fly on, a lost one loses it),
