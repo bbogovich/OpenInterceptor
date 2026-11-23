@@ -8,6 +8,9 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#144 (app NEXT)** three more: `cli::tests::folders_are_found_in_an_app_bundle_whatever_the_working_directory`,
+`app::launcher::tests::options_cycle_both_ways` and `app::menu::tests::a_reload_keeps_the_options_row`.
+
 **#142 (app 0.22.44)** two more: `campaign::aliens::tests::the_player_attacks_and_removes_the_rivals_places`
 and `bases_grow_hangars_and_send_scouts`.
 

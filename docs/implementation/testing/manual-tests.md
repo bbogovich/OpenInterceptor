@@ -2450,3 +2450,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Steps | 1. `openinterceptor --campaign interceptor --strategy`; let the clock run at the slowest speed and watch the dial. 2. `--strategy --map-level 2` (or click a star twice on the map). |
 | Expected | 1: the globe turns smoothly through a full rotation in about 3 s, centred in the dial's round opening (not low against its bottom edge); the corner lamps cycle in about 0.7 s. 2: the star's animated picture sits in the middle of a black scope — no grey panel art inside the circle — as at the other zoom levels. |
 
+### MT-6-41 — Changing campaign and difficulty in the app bundle
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later, the **built bundle** (`python3 tools/build_bundle.py`), not `cargo run`; the player's Interceptor data. Run it with `open dist/OpenInterceptor-<version>.app`, and once more from another working directory (`cd /tmp && <repo>/dist/OpenInterceptor-<version>.app/Contents/MacOS/openinterceptor`). |
+| Steps | 1. On the mission select (Battles and tools), press **D** several times, then **Tab**, then **Tab** again. 2. Main menu → Options: on the Difficulty row press **Right**, then **Left**, then **Left**; on the Campaign row press **Right**. 3. With the app running, rebuild the bundle (`python3 tools/build_bundle.py --skip-build --no-settings`) and press **D** again. |
+| Expected | 1: each D shows the next level, each Tab the other campaign; no "Could not start". 2: Right goes to the next level, Left to the previous one (wrapping at the ends); after each change the Options page stays open with the same row selected; the Campaign row switches campaign. 3: the level changes (the bundle is swapped in whole). If a reload ever fails, the message names the folders searched and the screen stays where it was. |
+
