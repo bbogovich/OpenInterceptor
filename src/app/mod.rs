@@ -575,6 +575,11 @@ pub async fn run(options: Options) {
             }
             Next::Reload { campaign, difficulty } => {
                 let from_menu = matches!(screen, Screen::Menu(_));
+                // The options row the change was made on: kept across the reload (#144).
+                let row = match &screen {
+                    Screen::Menu(m) => m.options_row(),
+                    _ => None,
+                };
                 let mut cfg = options.content_config();
                 // A campaign switch starts at that campaign's default difficulty.
                 cfg.campaign = campaign.clone().or(ctx.content.campaign.clone());
@@ -595,15 +600,24 @@ pub async fn run(options: Options) {
                         remember_choice(&id, level.as_deref());
                         // Back where the change was made: the menu's options, or the launcher.
                         screen = if from_menu && ctx.content.rules.strategy.is_some() {
-                            Screen::Menu(Box::new(menu::MainMenu::new(&ctx).on_options()))
+                            Screen::Menu(Box::new(menu::MainMenu::new(&ctx).on_options_at(row.unwrap_or(0))))
                         } else {
                             Screen::Launcher(launcher::Launcher::new(&ctx))
                         };
                     }
                     Err(e) => {
-                        let mut l = launcher::Launcher::new(&ctx);
-                        l.error = Some(format!("campaign {id}: {e}"));
-                        screen = Screen::Launcher(l);
+                        // The content stays as it was: stay on the screen the change was made
+                        // on (the menu's options or the launcher) and say why (#144).
+                        let msg = format!("campaign {id}: {e}");
+                        eprintln!("error: {msg}");
+                        match &mut screen {
+                            Screen::Menu(m) => m.error = Some(msg),
+                            _ => {
+                                let mut l = launcher::Launcher::new(&ctx);
+                                l.error = Some(msg);
+                                screen = Screen::Launcher(l);
+                            }
+                        }
                     }
                 }
             }

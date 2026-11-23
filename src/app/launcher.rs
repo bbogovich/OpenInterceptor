@@ -357,20 +357,46 @@ impl Launcher {
     }
 }
 
+/// The index one step from `i` in a list of `len` (forward or back), wrapping — how the
+/// campaign and difficulty choices cycle.
+pub fn cycle(i: usize, len: usize, forward: bool) -> usize {
+    if len == 0 {
+        return 0;
+    }
+    if forward {
+        (i + 1) % len
+    } else {
+        (i + len - 1) % len
+    }
+}
+
 /// The campaign after the current one in the list (wrapping), if there is another.
 pub fn next_campaign(content: &Content) -> Option<String> {
+    step_campaign(content, true)
+}
+
+/// The campaign one step from the current one, forward or back (wrapping), if there is
+/// another.
+pub fn step_campaign(content: &Content, forward: bool) -> Option<String> {
     let list = &content.campaigns;
     if list.len() < 2 {
         return None;
     }
     let i = list.iter().position(|(id, _)| Some(id.as_str()) == content.campaign.as_deref()).unwrap_or(0);
-    Some(list[(i + 1) % list.len()].0.clone())
+    Some(list[cycle(i, list.len(), forward)].0.clone())
 }
 
 /// The next difficulty level (wrapping), if the campaign defines more than one.
 pub fn next_difficulty(content: &Content) -> Option<String> {
+    step_difficulty(content, true)
+}
+
+/// The difficulty level one step up or down (wrapping), if the campaign defines more
+/// than one.
+pub fn step_difficulty(content: &Content, forward: bool) -> Option<String> {
     let r = &content.rules;
-    (r.difficulty_levels.len() > 1).then(|| r.difficulty_levels[(r.difficulty + 1) % r.difficulty_levels.len()].clone())
+    let n = r.difficulty_levels.len();
+    (n > 1).then(|| r.difficulty_levels[cycle(r.difficulty, n, forward)].clone())
 }
 
 /// Word-wraps `s` to lines of at most `width` characters.
@@ -458,6 +484,27 @@ mod tests {
         assert!(!m.choosing(&c));
         assert!(matches!(m.activate(&c), Next::Fly { ship: None, .. }));
         assert_eq!(next_campaign(&c), None, "only one campaign without the CD");
+    }
+
+    /// #144: left steps the difficulty (and campaign) back, right forward, both wrapping.
+    #[test]
+    fn options_cycle_both_ways() {
+        assert_eq!((cycle(0, 4, true), cycle(3, 4, true)), (1, 0));
+        assert_eq!((cycle(1, 4, false), cycle(0, 4, false)), (0, 3));
+        assert_eq!(cycle(0, 0, false), 0);
+        let mut c = Content::load(&ContentConfig {
+            pack_dirs: crate::content::checkout_dirs(),
+            no_original: true,
+            ..Default::default()
+        })
+        .unwrap();
+        let levels = c.rules.difficulty_levels.clone();
+        assert!(levels.len() > 2);
+        c.rules.difficulty = 1;
+        assert_eq!(step_difficulty(&c, true).as_deref(), Some(levels[2].as_str()));
+        assert_eq!(step_difficulty(&c, false).as_deref(), Some(levels[0].as_str()));
+        c.rules.difficulty = 0;
+        assert_eq!(step_difficulty(&c, false).as_deref(), levels.last().map(String::as_str), "wraps");
     }
 
     #[test]

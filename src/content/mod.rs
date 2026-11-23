@@ -211,7 +211,12 @@ impl Content {
             None => pack::order(found)?,
         };
         if packs.is_empty() {
-            return Err("no content packs found (is the packs/ folder next to the program?)".into());
+            // Name the folders searched: a player (or a bug report) can see where it looked.
+            let dirs: Vec<String> = cfg.pack_dirs.iter().map(|d| d.display().to_string()).collect();
+            return Err(format!(
+                "no content packs found in [{}] (is the packs/ folder next to the program?)",
+                dirs.join(", ")
+            ));
         }
         // 3. Rules.
         let mut sources = Vec::new();

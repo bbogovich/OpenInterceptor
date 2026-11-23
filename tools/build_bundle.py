@@ -111,8 +111,11 @@ def main():
         fail(f"{engine} not found")
 
     number = version()
-    app = DIST / f"OpenInterceptor-{number}.app"
+    final = DIST / f"OpenInterceptor-{number}.app"
     DIST.mkdir(exist_ok=True)
+    # Built beside the bundle and swapped in at the end (#144): a copy of the game running
+    # from dist/ must not find its Resources half-deleted when it reloads its content.
+    app = DIST / f".OpenInterceptor-{number}.app.building"
     shutil.rmtree(app, ignore_errors=True)
     contents = app / "Contents"
     (contents / "MacOS").mkdir(parents=True)
@@ -144,6 +147,15 @@ def main():
     run("xattr", "-cr", app)
     run("codesign", "--force", "--sign", "-", app)
     run("codesign", "--verify", "--strict", app)
+    # The swap: the old bundle moves aside and the new one takes its name in one rename,
+    # so the bundle's path never lacks its Resources for long.
+    old = DIST / f".OpenInterceptor-{number}.app.old"
+    shutil.rmtree(old, ignore_errors=True)
+    if final.exists():
+        final.rename(old)
+    app.rename(final)
+    shutil.rmtree(old, ignore_errors=True)
+    app = final
     if args.zip:
         # ditto keeps the bundle's signature and extended attributes intact (zip(1) would not).
         archive = DIST / f"OpenInterceptor-{number}-macos.zip"
