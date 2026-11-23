@@ -48,6 +48,7 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #143 soak tooling: --soak-fleet (keep N craft), --soak-capture (kills of capturable classes count as captures), autoplay researches event-opened topics first | 0.22.38 |
 | #141 freighters in flight (`aliens::freighters`), RQ-S-23 raids that hunt them, raid sizes and escorts by tech (`raids.sizes`, `escorts`), hired pilots as shipments | 0.22.41 |
 | #142 player attacks on the rival's places (`alien_bases.assault`, `Campaign::assault`), scouts, hangar growth and the ship queue; side missions and the remaining new-base checks wait on RE | NEXT |
+| #141 follow-up (unknowns §16): the hunters come from the nearest A base with 3 queued and take 3/4/3/4/5 from its queue; outpost 50 + 5d %, base 25 + 10d %; meeting within 600 is a battle (freighter lost only if destroyed); mission 3's Tachyon armament not built (chance formula gives 0, question for RE) | NEXT |
 | #137 RQ-S-19/21 deliveries by outpost freighter (100 units, 135 units/h), RQ-S-22 map speed by mass, RQ-S-28 versioned save sections (DEV-103) | 0.22.33 |
 
 ## Issues
