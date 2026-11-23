@@ -2441,3 +2441,12 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Steps | 1. `openinterceptor --campaign interceptor --strategy --map-demo` (the rival's base is selected). 2. Click the selected alien base again. 3. `--map-demo --screen testbed`: press **Attack** in the info panel. 4. `--campaign default --strategy --map-demo`. |
 | Expected | 1: the status bar reads ALIEN BASE, a yellow ring marks it. 2 and 3: the base's ready craft fly to the place as an interception (a contact appears there); the battle follows on arrival. 4: no rival places, nothing offers Attack. |
 
+
+### MT-6-40 — The dial globe's turn and the picture level's black scope
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy`; let the clock run at the slowest speed and watch the dial. 2. `--strategy --map-level 2` (or click a star twice on the map). |
+| Expected | 1: the globe turns smoothly through a full rotation in about 3 s, centred in the dial's round opening (not low against its bottom edge); the corner lamps cycle in about 0.7 s. 2: the star's animated picture sits in the middle of a black scope — no grey panel art inside the circle — as at the other zoom levels. |
+
