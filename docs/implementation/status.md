@@ -763,7 +763,7 @@ battle (the hourly simulation, freighter against the raid; the player can join o
 cargo lost only if the freighter is destroyed; `Campaign::battle_rules` lets the campaign start that
 battle itself. DEV-105 revised.
 
-**#144** (bug, app NEXT): content reloads in the app bundle (D, Tab, the Options campaign and
+**#144** (bug, app 0.22.48): content reloads in the app bundle (D, Tab, the Options campaign and
 difficulty rows). The likely cause of "no content packs found": `tools/build_bundle.py` deleted and
 rebuilt `dist/<app>` in place, so a copy running from `dist/` lost its Resources; the bundle is now
 built beside it and renamed into place. Also: pack folders resolve to absolute paths; a failed
