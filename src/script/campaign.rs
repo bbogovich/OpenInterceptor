@@ -53,6 +53,8 @@ pub mod id {
     pub const BASE_DISTANCE: u16 = 29;
     pub const CENTRE_DISTANCE: u16 = 30;
     pub const ALIEN_TECH: u16 = 31;
+    pub const ALIEN_BASES: u16 = 32;
+    pub const ALIEN_OUTPOSTS: u16 = 33;
 }
 
 /// Names with a meaning of their own as a system query's argument: in a `placement:`
@@ -168,6 +170,13 @@ pub const QUERIES: &[QueryDef] = &[
         result: Type::Num,
         doc: "the aliens' tech level, 1 - 3 (strategist.economy)",
     },
+    QueryDef { name: "alien_bases", args: &[], result: Type::Num, doc: "the rival's bases on the map (alien_bases)" },
+    QueryDef {
+        name: "alien_outposts",
+        args: &[],
+        result: Type::Num,
+        doc: "the rival's outposts on the map (alien_bases)",
+    },
 ];
 
 /// The campaign schema: every id in `names` is a constant (its index), then the
@@ -222,6 +231,8 @@ mod tests {
             (id::BASE_DISTANCE, "base_distance"),
             (id::CENTRE_DISTANCE, "centre_distance"),
             (id::ALIEN_TECH, "alien_tech"),
+            (id::ALIEN_BASES, "alien_bases"),
+            (id::ALIEN_OUTPOSTS, "alien_outposts"),
         ];
         assert_eq!(names.len(), QUERIES.len());
         for (i, n) in names {

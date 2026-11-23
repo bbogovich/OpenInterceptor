@@ -148,6 +148,19 @@ fn headless(options: &cli::Options) -> Option<i32> {
             plans.join(", "),
             c.story.aggression
         );
+        // The rival's places (`alien_bases:`): bases (A / B), queued ships, outposts, treasury.
+        if def.alien_bases.is_some() {
+            let a = &c.aliens;
+            let variant_a = a.bases.iter().filter(|b| b.variant == 1).count();
+            let queued: u32 = a.bases.iter().map(|b| b.queued).sum();
+            println!(
+                "  aliens: {} bases ({variant_a} A), {queued} ships queued, {} outposts, tech {}, Doomsday fund {:.0}",
+                a.bases.len(),
+                a.outposts.len(),
+                c.story.alien.tech.max(1),
+                c.story.alien.doomsday
+            );
+        }
         return Some(0);
     }
     if let Some(sc) = &options.soak {

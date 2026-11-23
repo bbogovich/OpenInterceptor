@@ -22,6 +22,7 @@
 //!  player's CD ────────────────┘
 //! ```
 
+pub mod aliens;
 pub mod autoresolve;
 pub mod behaviour;
 pub mod cutscene;
