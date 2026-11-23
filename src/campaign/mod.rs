@@ -3725,8 +3725,9 @@ mod tests {
         assert_eq!(save::difficulty_of("not: [a save"), None);
     }
 
-    /// Content loaded at a level is at that level, and a campaign started from it takes it
-    /// (the app's New Game: `Campaign::new(def, rules.difficulty, ..)`).
+    /// Content loaded at a level resolves `per_level` values at that level — the default
+    /// campaign's saucer scout aims 0.15 at its first level and 0.6 at its last — and a
+    /// campaign started from it takes the level (the app's New Game).
     #[test]
     fn content_resolves_per_level_values_at_the_chosen_level() {
         let load = |level: &str| {
@@ -3743,7 +3744,11 @@ mod tests {
         let levels = first.rules.difficulty_levels.clone();
         let last = load(levels.last().unwrap());
         assert_eq!((first.rules.difficulty, last.rules.difficulty), (0, levels.len() - 1));
-        // A campaign started from that content takes the content's level.
+        let aim = |c: &crate::content::Content| {
+            let r = &c.rules;
+            r.behaviour(r.behaviour_id("saucer_scout").unwrap()).skill.aim
+        };
+        assert_eq!((aim(&first), aim(&last)), (0.15, 0.6));
         let def = last.rules.strategy.as_ref().unwrap();
         assert_eq!(Campaign::new(def, last.rules.difficulty, 1).difficulty, levels.len() - 1);
     }
