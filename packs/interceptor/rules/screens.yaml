@@ -65,9 +65,11 @@ screens:
       # strategy/campaign.yaml), each with its S_TIME_* help and the RotarySwitch sound;
       # keys 1-6 pick them too (clock.first_key). Each hole's lamp is a pair of sprites,
       # rows 966+2k (out) and 967+2k (lit: the clock's speed) - the pairing DERIVED from
-      # the art (one size per pair). The globe in the dial (rows 918-929, 12 frames)
-      # turns while the clock runs; its rate and place DERIVED.
-      globe: {kind: anim, centre: [562, 304], frames: ["original:sprite#918", "original:sprite#919", "original:sprite#920", "original:sprite#921", "original:sprite#922", "original:sprite#923", "original:sprite#924", "original:sprite#925", "original:sprite#926", "original:sprite#927", "original:sprite#928", "original:sprite#929"], interval: 4, with_clock: true}
+      # the art (one size per pair). The globe in the dial: rows 918-965, 48 frames (#145: the
+      # 12 frames before were a quarter turn), turning while the clock runs at one frame
+      # every 4 ticks (3.2 s a turn); its rate and its place, centred in the dial's
+      # opening at (562, 289), are DERIVED from the art.
+      globe: {kind: anim, centre: [562, 289], frames: ["original:sprite#918", "original:sprite#919", "original:sprite#920", "original:sprite#921", "original:sprite#922", "original:sprite#923", "original:sprite#924", "original:sprite#925", "original:sprite#926", "original:sprite#927", "original:sprite#928", "original:sprite#929", "original:sprite#930", "original:sprite#931", "original:sprite#932", "original:sprite#933", "original:sprite#934", "original:sprite#935", "original:sprite#936", "original:sprite#937", "original:sprite#938", "original:sprite#939", "original:sprite#940", "original:sprite#941", "original:sprite#942", "original:sprite#943", "original:sprite#944", "original:sprite#945", "original:sprite#946", "original:sprite#947", "original:sprite#948", "original:sprite#949", "original:sprite#950", "original:sprite#951", "original:sprite#952", "original:sprite#953", "original:sprite#954", "original:sprite#955", "original:sprite#956", "original:sprite#957", "original:sprite#958", "original:sprite#959", "original:sprite#960", "original:sprite#961", "original:sprite#962", "original:sprite#963", "original:sprite#964", "original:sprite#965"], interval: 4, with_clock: true}
       speed0: {kind: button, centre: [523, 322], images: {sprite: "original:sprite#966", states: 2}, action: speed(0), sound: ui_dial, tip: "@orig.S_TIME_5SECS"}
       speed1: {kind: button, centre: [536, 336], images: {sprite: "original:sprite#968", states: 2}, action: speed(1), sound: ui_dial, tip: "@orig.S_TIME_1MIN"}
       speed2: {kind: button, centre: [554, 344], images: {sprite: "original:sprite#970", states: 2}, action: speed(2), sound: ui_dial, tip: "@orig.S_TIME_5MIN"}

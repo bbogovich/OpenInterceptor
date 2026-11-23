@@ -3481,6 +3481,14 @@ impl StrategyScreen {
             self.level = 0;
             return;
         };
+        // The map's black background behind the picture, as at the other levels (the
+        // round map: the circle inside the rectangle) — the art's scope is only a frame.
+        if self.map_round {
+            let (c, rad) = (vec2(r[0] + r[2] * 0.5, r[1] + r[3] * 0.5), r[2].min(r[3]) * 0.5);
+            draw_circle(c.x, c.y, rad, Color::new(0.01, 0.02, 0.04, 1.0));
+        } else {
+            draw_rectangle(r[0], r[1], r[2], r[3], Color::new(0.01, 0.02, 0.04, 1.0));
+        }
         let class = self.campaign.systems[sys].class.clone();
         // A system with the player's base shows the base picture (§14.4: rows 566 - 585
         // for X-COM's; the enemy's, 586 - 605, belong to bases this map does not have yet).
@@ -3506,6 +3514,27 @@ impl StrategyScreen {
                 WHITE,
                 DrawTextureParams { dest_size: Some(vec2(w, h)), ..Default::default() },
             );
+        }
+    }
+
+    /// `--map-level <n>` (testbed, for screenshots): the CSD opens at zoom level `n`; at the
+    /// picture level, of the star nearest the first base that has a picture.
+    pub fn map_level(&mut self, ctx: &AppContext, level: usize) {
+        let Some(def) = ctx.content.rules.strategy.as_ref() else { return };
+        self.level = level;
+        let c = &self.campaign;
+        let here = c.bases.first().map_or([0.0, 0.0], |b| c.systems[b.system].pos);
+        let d = |s: usize| {
+            let p = c.systems[s].pos;
+            (p[0] - here[0]).powi(2) + (p[1] - here[1]).powi(2)
+        };
+        let star = (0..c.systems.len())
+            .filter(|&s| !c.systems[s].hidden && !c.bases.iter().any(|b| b.system == s))
+            .filter(|&s| def.star_classes.iter().any(|k| k.id == c.systems[s].class && k.portrait.is_some()))
+            .min_by(|a, b| d(*a).total_cmp(&d(*b)));
+        if let Some(s) = star {
+            self.system = Some(s);
+            self.sel = Some(Sel::System(s));
         }
     }
 

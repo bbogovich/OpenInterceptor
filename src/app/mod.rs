@@ -470,6 +470,9 @@ pub async fn run(options: Options) {
                 if options.map_demo {
                     s.map_demo(&ctx);
                 }
+                if let Some(level) = options.map_level {
+                    s.map_level(&ctx, level);
+                }
                 Screen::Strategy(Box::new(s))
             }
             None => Screen::Launcher(launcher::Launcher::new(&ctx)),

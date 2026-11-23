@@ -36,6 +36,8 @@ OPTIONS:
                         skin's dialog look)
     --hover <X,Y>       With --strategy: the map's labels act as if the cursor were at
                         X,Y of the screen set's design space (for screenshots)
+    --map-level <N>     With --strategy (testbed): open the CSD at zoom level N (2: the
+                        picture of the nearest star that has one; for screenshots)
     --map-demo          With --strategy (testbed): put the rival's first base and
                         outpost next to yours, reveal them, send a freighter with a
                         purchase and start an off-screen battle nearby (screenshots)
@@ -106,6 +108,8 @@ pub struct Options {
     pub hover: Option<[f32; 2]>,
     /// `--map-demo`: the strategy map's objects staged near the base (testbed).
     pub map_demo: bool,
+    /// `--map-level <n>`: the CSD's zoom level at start (testbed).
+    pub map_level: Option<usize>,
     /// `--video <ref>`: play a video first.
     pub video: Option<String>,
     /// `--cutscene <id>`: play a cutscene first.
@@ -158,6 +162,10 @@ pub fn parse(args: &[String], env_data: Option<String>) -> Result<Options, Strin
             "--screen" => o.screen = Some(value("--screen")?),
             "--notice" => o.notice = Some(value("--notice")?),
             "--map-demo" => o.map_demo = true,
+            "--map-level" => {
+                let v = value("--map-level")?;
+                o.map_level = Some(v.parse().map_err(|_| format!("--map-level: expected a number, not '{v}'"))?);
+            }
             "--hover" => {
                 let v = value("--hover")?;
                 let p: Vec<f32> = v.split(',').filter_map(|x| x.trim().parse().ok()).collect();
@@ -331,6 +339,8 @@ mod tests {
         assert_eq!(parse(&args("--strategy --hover 120,200"), None).unwrap().hover, Some([120.0, 200.0]));
         assert!(parse(&args("--hover x"), None).is_err());
         assert!(parse(&args("--strategy --map-demo"), None).unwrap().map_demo);
+        assert_eq!(parse(&args("--strategy --map-level 2"), None).unwrap().map_level, Some(2));
+        assert!(parse(&args("--strategy --map-level x"), None).is_err());
         assert!(parse(&args("--frames many"), None).is_err());
         assert!(parse(&args("--help"), None).unwrap().help);
         assert!(!parse(&args("--fullscreen --windowed"), None).unwrap().fullscreen);
