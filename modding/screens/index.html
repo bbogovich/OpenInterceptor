@@ -7348,6 +7348,12 @@ and kept; one that cannot be loaded is reported on standard error once
 <td>A <code>map</code>'s marker under a star with an outpost (app 0.22.26; <code>interceptor</code>: row 916, <strong>verified</strong>).</td>
 </tr>
 <tr>
+<td><code>markers</code></td>
+<td>map of kind → asset</td>
+<td>shapes</td>
+<td>A <code>map</code>'s icons (app 0.22.39, RQ-UI-19): <code>base</code> (with a red / green progress bar under it while the base is built), <code>alien_base</code> and <code>alien_outpost</code> (the rival's places the player knows of — within a base's sensor range, <em>derived</em>; the outpost's blinks on 3 of every 6 steps), <code>freighter</code> (an outpost freighter flying a load), <code>contact</code>. A kind without an image is drawn as a shape. <code>interceptor</code>: 902, 903, 917, 606, 608 (<strong>verified</strong>, unknowns §1.2). A battle fought off-screen shows as a translucent red square for 5 of every 10 steps.</td>
+</tr>
+<tr>
 <td><code>y_range</code>, <code>y_steps</code></td>
 <td><code>[low, high]</code>, number</td>
 <td>fitted, 18 / about 6</td>
@@ -7540,6 +7546,10 @@ and kept; one that cannot be loaded is reported on standard error once
 <tr>
 <td><code>base</code></td>
 <td>The current base's name.</td>
+</tr>
+<tr>
+<td><code>base_hull</code></td>
+<td>The current base's hull, <code>HULL 5,400 / 6,000</code>; empty when its type has none (app 0.22.39).</td>
 </tr>
 <tr>
 <td><code>speed</code></td>
@@ -7760,6 +7770,13 @@ several objects are in the box their labels take turns, one at a time, each for 
 <span class="w">  </span><span class="nt">widgets</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">map</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="nv">map</span><span class="p p-Indicator">,</span><span class="nt"> rect</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">8</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">52</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">790</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">660</span><span class="p p-Indicator">],</span><span class="nt"> labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">font</span><span class="p">:</span><span class="w"> </span><span class="nv">body</span><span class="p p-Indicator">,</span><span class="nt"> rise</span><span class="p">:</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">,</span><span class="nt"> base_rise</span><span class="p">:</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="nt"> box</span><span class="p">:</span><span class="w"> </span><span class="nv">40</span><span class="p p-Indicator">}}</span>
 </code></pre></div>
+<p>Since app 0.22.39 the hover labels also name the rival's known bases and outposts ("ALIEN BASE",
+"ALIEN OUTPOST") and contacts (the raid's name) in RGB(200, 100, 50), freighters ("FREIGHTER")
+in RGB(0, 120, 0) and battles under way ("ATTACK IN PROGRESS") in RGB(200, 200, 200), the
+original's colours (<strong>verified</strong>; the texts <em>derived</em>); with labels, contacts' names show on hover
+only.</p>
+<p>A second click on the selected contact acts on it: <strong>Intercept</strong>, or <strong>Join the battle</strong> when it
+is being fought off-screen (RQ-C-21) — for screens without an info panel, such as the CSD.</p>
 <p>The testbed layout (<code>starmap</code>) takes a full <code>map</code> definition too, for its <code>labels</code>; its
 other keys are unused there. <code>--hover X,Y</code> puts the labels' cursor at a design-space point (for
 screenshots).</p>
