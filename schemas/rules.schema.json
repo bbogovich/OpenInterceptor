@@ -127,6 +127,7 @@
           "lift": {"description": "forward speed at which the wings carry the craft's weight; 0 = no wings", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "hover": {"description": "hovers: vertical thrust cancels gravity", "type": "boolean"},
           "atmospheric": {"description": "can enter an atmosphere (default true)", "type": "boolean"},
+          "silhouette": {"description": "the craft from above, nose up, white on transparent: the ship status display's centre", "type": "string"},
           "crewed": {"description": "has a pilot who can be hurt or killed (default: fighters, freighters, capitals and drones)", "type": "boolean"},
           "energy": {"description": "energy pool for beams, afterburner and cloak (default power.energy)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "energy_recharge": {"description": "pool recharge per second at full beam charge (default power.energy_recharge)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -249,6 +250,7 @@
           "lift": {"description": "forward speed at which the wings carry the craft's weight; 0 = no wings", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "hover": {"description": "hovers: vertical thrust cancels gravity", "type": "boolean"},
           "atmospheric": {"description": "can enter an atmosphere (default true)", "type": "boolean"},
+          "silhouette": {"description": "the craft from above, nose up, white on transparent: the ship status display's centre", "type": "string"},
           "crewed": {"description": "has a pilot who can be hurt or killed (default: fighters, freighters, capitals and drones)", "type": "boolean"},
           "energy": {"description": "energy pool for beams, afterburner and cloak (default power.energy)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "energy_recharge": {"description": "pool recharge per second at full beam charge (default power.energy_recharge)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
@@ -372,7 +374,8 @@
               "width": {"description": "band thickness (fraction of the half-size)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
               "tilt": {"description": "counter-clockwise rotation of the display in degrees", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
               "arc": {"description": "degrees each half (fore, aft) spans; 180 = no side gaps", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
-              "craft": {"description": "size of the craft silhouette (fraction of the half-size)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]}
+              "craft": {"description": "size of the craft silhouette (fraction of the half-size)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+              "craft_art": {"description": "where the art paints the craft, [x, y, w, h] design px: redrawn tinted by the hull", "type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}
             }},
           "inherit": {"type": "string", "description": "copy another definition of this kind first, or original:<file>/<section>"},
           "delete": {"type": "boolean"},

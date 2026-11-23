@@ -10,8 +10,9 @@ It writes into resources/default/:
 
 * `models/`   - ships, stations, rubble, debris pieces and the Guard 3D cockpit (OBJ +
                 MTL), plus `guard_cockpit.instruments.yaml` (models.py);
-* `textures/` - hull paint and its damage variants (PNG, textures.py) and the skin's
-                grid sheet fonts `font_*.png` (fonts.py);
+* `textures/` - hull paint and its damage variants (PNG, textures.py), the skin's
+                grid sheet fonts `font_*.png` (fonts.py) and the player craft's top-down
+                `silhouette_*.png` for the ship status display (silhouettes.py);
 * terrain dressing - ground detail textures and scatter models (rocks, a tree) for the
                 default terrains (terrain.py);
 * `sounds/`   - synthesised effects (WAV, sounds.py).
@@ -32,6 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fonts  # noqa: E402  (after the path tweak, so `common` is importable)
 import models  # noqa: E402
 import music  # noqa: E402
+import silhouettes  # noqa: E402
 import sounds  # noqa: E402
 import terrain  # noqa: E402
 import textures  # noqa: E402
@@ -50,6 +52,8 @@ def build():
     rows, rects = models.build_all()
     tex = textures.build_all()
     tex += fonts.build_all()
+    # The flyable craft, seen from above (the ship status display's centre, #147).
+    tex += silhouettes.build_all([models.comet(), models.meteor(), models.thunderbolt()])
     ground_tex, scatter = terrain.build_all()
     tex += ground_tex
     rows += [(m, 0) for m in scatter]
