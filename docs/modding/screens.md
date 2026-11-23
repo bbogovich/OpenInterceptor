@@ -561,7 +561,7 @@ Since app 0.22.15 (plan M2 #126, RQ-UI-09 – 12):
   **derived** from the art.
 - The globe in the dial (rows 918 – 965, 48 frames: one full turn) turns while the clock runs,
   one frame every 4 ticks (3.2 s a turn), centred in the dial's opening at (562, 289); its rate
-  and place are **derived** from the art. (Until app NEXT only the first 12 frames, a quarter
+  and place are **derived** from the art. (Until app 0.22.47 only the first 12 frames, a quarter
   turn, were listed, 15 px too low.)
 - At the picture level (the last `zoom_levels` stop) the map's black background is drawn
   behind the picture as at the other levels, so the scope's art is only a frame.

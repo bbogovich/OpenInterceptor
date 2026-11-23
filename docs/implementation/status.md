@@ -664,7 +664,7 @@ the Bases rows) and craft condition (the hangar rows); the map's `markers` — b
 bar, the rival's known bases and outposts, freighters in flight (`Campaign::freighters_in_flight`,
 for #141 to extend), battles under way — and their hover labels. MT-6-38.
 
-**#145** (app NEXT; a playtest of 0.22.46): the CSD's dial globe listed only rows 918 – 929, a
+**#145** (app 0.22.47; a playtest of 0.22.46): the CSD's dial globe listed only rows 918 – 929, a
 quarter of its 48-frame turn, so it looped a quarter turn every 0.8 s (too fast, frames missing);
 it now lists 918 – 965 and sits 15 px higher, at (562, 289). The picture level (level 2) draws the
 map's black disc before the star or base picture, so the scope is black around it. Frame timing
