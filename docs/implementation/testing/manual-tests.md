@@ -2430,6 +2430,6 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Field | |
 |---|---|
 | Preconditions | App NEXT or later; the player's Interceptor data; `auto_resolve` on. |
-| Steps | 1. `openinterceptor --campaign interceptor --strategy`; let time run until a freighter carries a purchase and a contact is fought off-screen. 2. Hover the base, a freighter, a contact, a battle. 3. Click the contact under attack twice. 4. Open Bases and Equip Ships. 5. Repeat 1 – 4 with `--campaign default` (Ctrl+T layout). |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy --map-demo` (or let time run until a freighter carries a purchase and a contact is fought off-screen). 2. Hover the base, a freighter, a contact, a battle. 3. Click the contact under attack twice. 4. Open Bases and Equip Ships. 5. Repeat 1 – 4 with `--campaign default` (Ctrl+T layout). |
 | Expected | 1: the base icon (902) with a progress bar while built; freighters (606) on their way; alien places in sensor range (903, 917 blinking); a blinking red square on a battle. 2: the labels name them in the original's colours. 3: the battle is flown from where it stands. 4: Bases shows "HULL x / 6,000"; a damaged craft's row gives its hull, shields and armour. 5: shapes instead of icons; the Contacts list offers "Join the battle"; the Bases list gives the hull. |
 
