@@ -8,6 +8,9 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
+**#142 (app NEXT)** two more: `campaign::aliens::tests::the_player_attacks_and_removes_the_rivals_places`
+and `bases_grow_hangars_and_send_scouts`.
+
 **#141 (app 0.22.41)** four more: `campaign::aliens::tests::a_raid_hunts_a_freighter_and_catches_it_or_lets_it_go`,
 `planned_raids_take_their_size_from_the_table_and_an_escort_at_tech_three`,
 `campaign::tests::hired_pilots_arrive_by_freighter` and
