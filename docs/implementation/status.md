@@ -660,13 +660,13 @@ bonuses are indexed by the pilot's **rank**, not its grade (tables 0x65f0a8…0x
 rank just rolled); the grade only picks the Psionics range (0 – 100, 0 – 9, 0, 50 – 79, 45 – 69,
 75 – 99 for grades 0 – 5).
 
-**#134** (app NEXT; RQ-C-18/19/20/21, D-24; flight README §13 – 14): `auto_resolve:` runs an
+**#134** (app 0.22.32; RQ-C-18/19/20/21, D-24; flight README §13 – 14): `auto_resolve:` runs an
 auto-resolved interception as the original's hourly simulation (`campaign::autoresolve`), in game
 time, with the station's part at a base; `craft_damage:` keeps battle damage on craft (flown or
 not) and on the base's hull; `Campaign::join_offscreen` stops a running battle with its damage; the
 autoplayer fights off-screen and rebuys a hull when it has none. The original's simulation has no
 system hits, so it never disables or captures a ship: the soak's story still waits for a captured
-saucer. `interceptor` `--strategy-soak` (app NEXT, seed 7):
+saucer. `interceptor` `--strategy-soak` (app 0.22.32, seed 7):
 
 | Days | Battles | Off-screen won / lost | Craft lost | Craft at the end | Topics |
 |---|---|---|---|---|---|

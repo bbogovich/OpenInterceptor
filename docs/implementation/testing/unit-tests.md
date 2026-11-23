@@ -8,7 +8,7 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
-**#134 (app NEXT)** six more: `campaign::autoresolve::tests::ratings_follow_the_original_formulas`,
+**#134 (app 0.22.32)** six more: `campaign::autoresolve::tests::ratings_follow_the_original_formulas`,
 `rounds_come_at_five_hours_then_hourly_and_hits_go_shield_armour_hull`,
 `a_won_battle_reports_its_kills_and_outcome_actions`,
 `station_hits_take_modules_first_and_the_hull_by_quarters`,

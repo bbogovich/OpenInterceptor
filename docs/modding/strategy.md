@@ -439,7 +439,7 @@ kills by type.
 
 ### `auto_resolve` and `craft_damage`
 
-`auto_resolve:` (app NEXT) — an auto-resolved interception is fought as the original's hourly
+`auto_resolve:` (app 0.22.32) — an auto-resolved interception is fought as the original's hourly
 combat simulation (flight README §13, **verified**) instead of one roll of odds; without the section
 (or with `model: odds`) the roll stays (DEV-057). The craft at the contact, with their fits,
 battle damage and pilots, fight the raid's mission's hostile roles (each at a count rolled in its
@@ -487,7 +487,7 @@ station's C and D and is a module place with those hit points. A base type's
 pool, base D (1,000), A and B drawn from their ranges per battle, its return fire; its hull is
 the base's own `hull` (as damaged and repaired), else `hull` here.
 
-`craft_damage: {persist: true, repair_per_day: 10%}` (app NEXT) — battle damage stays on a craft
+`craft_damage: {persist: true, repair_per_day: 10%}` (app 0.22.32) — battle damage stays on a craft
 (flown or off-screen) and mends at home by `repair_per_day` of each bank's maximum a day; a flown
 battle starts the craft with it.
 
@@ -816,7 +816,7 @@ systems no lane joins are reached in one straight hop. Endurance and stranding a
    counts — and the player wins with p = P² / (P² + E²). The mission's own outcome actions for
    the rolled `win` or `lose` apply as for a flown battle (DEV-057). A won auto-resolve credits
    the kills of the hostile roles only, each at its smallest count (`balance::hostile_count`,
-   app 0.16.15). With an [`auto_resolve:`](#auto_resolve-and-craft_damage) section (app NEXT)
+   app 0.16.15). With an [`auto_resolve:`](#auto_resolve-and-craft_damage) section (app 0.22.32)
    the battle is instead **fought off-screen in game time**, as the original's: the result
    arrives hours later as a notice, the craft keep their damage and lost craft are gone with
    their pilots.
