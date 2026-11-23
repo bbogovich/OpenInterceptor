@@ -262,15 +262,23 @@ pub fn find_resources_dir(exe: Option<&Path>) -> Option<PathBuf> {
 }
 
 /// The first existing `name` folder: in the working directory, next to the program,
-/// in a macOS app's `Resources`, then in the development checkout.
+/// in a macOS app's `Resources`, then in the development checkout. The result is
+/// absolute (canonical where the system allows): a folder found relative to the working
+/// directory must not change meaning later in the run (#144).
 fn find_dir(name: &str, exe: Option<&Path>) -> Option<PathBuf> {
-    let mut candidates = vec![PathBuf::from(name)];
+    find_dir_from(name, std::env::current_dir().ok().as_deref(), exe)
+}
+
+/// [`find_dir`] with the working directory given (for tests).
+fn find_dir_from(name: &str, cwd: Option<&Path>, exe: Option<&Path>) -> Option<PathBuf> {
+    let mut candidates: Vec<PathBuf> = cwd.map(|d| d.join(name)).into_iter().collect();
     if let Some(dir) = exe.and_then(Path::parent) {
         candidates.push(dir.join(name));
         candidates.push(dir.join("../Resources").join(name));
     }
     candidates.push(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(name));
-    candidates.into_iter().find(|p| p.is_dir())
+    let found = candidates.into_iter().find(|p| p.is_dir())?;
+    Some(found.canonicalize().unwrap_or(found))
 }
 
 /// Where packs are loaded from, in order: `resources/` (what ships with the game: the
@@ -364,12 +372,39 @@ mod tests {
     }
 
     #[test]
+    fn folders_are_found_in_an_app_bundle_whatever_the_working_directory() {
+        // A fake bundle: Contents/MacOS/openinterceptor and Contents/Resources/{packs,resources}.
+        let root = std::env::temp_dir().join(format!("oi-bundle-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let contents = root.join("Test.app/Contents");
+        for d in ["MacOS", "Resources/packs", "Resources/resources"] {
+            std::fs::create_dir_all(contents.join(d)).unwrap();
+        }
+        let exe = contents.join("MacOS/openinterceptor");
+        let elsewhere = root.join("elsewhere");
+        std::fs::create_dir_all(&elsewhere).unwrap();
+        for cwd in [Some(elsewhere.as_path()), Some(Path::new("/")), None] {
+            let packs = find_dir_from("packs", cwd, Some(&exe)).unwrap();
+            assert!(packs.is_absolute(), "{packs:?}");
+            assert_eq!(packs, contents.join("Resources/packs").canonicalize().unwrap());
+            let res = find_dir_from("resources", cwd, Some(&exe)).unwrap();
+            assert_eq!(res, contents.join("Resources/resources").canonicalize().unwrap());
+        }
+        // A folder in the working directory wins, and comes back absolute.
+        std::fs::create_dir_all(elsewhere.join("packs")).unwrap();
+        let p = find_dir_from("packs", Some(&elsewhere), Some(&exe)).unwrap();
+        assert_eq!(p, elsewhere.join("packs").canonicalize().unwrap());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
     fn content_dirs_are_resources_then_packs() {
         assert!(find_packs_dir(None).is_some());
         let resources = find_resources_dir(None).expect("the checkout has resources/");
         assert!(resources.join("default/pack.yaml").is_file(), "the default campaign lives in resources/default");
         let cfg = parse(&args("--packs /x"), None).unwrap().content_config();
         assert_eq!(cfg.pack_dirs, vec![resources, PathBuf::from("/x")], "--packs replaces only the mods folder");
+        assert!(cfg.pack_dirs[0].is_absolute());
         assert!(user_data_dir().is_some());
     }
 }

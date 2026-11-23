@@ -10,7 +10,7 @@
 //! changed with Left/Right. The item lists and the volume step are pure, so they are
 //! tested; the screen only reads input and draws.
 
-use super::launcher::{next_campaign, next_difficulty};
+use super::launcher::{step_campaign, step_difficulty};
 use super::{AppContext, Next};
 use crate::render::camera::SpaceCamera;
 use glam::{Quat, Vec3};
@@ -139,6 +139,15 @@ pub struct MainMenu {
     campaign: String,
 }
 
+/// The most rows the options page has (its `Setting` list).
+const SETTINGS_ROWS: usize = 8;
+
+/// The options row to show after a reload: the one the change was made on, held to the
+/// page's rows; the first when there was none (#144).
+pub fn kept_row(before: Option<usize>, rows: usize) -> usize {
+    before.unwrap_or(0).min(rows.saturating_sub(1))
+}
+
 impl MainMenu {
     pub fn new(ctx: &AppContext) -> MainMenu {
         let id = ctx.content.campaign.clone().unwrap_or_default();
@@ -160,9 +169,19 @@ impl MainMenu {
     }
 
     /// Opens straight on the options page (after a reload made from it).
-    pub fn on_options(mut self) -> MainMenu {
-        self.options = Some(0);
+    pub fn on_options(self) -> MainMenu {
+        self.on_options_at(0)
+    }
+
+    /// The options page with row `row` selected (kept across a content reload, #144).
+    pub fn on_options_at(mut self, row: usize) -> MainMenu {
+        self.options = Some(kept_row(Some(row), SETTINGS_ROWS));
         self
+    }
+
+    /// The options row selected, when the options page is open.
+    pub fn options_row(&self) -> Option<usize> {
+        self.options
     }
 
     pub fn frame(&mut self, ctx: &mut AppContext) -> Next {
@@ -235,13 +254,14 @@ impl MainMenu {
                     self.options = None;
                 } else if left || right || enter {
                     match rows[row] {
+                        // Left steps back, right (and Enter) forward (#144).
                         Setting::Campaign => {
-                            if let Some(next) = next_campaign(&ctx.content) {
+                            if let Some(next) = step_campaign(&ctx.content, !left) {
                                 return Next::Reload { campaign: Some(next), difficulty: None };
                             }
                         }
                         Setting::Difficulty => {
-                            if let Some(level) = next_difficulty(&ctx.content) {
+                            if let Some(level) = step_difficulty(&ctx.content, !left) {
                                 return Next::Reload { campaign: None, difficulty: Some(level) };
                             }
                         }
@@ -457,5 +477,12 @@ mod tests {
         assert_eq!(fit_size(100.0, 20.0, 150.0), 20.0, "fits: unchanged");
         assert_eq!(fit_size(200.0, 20.0, 150.0), 15.0, "scaled to the room");
         assert_eq!(fit_size(1000.0, 20.0, 150.0), 10.0, "never below half");
+    }
+
+    #[test]
+    fn a_reload_keeps_the_options_row() {
+        assert_eq!(kept_row(Some(2), 8), 2, "the difficulty row stays selected");
+        assert_eq!(kept_row(Some(20), 8), 7);
+        assert_eq!(kept_row(None, 8), 0);
     }
 }
