@@ -2249,7 +2249,7 @@ impl Campaign {
     /// A contact reached its target unopposed: the mission's `lose` outcomes apply.
     fn unopposed(&mut self, def: &StrategyDef, contact: u32, events: &mut Vec<Event>) {
         // A raid after a freighter catches it instead of striking (RQ-S-23).
-        if aliens::hunt_arrived(self, contact, events) {
+        if aliens::hunt_arrived(self, def, contact, events) {
             return;
         }
         let Some(k) = self.contacts.iter().position(|c| c.id == contact) else { return };
