@@ -8,7 +8,7 @@ test** (fake DLLs, meshes, WAVs, temp pack folders) — never original game file
 `platform::linux` has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.
 
-**Difficulty fix (app NEXT)** two more: `campaign::tests::a_save_names_its_difficulty_before_it_is_read`
+**Difficulty fix (app 0.22.36)** two more: `campaign::tests::a_save_names_its_difficulty_before_it_is_read`
 and `campaign::tests::content_resolves_per_level_values_at_the_chosen_level`.
 
 **#139 (app 0.22.34)** five more in `campaign::aliens::tests`:
