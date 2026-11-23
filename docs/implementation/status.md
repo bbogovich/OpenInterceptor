@@ -717,7 +717,7 @@ content must be at the campaign's level. New Game and the menu's difficulty choi
 at the save's level first (`save::difficulty_of`), and `--strategy-soak` starts its campaign at the
 content's level (`--difficulty`, else the default) instead of level 1.
 
-**#143** (app NEXT, test tooling): `--soak-fleet` and `--soak-capture` for `--strategy-soak`;
+**#143** (app 0.22.38, test tooling): `--soak-fleet` and `--soak-capture` for `--strategy-soak`;
 the automatic player keeps its fleet and researches event-opened topics first. `interceptor`
 Veteran, 365 days with `--soak-capture`: the Type 1 and Type 2 saucer examinations are researched
 on days 122 and 192 (never without the flag); 3 craft at the end. The Doomsday arc still waits on
