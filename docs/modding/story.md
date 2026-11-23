@@ -93,7 +93,7 @@ An event is a condition, a chance, a list of actions and, optionally, choices fo
 | Key | Type | Default | Meaning |
 |---|---|---|---|
 | `when` | condition | always | When it may fire, in the [campaign context](#conditions). |
-| `check` | `daily`, `weekly`, `monthly`, `after_battle`, `on_research`, `scheduled` | `daily` | How often it is checked: at each day, week (168 h) or month (720 h) boundary, after any battle the player flies, or after any research topic is finished. `scheduled` (app NEXT): only the [side-mission scheduler](#side_missions) fires it. |
+| `check` | `daily`, `weekly`, `monthly`, `after_battle`, `on_research`, `scheduled` | `daily` | How often it is checked: at each day, week (168 h) or month (720 h) boundary, after any battle the player flies, or after any research topic is finished. `scheduled` (app 0.22.31): only the [side-mission scheduler](#side_missions) fires it. |
 | `chance` | fraction | 100 % | The chance per check, once `when` holds. |
 | `do` | list of [actions](#actions) (or one action) | none | What it does when it fires. |
 | `choices` | list of `{text, do}` | none | A choice for the player, made after `do` has run: `text` is the option (a `@key` or words), `do` its actions. Up to five are offered on number keys. |
@@ -184,7 +184,7 @@ The rival's mood (a global section). Its **aggression** multiplies the chance of
 Without a `strategist` section aggression stays at 1. The `aggression(n)` action moves it
 directly. `interceptor` starts at 0.7, `Think.ini`'s `StartingAggression` (D-25, **verified**).
 
-`strategist.economy` (app NEXT, RQ-S-14) — the rival's treasury and tech level:
+`strategist.economy` (app 0.22.31, RQ-S-14) — the rival's treasury and tech level:
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
@@ -200,7 +200,7 @@ its 3 alien downlinks and the missing aggression adjustment of the split are *de
 
 ## `side_missions`
 
-`side_missions: {check_every, list}` (app NEXT, RQ-S-13) — a scheduler for side missions: every
+`side_missions: {check_every, list}` (app 0.22.31, RQ-S-13) — a scheduler for side missions: every
 `check_every` (a random time in `[min, max]`) the entries of `list` are tried **in order**, and
 the first whose `months` window holds (whole 30-day months since the start), whose event is not
 spent (`once`) and whose `when` holds fires, with its own `chance`; at most one a check. The
@@ -354,7 +354,7 @@ is not there, that arcs only move forward, and that the serial and the Engine ar
 guide describes. Every estimate is marked `DERIVED` in the file.
 
 - **Arc `doomsday`**: `alien_message_1` – `alien_message_5`, `summon_macarthur`,
-  `final_mission`. Since app NEXT (RQ-S-12, README §4.3, unknowns §11.2, **verified**) each message
+  `final_mission`. Since app 0.22.31 (RQ-S-12, README §4.3, unknowns §11.2, **verified**) each message
   is intercepted after a battle with the AlienMessage goodies chance (7 / 7 / 5 / 5 / 4 %), from
   its month (February, April, June, August, November 2067 — here whole 30-day months 1 / 3 / 5 /
   7 / 10, *derived*) once its prerequisites are known: the previous message, the saucer
@@ -362,7 +362,7 @@ guide describes. Every estimate is marked `DERIVED` in the file.
   three research topics; the final mission (`destroy_doomsday_weapon`) follows 24 – 48 hours later
   (`delay`, **verified**).
 - **Plan `doomsday`**: three stages (Structural, Weapon, Drive) with the original's counts by
-  difficulty (8/8/9, 9/8/8, 10/8/7, 7/7/6, 7/6/5, unknowns §12.2, **verified** since app NEXT),
+  difficulty (8/8/9, 9/8/8, 10/8/7, 7/7/6, 7/6/5, unknowns §12.2, **verified** since app 0.22.31),
   shipments as the raid `doomsday_convoy` (the escorted alien freighter ambush) with a chance by
   difficulty, three warnings and `defeat(doomsday_complete)`.
 - **Side missions**: the [scheduler](#side_missions) with four of the original's seven; Kabron

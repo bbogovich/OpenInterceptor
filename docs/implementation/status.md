@@ -644,7 +644,7 @@ base and 30,000 of the centre, 6,000 hull, technicians; `default`: a 4,000-point
 alien probe raid's seven probe types, of which the sensor, intel jammer and comm jammer probes open
 their topics. DEV-097 updated.
 
-**#135** (app NEXT; RQ-S-12/13/14/15, D-25; README §4.3, §6; unknowns §11.2, §12.2): the alien
+**#135** (app 0.22.31; RQ-S-12/13/14/15, D-25; README §4.3, §6; unknowns §11.2, §12.2): the alien
 messages intercepted after battles by month and prerequisites (the topics hidden until then);
 events' `delay` (the MacArthur 24 – 48 hours later) and `check: scheduled`; the side-mission
 scheduler (`side_missions:`); the aliens' treasury and tech level (`strategist.economy`,
