@@ -4947,6 +4947,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#side_missions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        side_missions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#endings-and-campaign_end" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6690,6 +6701,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#side_missions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        side_missions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#endings-and-campaign_end" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6903,9 +6925,9 @@ victory.</p>
 </tr>
 <tr>
 <td><code>check</code></td>
-<td><code>daily</code>, <code>weekly</code>, <code>monthly</code>, <code>after_battle</code>, <code>on_research</code></td>
+<td><code>daily</code>, <code>weekly</code>, <code>monthly</code>, <code>after_battle</code>, <code>on_research</code>, <code>scheduled</code></td>
 <td><code>daily</code></td>
-<td>How often it is checked: at each day, week (168 h) or month (720 h) boundary, after any battle the player flies, or after any research topic is finished.</td>
+<td>How often it is checked: at each day, week (168 h) or month (720 h) boundary, after any battle the player flies, or after any research topic is finished. <code>scheduled</code> (app 0.22.31): only the <a href="#side_missions">side-mission scheduler</a> fires it.</td>
 </tr>
 <tr>
 <td><code>chance</code></td>
@@ -6936,6 +6958,12 @@ victory.</p>
 <td>time</td>
 <td>0</td>
 <td>For a repeating event (<code>once: false</code>): the least time between firings (<code>60d</code>).</td>
+</tr>
+<tr>
+<td><code>delay</code></td>
+<td><code>[min, max]</code> times</td>
+<td>none</td>
+<td>App NEXT: once the event would fire (its check, condition and chance passed), it fires a random time in this range later instead, whatever its <code>check</code> (<code>interceptor</code>: the MacArthur arrives <code>[24h, 48h]</code> after the request, RQ-S-15, <strong>verified</strong>).</td>
 </tr>
 <tr>
 <td><code>arc</code></td>
@@ -7123,7 +7151,85 @@ trade, the design's <code>relation_rules</code>, and standings between factions 
 </tbody>
 </table>
 <p>Without a <code>strategist</code> section aggression stays at 1. The <code>aggression(n)</code> action moves it
-directly. The design's budgets, expansion, offence ladder and <code>Think.ini</code> values are not built.</p>
+directly. <code>interceptor</code> starts at 0.7, <code>Think.ini</code>'s <code>StartingAggression</code> (D-25, <strong>verified</strong>).</p>
+<p><code>strategist.economy</code> (app 0.22.31, RQ-S-14) — the rival's treasury and tech level:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>income_every</code>, <code>income</code></td>
+<td>time, expression</td>
+<td>25 d, <code>125000 * (difficulty + 1)</code></td>
+<td>Money the treasury gets each period.</td>
+</tr>
+<tr>
+<td><code>split_every</code>, <code>ratios</code></td>
+<td>time, <code>[research, goods, doomsday]</code></td>
+<td>6.25 d, <code>[0.3, 0.4, 0.3]</code></td>
+<td>Each period the treasury is split into the three funds by these shares.</td>
+</tr>
+<tr>
+<td><code>spend_every</code>, <code>research_per_downlink</code>, <code>downlinks</code></td>
+<td>time, number, number</td>
+<td>20 h, 20000, 0</td>
+<td>Each period up to <code>research_per_downlink</code> × <code>downlinks</code> / 7 (/ 14 with none) moves from the research fund into research.</td>
+</tr>
+<tr>
+<td><code>tech_levels</code></td>
+<td>list of <code>[to 2, to 3]</code> per difficulty level</td>
+<td>none</td>
+<td>Research money at which the tech level rises to 2 and to 3.</td>
+</tr>
+</tbody>
+</table>
+<p>Conditions read the level as <code>alien_tech</code> (1 – 3). <code>interceptor</code> follows the original (README
+§6.1, <strong>verified</strong>): the fallback income (the aliens' outposts are not modelled), <code>Think.ini</code>'s
+ratios, 20,000 per downlink and the thresholds 1.0M / 1.5M (Beginner) … 0.5M / 0.9M (Superhuman);
+its 3 alien downlinks and the missing aggression adjustment of the split are <em>derived</em>.</p>
+<h2 id="side_missions"><code>side_missions</code><a class="headerlink" href="#side_missions" title="Permanent link">&para;</a></h2>
+<p><code>side_missions: {check_every, list}</code> (app 0.22.31, RQ-S-13) — a scheduler for side missions: every
+<code>check_every</code> (a random time in <code>[min, max]</code>) the entries of <code>list</code> are tried <strong>in order</strong>, and
+the first whose <code>months</code> window holds (whole 30-day months since the start), whose event is not
+spent (<code>once</code>) and whose <code>when</code> holds fires, with its own <code>chance</code>; at most one a check. The
+events are <code>check: scheduled</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Entry key</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>event</code></td>
+<td>event id</td>
+<td>The side mission's event (unknown: load error).</td>
+</tr>
+<tr>
+<td><code>months</code></td>
+<td><code>[first, last]</code></td>
+<td>Months it may fire in (default: any).</td>
+</tr>
+<tr>
+<td><code>chance</code></td>
+<td>fraction</td>
+<td>The chance when it qualifies (default 100 %).</td>
+</tr>
+</tbody>
+</table>
+<p><code>interceptor</code> (README §6.2, <strong>verified</strong> order, months and chances): alien raiders (months 2 – 7,
+10 %), rogue freighter (5 – 17, 20 %), pirate rescue (9 – 23, 20 %), arms dealer (from 6, 70 %:
+<em>derived</em>, the original uses the aliens' aggression), every 6 – 9 days. Which mission stands for
+each, and the month offset (the original's month value − 1), are <em>derived</em>; the Nova Bomb hijack
+and the recon mission are not built. <code>default</code>: Dominion scouts and a Black Comet ambush call.</p>
 <h2 id="endings-and-campaign_end"><code>endings</code> and <code>campaign_end</code><a class="headerlink" href="#endings-and-campaign_end" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">endings</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">engine_destroyed</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">victory</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">,</span><span class="nt"> text</span><span class="p">:</span><span class="w"> </span><span class="s">"…"</span><span class="p p-Indicator">}</span>
@@ -7345,18 +7451,20 @@ is not there, that arcs only move forward, and that the serial and the Engine ar
 guide describes. Every estimate is marked <code>DERIVED</code> in the file.</p>
 <ul>
 <li><strong>Arc <code>doomsday</code></strong>: <code>alien_message_1</code> – <code>alien_message_5</code>, <code>summon_macarthur</code>,
-  <code>final_mission</code>. The first message is checked <code>after_battle</code> from 1 February with a chance per
-  battle by difficulty, or regardless later (the later day is <em>derived</em>); the next ones need
-  their date, a saucer examination topic and the Doomsday plan's progress; MacArthur needs three
-  research topics, and the final mission (<code>destroy_doomsday_weapon</code>, whose win now sets
-  <code>doomsday_destroyed</code>) is offered about a week later.</li>
-<li><strong>Plan <code>doomsday</code></strong>: three stages (Structural, Weapon, Drive) with <code>{per_level: …}</code> counts,
+  <code>final_mission</code>. Since app 0.22.31 (RQ-S-12, README §4.3, unknowns §11.2, <strong>verified</strong>) each message
+  is intercepted after a battle with the AlienMessage goodies chance (7 / 7 / 5 / 5 / 4 %), from
+  its month (February, April, June, August, November 2067 — here whole 30-day months 1 / 3 / 5 /
+  7 / 10, <em>derived</em>) once its prerequisites are known: the previous message, the saucer
+  examinations and the Doomsday pieces; it opens its (hidden) research topic. MacArthur needs
+  three research topics; the final mission (<code>destroy_doomsday_weapon</code>) follows 24 – 48 hours later
+  (<code>delay</code>, <strong>verified</strong>).</li>
+<li><strong>Plan <code>doomsday</code></strong>: three stages (Structural, Weapon, Drive) with the original's counts by
+  difficulty (8/8/9, 9/8/8, 10/8/7, 7/7/6, 7/6/5, unknowns §12.2, <strong>verified</strong> since app 0.22.31),
   shipments as the raid <code>doomsday_convoy</code> (the escorted alien freighter ambush) with a chance by
   difficulty, three warnings and <code>defeat(doomsday_complete)</code>.</li>
-<li><strong>Side missions</strong>: two of the original's seven so far — a rogue freighter and Kabron pirates,
-  both flying <code>ambush_pirate_squadron</code> on <em>derived</em> triggers.</li>
-<li><strong>Strategist</strong>: aggression with <em>derived</em> values (the original's <code>Think.ini</code> rules are not
-  read yet).</li>
+<li><strong>Side missions</strong>: the <a href="#side_missions">scheduler</a> with four of the original's seven; Kabron
+  pirates stay as a <em>derived</em> stand-in for the minor missions.</li>
+<li><strong>Strategist</strong>: aggression from 0.7 (rise and fall <em>derived</em>) and the <a href="#strategist">aliens' economy</a>.</li>
 <li><strong>Videos</strong> (app 0.12.0): each alien message also plays the original's transmission film,
   <code>video(original:alientrans1.smk)</code> – <code>alientrans5.smk</code>; the victory ending plays the credits
   film (<code>video: original:credits_sm2a.smk</code>, app 0.12.1); and a new campaign opens with
@@ -7367,12 +7475,8 @@ guide describes. Every estimate is marked <code>DERIVED</code> in the file.</p>
   original's own text keys — <code>@orig.DD_WARNING1</code> – <code>DD_WARNING3</code>, <code>@orig.MAC_PROMPT1</code>,
   <code>@orig.DD_TOOLATE</code>, <code>@orig.S_LASTBASEDEAD</code> — read from the player's data at load.</li>
 </ul>
-<div class="admonition warning">
-<p class="admonition-title">Derived: the saucer examinations</p>
-<p>The gates of messages 2 – 4 use the topics <code>type_1_saucer_examination</code>,
-<code>type_2_saucer_examination</code> and <code>type_3_saucer_examination</code> for the guide's Wraith, Spectre
-and Phantasm examinations. That mapping is <strong>derived and unconfirmed</strong>.</p>
-</div>
+<p>The saucer examinations the message gates name are the original's topics 70 – 72 (<strong>verified</strong>
+since app 0.22.27).</p>
 <h2 id="trying-a-story-out">Trying a story out<a class="headerlink" href="#trying-a-story-out" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>openinterceptor --campaign &lt;id&gt; --strategy-soak 365</code> plays a year headless and now prints the
