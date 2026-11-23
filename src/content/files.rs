@@ -300,6 +300,11 @@ fn ship() -> Ty {
         f("lift", Ty::Num, "forward speed at which the wings carry the craft's weight; 0 = no wings"),
         f("hover", Ty::Bool, "hovers: vertical thrust cancels gravity"),
         f("atmospheric", Ty::Bool, "can enter an atmosphere (default true)"),
+        f(
+            "crewed",
+            Ty::Bool,
+            "has a pilot who can be hurt or killed (default: fighters, freighters, capitals and drones)",
+        ),
         f("energy", Ty::Num, "energy pool for beams, afterburner and cloak (default power.energy)"),
         f("energy_recharge", Ty::Num, "pool recharge per second at full beam charge (default power.energy_recharge)"),
         f("beams", names(), "one beam id per mount"),

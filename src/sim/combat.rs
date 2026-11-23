@@ -940,6 +940,9 @@ pub fn ship_collisions(w: &mut World) {
 /// lost then. A ship with no pilot health, or a pilot already dead, is unaffected.
 pub fn hurt_pilot(w: &mut World, id: ShipId, n: f32) {
     let spin = Vec3::new(w.random() - 0.5, w.random() - 0.5, w.random() - 0.5) * 2.0;
+    // A static class (a station a modder marked `crewed`) is anchored: its crew can fall,
+    // but it never drifts or tumbles (#146).
+    let anchored = w.get(id).is_some_and(|s| w.rules.ship(s.class).kind.is_static());
     let Some(s) = w.get_mut(id) else { return };
     let Some(h) = s.pilot_health.filter(|h| *h >= 0.0) else { return };
     let after = h - n;
@@ -950,9 +953,11 @@ pub fn hurt_pilot(w: &mut World, id: ShipId, n: f32) {
     s.disabled = true;
     s.controls = Default::default();
     let text = if after < 0.0 {
-        s.angular_velocity = spin;
-        s.tumble = 999.0;
-        s.velocity = s.forward() * 10.0;
+        if !anchored {
+            s.angular_velocity = spin;
+            s.tumble = 999.0;
+            s.velocity = s.forward() * 10.0;
+        }
         "PILOT KILLED"
     } else {
         "PILOT UNCONSCIOUS"
@@ -1744,6 +1749,85 @@ mod tests {
         let s = w.get(me).unwrap();
         assert!(s.velocity.z > 0.0, "bounced back");
         assert!(w.get(st).is_some());
+    }
+
+    /// #146: fighter-scale impacts never spin a station, and barely spin a capital ship
+    /// or a freighter. A station has no pilot to kill (only crewed classes do), is
+    /// immovable in a collision, and a heavy hull takes a fighter's knock in its stride.
+    #[test]
+    fn fighter_impacts_leave_stations_and_heavy_hulls_steady() {
+        use crate::content::behaviour::HealthRoll;
+        use crate::content::equipment::PilotInjury;
+        use crate::content::rules::{ShipClassId, ShipKind};
+        let mut r = (*rules()).clone();
+        r.damage.pilot_injury = Some(PilotInjury {
+            amount: [1.0, 3.0],
+            collision: [5.0, 10.0],
+            health: HealthRoll { base: [5.0, 15.0], per_rank: [0.0, 0.0], rank_roll: Vec::new() },
+        });
+        let base = r.ship_id("base").unwrap();
+        let f = r.ship_id("fighter").unwrap();
+        assert!(!r.ship(base).crewed && r.ship(f).crewed, "crewed by kind by default");
+        // A heavy hull: a capital ship and a freighter, five times a fighter's radius.
+        let mut heavy = Vec::new();
+        for kind in [ShipKind::Capital, ShipKind::Freighter] {
+            let mut c = r.ship(f).clone();
+            c.id = format!("{kind:?}");
+            c.kind = kind;
+            r.ships.push(c);
+            heavy.push(ShipClassId((r.ships.len() - 1) as u16));
+        }
+        let mut shapes: Vec<Shape> = r.ships.iter().map(|_| Shape::sphere(5.0)).collect();
+        for h in &heavy {
+            shapes[h.0 as usize] = Shape::sphere(25.0);
+        }
+        let r = Arc::new(r);
+        let mut w = World::new(r.clone(), Arc::new(shapes), 7);
+        // The station: rammed head-on and glancing, 40 times, then shot to pieces' edge.
+        let st = w.spawn(base, FactionId(2), "base", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        assert_eq!(w.get(st).unwrap().pilot_health, None, "a station has no pilot");
+        let me = w.spawn(f, FactionId(0), "me", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        for k in 0..40 {
+            let side = if k % 2 == 0 { 0.0 } else { 3.0 };
+            let s = w.get_mut(me).unwrap();
+            (s.position, s.velocity) = (Vec3::new(side, 0.0, 9.0), Vec3::new(-40.0 * side, 0.0, -150.0));
+            w.contacts.clear();
+            ship_collisions(&mut w);
+        }
+        for _ in 0..50 {
+            let at = w.get(st).unwrap().position;
+            apply_damage(&mut w, st, 50.0, at);
+        }
+        let s = w.get(st).unwrap();
+        assert!(s.angular_velocity.length() < 1e-6 && s.velocity.length() < 1e-6, "{s:?}");
+        assert_eq!(s.tumble, 0.0);
+        // Even a station a modder marks crewed is anchored when its crew falls.
+        let mut w2 = World::new(r.clone(), Arc::new(r.ships.iter().map(|_| Shape::sphere(5.0)).collect()), 7);
+        let st2 = w2.spawn(base, FactionId(2), "base", Vec3::ZERO, Quat::IDENTITY, Pilot::External);
+        w2.get_mut(st2).unwrap().pilot_health = Some(1.0);
+        hurt_pilot(&mut w2, st2, 5.0);
+        let s = w2.get(st2).unwrap();
+        assert!(s.angular_velocity.length() < 1e-6 && s.velocity.length() < 1e-6);
+        // A fighter glancing off a capital ship and a freighter: the fighter bounces and
+        // spins, the heavy hull's spin stays tiny (radius cubed: 125 times the mass).
+        for h in heavy {
+            let hv = w.spawn(h, FactionId(2), "heavy", Vec3::new(0.0, 500.0, 0.0), Quat::IDENTITY, Pilot::External);
+            let s = w.get_mut(me).unwrap();
+            (s.position, s.velocity, s.angular_velocity) = (
+                Vec3::new(0.0, 500.0, 0.0)
+                    + Vec3::new(0.3, 0.0, 0.95).normalize() * (30.0 * BODY_RADIUS_FRACTION * 0.9),
+                Vec3::new(-60.0, 0.0, -150.0),
+                Vec3::ZERO,
+            );
+            w.contacts.clear();
+            ship_collisions(&mut w);
+            let (big, small) = (w.get(hv).unwrap(), w.get(me).unwrap());
+            assert!(small.angular_velocity.length() > 0.5, "the fighter tumbles: {:?}", small.angular_velocity);
+            assert!(big.angular_velocity.length() < 0.05, "{:?}: {:?}", big.class, big.angular_velocity);
+            assert!(big.velocity.length() < 3.0, "and is barely pushed: {:?}", big.velocity);
+            assert_eq!(big.tumble, 0.0);
+            w.get_mut(hv).unwrap().alive = false;
+        }
     }
 
     #[test]
