@@ -651,6 +651,13 @@ scheduler (`side_missions:`); the aliens' treasury and tech level (`strategist.e
 `alien_tech`); aggression from 0.7; the Doomsday piece counts. Not built: alien bases, their
 raid planner and expansion. DEV-101.
 
+**#137** (app NEXT; RQ-S-19/21/22/28; unknowns §2, §12.6): deliveries by the outposts' freighters
+(`shipments:`: queued, 100-unit loads in order, travel, unloading and refuelling, ships without a
+bay refunded), map speed by mass (`speed_by_mass`, hull and item `mass`, engines'
+`strategic_factor`), versioned save sections (`save::SECTIONS`). `interceptor`: the original's
+values and slower raids by fleet mass; `default`: colony freighters. Not built: the aliens'
+harassment of freighters (#139). DEV-103.
+
 **#133** (app 0.22.28; RQ-S-10, RQ-S-11, RQ-C-10's campaign link, RQ-C-23, D-08; strategy README §5,
 flight README §4.2, with the generator, salary and bracket tables read from the exe): `pilots.generate`,
 `pilots.health`, the periodic `pilots.training`, the salary table and `stat_max`; `damage.pilot_injury`
