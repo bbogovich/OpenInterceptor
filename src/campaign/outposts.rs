@@ -162,6 +162,14 @@ impl Campaign {
                     continue;
                 }
                 match d.product {
+                    // A pilot takes one unit (unknowns §2.2).
+                    Product::Pilot(_) => {
+                        if room < 1.0 {
+                            break;
+                        }
+                        self.deliveries[k].arrive_at = arrive;
+                        room -= 1.0;
+                    }
                     Product::Hull(_) => {
                         // A ship takes the whole freighter, and only an empty one.
                         if room == rules.capacity {

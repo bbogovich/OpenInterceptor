@@ -421,6 +421,26 @@ impl MissionDef {
     }
 }
 
+impl MissionDef {
+    /// The mission sized for a planned raid (`alien_bases.raids.sizes`): its first enemy
+    /// role flies `ships`, and an `escort` of that class joins as a role of its own.
+    pub fn with_size(&self, ships: u32, escort: Option<&str>) -> MissionDef {
+        let mut m = self.clone();
+        if let Some(r) = m.roles.iter().position(|r| r.ai == AiRole::Enemy) {
+            m.roles[r].count = (ships, ships);
+            if let Some(e) = escort {
+                let mut esc = m.roles[r].clone();
+                esc.name = format!("{}_escort", esc.name);
+                esc.classes = vec![e.to_string()];
+                esc.count = (1, 1);
+                esc.arrive = None;
+                m.roles.push(esc);
+            }
+        }
+        m
+    }
+}
+
 /// What a campaign battle puts in its mission's first protected role (see
 /// [`MissionDef::with_stand_in`]).
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -499,5 +519,18 @@ mod tests {
         // No protected role: an error, not a silent change.
         let plain = parse("roles: {a: {class: comet}}\nobjectives: {win: alive(a)}\n").unwrap();
         assert!(plain.with_stand_in(&s).unwrap_err().contains("no protected role"));
+    }
+
+    #[test]
+    fn a_mission_sized_for_a_raid_flies_that_many_and_its_escort() {
+        let doc = crate::formats::yaml::parse("roles:\n  foes: {class: raider, count: [2, 3]}\n  pal: {class: fighter, ai: wingman}\nobjectives: {win: destroyed_all(foes)}\n").unwrap();
+        let m = MissionDef::parse("t", Get(&doc), 0, &["raider".into(), "fighter".into()], &[]).unwrap();
+        let sized = m.with_size(6, Some("fighter"));
+        assert_eq!(sized.roles[0].count, (6, 6));
+        assert_eq!(
+            sized.roles.last().map(|r| (r.classes.clone(), r.count)),
+            Some((vec!["fighter".to_string()], (1, 1)))
+        );
+        assert_eq!(m.with_size(4, None).roles.len(), m.roles.len());
     }
 }

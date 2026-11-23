@@ -64,6 +64,72 @@ pub struct AlienState {
     pub piece_work: Vec<(f64, u32)>,
     /// The hour of the last piece-work update (every 20 h).
     pub piece_clock: f64,
+    /// Raid sizes the planner rolled (`raids.sizes`), for the raid's battle.
+    pub sizes: Vec<RaidSize>,
+    /// Raids hunting a freighter (RQ-S-23).
+    pub hunts: Vec<Hunt>,
+}
+
+/// A raid's ships and escort (`alien_bases.raids.sizes`, `escorts`), for its battle.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RaidSize {
+    pub contact: u32,
+    pub ships: u32,
+    pub escort: Option<String>,
+}
+
+/// A raid sent after a freighter in flight: the freighter's outpost, base and the hour
+/// it unloads (its flight's key).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Hunt {
+    pub contact: u32,
+    pub outpost: usize,
+    pub base: usize,
+    pub arrive: f64,
+}
+
+/// A freighter in flight from an outpost to a base (unknowns §2.2): where it is now and
+/// the hour it unloads. Derived from the shipments it carries (the outposts' freighters).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Flight {
+    pub outpost: usize,
+    pub base: usize,
+    pub arrive: f64,
+    pub pos: [f32; 2],
+}
+
+/// The player's freighters in flight now (`shipments:`): for the map and for the
+/// rival's harassment.
+pub fn freighters(c: &Campaign, def: &StrategyDef) -> Vec<Flight> {
+    let Some(ship) = def.shipments.as_ref() else { return Vec::new() };
+    let now = c.hours;
+    let mut out: Vec<Flight> = Vec::new();
+    for d in &c.deliveries {
+        if d.arrive_at >= QUEUED || d.arrive_at <= now || d.base >= c.bases.len() {
+            continue;
+        }
+        let to = c.systems[c.bases[d.base].system].pos;
+        let found = (0..c.outposts.len()).find(|&o| {
+            let trip = distance(c.systems[c.outposts[o].system].pos, to) as f64 / ship.speed as f64;
+            (c.outposts[o].freighter_free - (d.arrive_at + ship.refuel as f64 + trip)).abs() < 1e-6
+        });
+        let Some(o) = found else { continue };
+        if out.iter().any(|f| f.outpost == o && f.arrive == d.arrive_at) {
+            continue;
+        }
+        let from = c.systems[c.outposts[o].system].pos;
+        let trip = distance(from, to) as f64 / ship.speed as f64;
+        let left = (d.arrive_at - ship.unload as f64 - now).max(0.0);
+        let t = if trip > 0.0 { (1.0 - left / trip).clamp(0.0, 1.0) as f32 } else { 1.0 };
+        let pos = [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t];
+        out.push(Flight { outpost: o, base: d.base, arrive: d.arrive_at, pos });
+    }
+    out
+}
+
+/// The size recorded for `contact`'s raid, if the planner rolled one.
+pub fn size_of(c: &Campaign, contact: u32) -> Option<&RaidSize> {
+    c.aliens.sizes.iter().find(|s| s.contact == contact)
 }
 
 /// The rival's technicians (the original's `0x42758c(9)`): per alien outpost
@@ -220,6 +286,11 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
     }
     // The plans' pieces (`plans.<id>.work`).
     piece_work(c, def);
+    // Size records of raids no longer on the map go.
+    let live: Vec<u32> = c.contacts.iter().map(|k| k.id).collect();
+    c.aliens.sizes.retain(|r| live.contains(&r.contact));
+    // Raids after freighters follow them (RQ-S-23).
+    follow_hunts(c, def, events);
     // Harassment of freighters in flight near alien outposts and bases (RQ-S-23).
     while now >= c.aliens.next_harass {
         c.aliens.next_harass += harass_every(c, a) as f64;
@@ -358,6 +429,13 @@ fn plan_raid(c: &mut Campaign, def: &StrategyDef, a: &AlienBasesDef, month: f32,
         }
     }
     let Some((r, target_base, dest)) = choice else { return };
+    let kind = if target_base.is_some() {
+        "base"
+    } else if a.opp_raid.as_deref().and_then(raid_id) == Some(r) {
+        "opp"
+    } else {
+        "outpost"
+    };
     // The nearest A base with enough ships queued sends it, and they leave the queue.
     let source = (0..c.aliens.bases.len())
         .filter(|&k| c.aliens.bases[k].variant == 1 && c.aliens.bases[k].queued >= a.min_queued.max(1))
@@ -366,7 +444,14 @@ fn plan_raid(c: &mut Campaign, def: &StrategyDef, a: &AlienBasesDef, month: f32,
             dist(x).total_cmp(&dist(y))
         });
     let Some(k) = source else { return };
-    c.aliens.bases[k].queued -= a.min_queued.max(1);
+    // Its size from the table, capped by the ships queued (all of them leave the queue);
+    // without a table the planner's `min_queued`.
+    let queued = c.aliens.bases[k].queued;
+    let ships = match a.size(kind, c.difficulty) {
+        Some([lo, hi]) => (below(c, lo, hi) as u32).clamp(1, queued),
+        None => a.min_queued.max(1).min(queued),
+    };
+    c.aliens.bases[k].queued -= ships;
     let from = c.systems[c.aliens.bases[k].system].pos;
     let id = c.next_contact;
     c.next_contact += 1;
@@ -385,51 +470,130 @@ fn plan_raid(c: &mut Campaign, def: &StrategyDef, a: &AlienBasesDef, month: f32,
         plan: None,
     });
     c.count_activity(def, dest, 0);
+    let escort = roll_escort(c, a, kind, month);
+    c.aliens.sizes.push(RaidSize { contact: id, ships, escort });
     let _ = events; // the contact shows once a sensor sees it
 }
 
-/// The harassment check (`0x573181`, RQ-S-23): a freighter in flight within
-/// `harass_radius` of an alien outpost (half that of a base) is attacked with
-/// 50 + 5d %; its cargo is lost (DERIVED: the original sends a fleet after it).
-fn harass(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
-    let (Some(a), Some(ship)) = (def.alien_bases.as_ref(), def.shipments.as_ref()) else { return };
-    let now = c.hours;
-    let chance = a.harass_chance[0] + a.harass_chance[1] * c.difficulty as f32;
-    // Each freighter in flight: its outpost, its base, and the hour it unloads.
-    let mut flights: Vec<(usize, usize, f64)> = Vec::new();
-    for d in &c.deliveries {
-        if d.arrive_at >= QUEUED || d.arrive_at <= now {
+/// The escort a raid at a `kind` target takes (`raids.escorts`, the original's
+/// `0x5a2f30`): the first rule whose tech level, month and kinds apply and whose roll wins.
+fn roll_escort(c: &mut Campaign, a: &AlienBasesDef, kind: &str, month: f32) -> Option<String> {
+    let tech = c.story.alien.tech.max(1);
+    for e in &a.escorts {
+        if tech < e.tech || month <= e.after_month || (!e.kinds.is_empty() && !e.kinds.iter().any(|k| k == kind)) {
             continue;
         }
-        let to = c.systems[c.bases[d.base].system].pos;
-        let found = (0..c.outposts.len()).find(|&o| {
-            let trip = distance(c.systems[c.outposts[o].system].pos, to) as f64 / ship.speed as f64;
-            (c.outposts[o].freighter_free - (d.arrive_at + ship.refuel as f64 + trip)).abs() < 1e-6
-        });
-        if let Some(o) = found {
-            if !flights.iter().any(|f| f.0 == o && f.2 == d.arrive_at) {
-                flights.push((o, d.base, d.arrive_at));
+        if c.roll() < e.chance + e.per_level * c.difficulty as f32 {
+            return Some(e.class.clone());
+        }
+    }
+    None
+}
+
+/// The hunts: each raid follows its freighter; it gives up when the freighter has
+/// arrived, and catches it when within an hour's flight — the cargo is lost.
+fn follow_hunts(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
+    if c.aliens.hunts.is_empty() {
+        return;
+    }
+    let flights = freighters(c, def);
+    let mut k = 0;
+    while k < c.aliens.hunts.len() {
+        let h = c.aliens.hunts[k].clone();
+        let Some(ci) = c.contacts.iter().position(|x| x.id == h.contact) else {
+            c.aliens.hunts.remove(k);
+            continue;
+        };
+        match flights.iter().find(|f| f.outpost == h.outpost && f.base == h.base && f.arrive == h.arrive) {
+            None => {
+                // Home safe: the raid turns back.
+                c.contacts.remove(ci);
+                c.aliens.hunts.remove(k);
+                c.aliens.sizes.retain(|s| s.contact != h.contact);
+            }
+            Some(f) => {
+                let reach = def.raids[c.contacts[ci].raid].speed;
+                if distance(c.contacts[ci].pos, f.pos) <= reach {
+                    caught(c, &h, events);
+                } else {
+                    c.contacts[ci].dest = f.pos;
+                    k += 1;
+                }
             }
         }
     }
-    for (o, base, arrive) in flights {
-        let from = c.systems[c.outposts[o].system].pos;
-        let to = c.systems[c.bases[base].system].pos;
-        let trip = distance(from, to) as f64 / ship.speed as f64;
-        let left = (arrive - ship.unload as f64 - now).max(0.0);
-        let t = if trip > 0.0 { (1.0 - left / trip).clamp(0.0, 1.0) as f32 } else { 1.0 };
-        let pos = [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t];
-        let near = c.aliens.outposts.iter().any(|x| distance(c.systems[x.system].pos, pos) <= a.harass_radius[0])
-            || c.aliens.bases.iter().any(|x| distance(c.systems[x.system].pos, pos) <= a.harass_radius[1]);
-        if !near || c.roll() >= chance {
+}
+
+/// A hunt reached its freighter: the flight's cargo is lost and the raid goes home.
+fn caught(c: &mut Campaign, h: &Hunt, events: &mut Vec<Event>) {
+    c.contacts.retain(|x| x.id != h.contact);
+    c.aliens.hunts.retain(|x| x.contact != h.contact);
+    c.aliens.sizes.retain(|s| s.contact != h.contact);
+    let before = c.deliveries.len();
+    c.deliveries.retain(|d| !(d.base == h.base && d.arrive_at == h.arrive));
+    if c.deliveries.len() < before {
+        let t = format!("Aliens caught a freighter bound for {}: its cargo is lost", c.bases[h.base].name);
+        c.log(t.clone());
+        events.push(Event::Notice(t, NoticeKind::Other));
+    }
+}
+
+/// A contact that reaches its destination unopposed: a hunt catches its freighter
+/// (instead of striking a system). Returns whether it was one.
+pub fn hunt_arrived(c: &mut Campaign, contact: u32, events: &mut Vec<Event>) -> bool {
+    let Some(h) = c.aliens.hunts.iter().find(|x| x.contact == contact).cloned() else { return false };
+    caught(c, &h, events);
+    true
+}
+
+/// The harassment check (`0x573181`, RQ-S-23): a freighter in flight within
+/// `harass_radius` of an alien outpost (or of a base) is attacked with 50 + 5d %: a raid
+/// (`raids.freighter`) sets out after it from the nearest alien place, `sizes.freighter`
+/// ships strong (DERIVED: where the original's fleet comes from is not traced). Without
+/// that raid the cargo is lost at once.
+fn harass(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
+    let Some(a) = def.alien_bases.as_ref() else { return };
+    let chance = a.harass_chance[0] + a.harass_chance[1] * c.difficulty as f32;
+    for f in freighters(c, def) {
+        if c.aliens.hunts.iter().any(|h| h.outpost == f.outpost && h.arrive == f.arrive) {
             continue;
         }
-        let before = c.deliveries.len();
-        c.deliveries.retain(|d| !(d.base == base && d.arrive_at == arrive));
-        if c.deliveries.len() < before {
-            let t = format!("Aliens attacked a freighter bound for {}: its cargo is lost", c.bases[base].name);
-            c.log(t.clone());
-            events.push(Event::Notice(t, NoticeKind::Other));
+        let near_outpost = c
+            .aliens
+            .outposts
+            .iter()
+            .map(|x| c.systems[x.system].pos)
+            .find(|p| distance(*p, f.pos) <= a.harass_radius[0]);
+        let near_base =
+            c.aliens.bases.iter().map(|x| c.systems[x.system].pos).find(|p| distance(*p, f.pos) <= a.harass_radius[1]);
+        let Some(from) = near_outpost.or(near_base) else { continue };
+        if c.roll() >= chance {
+            continue;
+        }
+        let hunt = Hunt { contact: c.next_contact, outpost: f.outpost, base: f.base, arrive: f.arrive };
+        match a.freighter_raid.as_deref().and_then(|id| def.raids.iter().position(|r| r.id == id)) {
+            Some(r) => {
+                let id = c.next_contact;
+                c.next_contact += 1;
+                c.contacts.push(Contact {
+                    id,
+                    raid: r,
+                    pos: from,
+                    dest: f.pos,
+                    target_base: None,
+                    detected: false,
+                    route: Vec::new(),
+                    plan: None,
+                });
+                let ships = match a.size("freighter", c.difficulty) {
+                    Some([lo, hi]) => below(c, lo, hi).max(1.0) as u32,
+                    None => 1,
+                };
+                c.aliens.sizes.push(RaidSize { contact: id, ships, escort: None });
+                c.aliens.hunts.push(hunt);
+                c.count_activity(def, f.pos, 0);
+            }
+            None => caught(c, &hunt, events),
         }
     }
 }
@@ -606,5 +770,86 @@ mod tests {
         c.aliens.outposts = vec![AlienOutpost { system: 1, founded: 0.0, opps: 0 }];
         harass(&mut c, &d, &mut ev);
         assert!(c.deliveries.is_empty(), "attacked: the cargo is lost");
+    }
+
+    #[test]
+    fn a_raid_hunts_a_freighter_and_catches_it_or_lets_it_go() {
+        // As above, with a raid to send: it sets out after the freighter instead.
+        let (d, mut c) = rival(
+            "outposts: {yield_table: [[100]]}\nshipments: {capacity: 10, speed: 1000, unload: 30min, refuel: 1h}\n",
+        );
+        let mut d = d;
+        let a = d.alien_bases.as_mut().unwrap();
+        (a.harass_chance, a.freighter_raid) = ([1.0, 0.0], Some("raid".into()));
+        a.sizes = vec![("freighter".into(), vec![[2.0, 3.0]])];
+        let mut ev = Vec::new();
+        step(&mut c, &d, &mut ev);
+        c.outposts.push(crate::campaign::outposts::Outpost {
+            system: 1,
+            funding: 0.75,
+            founded: 0.0,
+            opps: vec![(1, 0)],
+            freighter_free: 0.0,
+        });
+        let laser = d.item("laser").unwrap();
+        c.buy(&d, 0, crate::campaign::Product::Item(laser), 1).unwrap();
+        c.load_freighters(&d);
+        c.aliens.outposts = vec![AlienOutpost { system: 1, founded: 0.0, opps: 0 }];
+        c.aliens.bases.clear();
+        c.hours = 1.0;
+        let flight = freighters(&c, &d);
+        assert_eq!(flight.len(), 1, "one freighter in flight");
+        let n = c.contacts.len();
+        harass(&mut c, &d, &mut ev);
+        assert_eq!(c.contacts.len(), n + 1, "a raid sets out");
+        assert_eq!(c.deliveries.len(), 1, "the cargo is still aboard");
+        let id = c.contacts.last().unwrap().id;
+        assert_eq!(size_of(&c, id).map(|s| s.ships), Some(2));
+        // It follows the freighter; once within an hour's flight it catches it.
+        c.contacts.last_mut().unwrap().pos = flight[0].pos;
+        follow_hunts(&mut c, &d, &mut ev);
+        assert!(c.deliveries.is_empty() && c.aliens.hunts.is_empty());
+        assert!(c.contacts.iter().all(|k| k.id != id), "the raid goes home");
+        // A freighter that gets home first: the raid turns back.
+        c.buy(&d, 0, crate::campaign::Product::Item(laser), 1).unwrap();
+        c.outposts[0].freighter_free = 0.0;
+        c.load_freighters(&d);
+        harass(&mut c, &d, &mut ev);
+        let id = c.contacts.last().unwrap().id;
+        c.hours += 10.0;
+        follow_hunts(&mut c, &d, &mut ev);
+        assert!(c.contacts.iter().all(|k| k.id != id) && c.aliens.hunts.is_empty());
+    }
+
+    #[test]
+    fn planned_raids_take_their_size_from_the_table_and_an_escort_at_tech_three() {
+        let (d, mut c) = rival("");
+        let mut d = d;
+        let a = d.alien_bases.as_mut().unwrap();
+        a.sizes = vec![("base".into(), vec![[5.0, 6.0]])];
+        a.escorts = vec![crate::content::aliens::Escort {
+            class: "rocket".into(),
+            tech: 3,
+            after_month: -1.0,
+            kinds: vec!["base".into()],
+            chance: 1.0,
+            per_level: 0.0,
+        }];
+        let mut ev = Vec::new();
+        step(&mut c, &d, &mut ev);
+        c.aliens.bases.iter_mut().for_each(|b| b.queued = 6);
+        c.story.alien.tech = 3;
+        c.aliens.next_raid = c.hours;
+        step(&mut c, &d, &mut ev);
+        let id = c.contacts.last().unwrap().id;
+        let s = size_of(&c, id).unwrap();
+        assert_eq!((s.ships, s.escort.as_deref()), (5, Some("rocket")));
+        assert!(c.aliens.bases.iter().any(|b| b.queued == 1), "five ships left the queue");
+        // Capped by the queue.
+        c.aliens.bases.iter_mut().for_each(|b| b.queued = 3);
+        c.aliens.next_raid = c.hours;
+        step(&mut c, &d, &mut ev);
+        let id = c.contacts.last().unwrap().id;
+        assert_eq!(size_of(&c, id).unwrap().ships, 3);
     }
 }

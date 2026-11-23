@@ -70,6 +70,8 @@ impl ModuleInst {
 pub enum Product {
     Item(usize),
     Hull(usize),
+    /// A hired pilot on the way (index into `Campaign::pilots`; shipments only).
+    Pilot(usize),
 }
 
 /// A manufacturing job at a base.
@@ -108,6 +110,8 @@ pub struct Base {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PilotState {
     Ready,
+    /// Hired and on the way to the base by freighter (`shipments:`).
+    Arriving,
     /// Healing until this campaign hour.
     Injured(f64),
     Dead,
@@ -962,7 +966,7 @@ impl Campaign {
             .filter(|d| d.base == base)
             .filter_map(|d| match d.product {
                 Product::Item(i) => Some(def.items[i].size * d.count as f32),
-                Product::Hull(_) => None,
+                Product::Hull(_) | Product::Pilot(_) => None,
             })
             .sum();
         Some(self.store_free(def, base) - inbound)
@@ -978,7 +982,7 @@ impl Campaign {
             .filter(|j| j.started)
             .filter_map(|j| match j.product {
                 Product::Item(i) => Some(def.items[i].size),
-                Product::Hull(_) => None,
+                Product::Hull(_) | Product::Pilot(_) => None,
             })
             .sum();
         cap - used - making
@@ -1433,6 +1437,7 @@ impl Campaign {
         let (what, cost) = match product {
             Product::Item(i) => (format!("items.{}", def.items[i].id), def.items[i].cost),
             Product::Hull(h) => (format!("hulls.{}", def.hulls[h].id), def.hulls[h].cost),
+            Product::Pilot(_) => return Err("pilots are hired, not bought".into()),
         };
         if !self.available(def, &what) {
             return Err("not available yet".into());
@@ -1476,6 +1481,7 @@ impl Campaign {
         let (what, work) = match product {
             Product::Item(i) => (format!("items.{}", def.items[i].id), def.items[i].prod_time),
             Product::Hull(h) => (format!("hulls.{}", def.hulls[h].id), def.hulls[h].prod_time),
+            Product::Pilot(_) => return Err("pilots are hired, not made".into()),
         };
         if work <= 0.0 {
             return Err("this can only be bought".into());
@@ -1504,7 +1510,23 @@ impl Campaign {
             return Err(format!("hiring costs {fee:.0}"));
         }
         self.money -= fee;
-        let p = self.recruits.remove(recruit);
+        let mut p = self.recruits.remove(recruit);
+        // With outpost freighters (`shipments:`) a hire travels like any shipment: loaded
+        // at an outpost (one cargo unit), flown to the base (unknowns §2.1, RQ-S-21).
+        if def.shipments.is_some() && !self.bases.is_empty() {
+            p.state = PilotState::Arriving;
+            self.log(format!("{} is hired and on the way", p.name));
+            self.pilots.push(p);
+            let k = self.pilots.len() - 1;
+            self.deliveries.push(Delivery {
+                product: Product::Pilot(k),
+                base: 0,
+                count: 1,
+                arrive_at: QUEUED,
+                held: false,
+            });
+            return Ok(());
+        }
         self.log(format!("{} joins the roster", p.name));
         self.pilots.push(p);
         Ok(())
@@ -1642,7 +1664,7 @@ impl Campaign {
                             .logistics
                             .as_ref()
                             .is_some_and(|l| l.hull_components.get(h).is_some_and(|c| !c.is_empty())),
-                        Product::Item(_) => false,
+                        Product::Item(_) | Product::Pilot(_) => false,
                     };
                     if needs_parts {
                         break;
@@ -1657,6 +1679,7 @@ impl Campaign {
                     let cost = match product {
                         Product::Item(i) => def.items[i].cost,
                         Product::Hull(h) => def.hulls[h].cost,
+                        Product::Pilot(_) => 0.0, // never a job
                     } as f64;
                     if self.money < cost {
                         break; // waits until it can be paid
@@ -1675,6 +1698,7 @@ impl Campaign {
                     job.left = match product {
                         Product::Item(i) => def.items[i].prod_time,
                         Product::Hull(h) => def.hulls[h].prod_time,
+                        Product::Pilot(_) => 0.0, // never a job
                     };
                     if job.count == 0 {
                         self.bases[b].jobs.remove(0);
@@ -1703,6 +1727,13 @@ impl Campaign {
                 let what = match d.product {
                     Product::Item(i) => def.items[i].name.clone(),
                     Product::Hull(h) => def.hulls[h].id.clone(),
+                    Product::Pilot(p) => {
+                        // A pilot lost on the way is lost for good.
+                        if let Some(x) = self.pilots.get_mut(p) {
+                            x.state = PilotState::Dead;
+                        }
+                        self.pilots.get(p).map_or_else(String::new, |x| x.name.clone())
+                    }
                 };
                 notice(
                     self,
@@ -1940,6 +1971,7 @@ impl Campaign {
                 a.base_raids.iter().any(|r| r == id)
                     || a.outpost_raid.as_deref() == Some(id)
                     || a.opp_raid.as_deref() == Some(id)
+                    || a.freighter_raid.as_deref() == Some(id)
             })
         };
         // Raids: roll, and launch a contact from the map's edge towards a target.
@@ -2216,6 +2248,10 @@ impl Campaign {
 
     /// A contact reached its target unopposed: the mission's `lose` outcomes apply.
     fn unopposed(&mut self, def: &StrategyDef, contact: u32, events: &mut Vec<Event>) {
+        // A raid after a freighter catches it instead of striking (RQ-S-23).
+        if aliens::hunt_arrived(self, contact, events) {
+            return;
+        }
         let Some(k) = self.contacts.iter().position(|c| c.id == contact) else { return };
         let c = self.contacts.remove(k);
         // A plan's shipment that gets through builds the plan rather than striking.
@@ -2338,6 +2374,13 @@ impl Campaign {
                 self.add_stock(base, i, count);
                 let t = format!("{}: {} x {} arrived", self.bases[base].name, count, def.items[i].name);
                 self.log(t);
+            }
+            Product::Pilot(p) => {
+                if let Some(x) = self.pilots.get_mut(p).filter(|x| x.state == PilotState::Arriving) {
+                    x.state = PilotState::Ready;
+                    let t = format!("{}: {} arrived", self.bases[base].name, x.name);
+                    self.log(t);
+                }
             }
             Product::Hull(h) => {
                 for _ in 0..count {
@@ -2612,6 +2655,10 @@ impl Campaign {
                 who,
             ));
         }
+        // The planner's size for this raid (`alien_bases.raids.sizes`): its first hostile
+        // role flies that many, and its escort joins.
+        let sized = aliens::size_of(self, contact).cloned();
+        let mut sized_used = false;
         for role in &mission.roles {
             let Some(first) = role.classes.iter().find_map(|c| rules.ship_id(c)) else { continue };
             let faction =
@@ -2621,9 +2668,13 @@ impl Campaign {
                 Some(me) if me == faction => 0,
                 _ => continue, // neutrals stay out of it
             };
-            let n = role.count.0
+            let mut n = role.count.0
                 + ((self.roll() * (role.count.1.saturating_sub(role.count.0) + 1) as f32) as u32)
                     .min(role.count.1.saturating_sub(role.count.0));
+            if let (Some(sz), 1, false) = (&sized, side, sized_used) {
+                n = sz.ships;
+                sized_used = true;
+            }
             for _ in 0..n {
                 let class = role.classes
                     [((self.roll() * role.classes.len() as f32) as usize).min(role.classes.len() - 1)]
@@ -2632,6 +2683,11 @@ impl Campaign {
                 people.push(stats_of(&p));
                 plan.push((side, None, class, Loadout::default(), None, Some(people.len() - 1)));
             }
+        }
+        if let Some(e) = sized.as_ref().and_then(|s| s.escort.clone()) {
+            let p = self.make_pilot(def);
+            people.push(stats_of(&p));
+            plan.push((1, None, e, Loadout::default(), None, Some(people.len() - 1)));
         }
         // One stat lookup per pilot (a boxed closure: the entries borrow them as
         // `&dyn Fn`, so each needs a home that outlives the entries).
@@ -2843,6 +2899,15 @@ impl Campaign {
             return Err("no such pilot".into());
         }
         let gone = self.pilots.remove(p);
+        // Their shipment goes too; later pilots' shipments move up one place.
+        self.deliveries.retain(|d| d.product != Product::Pilot(p));
+        for d in &mut self.deliveries {
+            if let Product::Pilot(k) = &mut d.product {
+                if *k > p {
+                    *k -= 1;
+                }
+            }
+        }
         self.log(format!("Dismissed: {}", gone.name));
         Ok(())
     }
@@ -3270,6 +3335,36 @@ mod tests {
 
     /// `--soak-capture` and `--soak-fleet` (test tooling): a won battle's kill of a class
     /// some topic needs captured counts as the capture; the automatic player keeps its fleet.
+    /// With outpost freighters a hired pilot is a shipment: on the way until a freighter
+    /// brings them (one cargo unit), then ready (unknowns §2.1 – 2.2).
+    #[test]
+    fn hired_pilots_arrive_by_freighter() {
+        let text = SAMPLE.to_string()
+            + "outposts: {yield_table: [[100]]}\nshipments: {capacity: 10, speed: 1000, unload: 30min, refuel: 1h}\n";
+        let (d, errors) = build(&text);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let mut c = Campaign::new(&d, 0, 5);
+        c.outposts.push(outposts::Outpost {
+            system: 1,
+            funding: 0.75,
+            founded: 0.0,
+            opps: vec![(1, 0)],
+            freighter_free: 0.0,
+        });
+        c.refresh_recruits(&d);
+        let before = c.pilots.len();
+        c.hire(&d, 0).unwrap();
+        let k = c.pilots.len() - 1;
+        assert_eq!((c.pilots.len(), c.pilots[k].state), (before + 1, PilotState::Arriving));
+        assert!(c.deliveries.iter().any(|x| x.product == Product::Pilot(k)));
+        // A freighter loads them in the first hour and lands 3 h + 30 min later.
+        c.advance(&d, 2.0);
+        assert_eq!(c.pilots[k].state, PilotState::Arriving);
+        c.advance(&d, 3.0);
+        assert_eq!(c.pilots[k].state, PilotState::Ready);
+    }
+
     #[test]
     fn soak_tooling_captures_and_keeps_the_fleet() {
         let text = SAMPLE.replace(

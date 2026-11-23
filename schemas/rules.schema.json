@@ -1396,7 +1396,17 @@
             "min_queued": {"description": "ships a base needs queued to send a raid, and takes (3)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
             "base": {"description": "raids at a base: the first whose requires holds", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
             "outpost": {"description": "the raid at a corporate outpost", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
-            "opp": {"description": "the raid at an outpost's platform", "type": "string", "pattern": "^[a-z0-9_.-]+$"}
+            "opp": {"description": "the raid at an outpost's platform", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+            "freighter": {"description": "the raid sent after a freighter (harass); without it the cargo is lost", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+            "sizes": {"description": "kind (base, outpost, opp, freighter): [[from, to), ...] ships by level", "type": "object", "additionalProperties": {"type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2}}},
+            "escorts": {"description": "escorts: the first that applies and wins its roll joins", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {
+                  "class": {"description": "the escort's class", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
+                  "tech": {"description": "from this alien tech level (3)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "after_month": {"description": "only after this month", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "kinds": {"description": "only for these target kinds", "type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_.-]+$"}},
+                  "chance": {"description": "its chance (25 %)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
+                  "per_level": {"description": "+ per level", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]}
+                }}}
           }},
         "harass": {"description": "freighters in flight near the rival's places are attacked", "type": "object", "additionalProperties": false, "properties": {
             "every": {"description": "the check at level 0 (6h)", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},

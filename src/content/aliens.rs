@@ -66,6 +66,14 @@ pub struct AlienBasesDef {
     pub base_raids: Vec<String>,
     pub outpost_raid: Option<String>,
     pub opp_raid: Option<String>,
+    /// The raid sent after a freighter near the rival's places (RQ-S-23); `None`: its
+    /// cargo is simply lost.
+    pub freighter_raid: Option<String>,
+    /// Raid sizes by target kind (`base`, `outpost`, `opp`, `freighter`): per difficulty
+    /// level `[from, to)` ships, capped by the ships queued at the sending base.
+    pub sizes: Vec<(String, Vec<[f32; 2]>)>,
+    /// Escorts by alien tech level: the first that applies and wins its roll joins.
+    pub escorts: Vec<Escort>,
     /// What an alien outpost pays the rival's treasury each income period, once
     /// `income_after` hours old (0: the economy's own `income` formula).
     pub outpost_income: f32,
@@ -134,6 +142,41 @@ impl AlienBasesDef {
             base_raids: list("base"),
             outpost_raid: one("outpost"),
             opp_raid: one("opp"),
+            freighter_raid: one("freighter"),
+            sizes: raids
+                .map(|r| r.map("sizes"))
+                .unwrap_or(&[])
+                .iter()
+                .map(|(k, v)| {
+                    let rows: Vec<[f32; 2]> = v
+                        .as_seq()
+                        .unwrap_or(&[])
+                        .iter()
+                        .filter_map(|r| {
+                            let x: Vec<f32> = r.as_seq()?.iter().filter_map(|n| n.as_str()?.parse().ok()).collect();
+                            (x.len() == 2).then(|| [x[0], x[1]])
+                        })
+                        .collect();
+                    (k.clone(), rows)
+                })
+                .collect(),
+            escorts: raids
+                .and_then(|r| r.node("escorts"))
+                .and_then(|n| n.as_seq())
+                .unwrap_or(&[])
+                .iter()
+                .map(|e| {
+                    let e = Get(e);
+                    Escort {
+                        class: e.str("class").unwrap_or("").to_string(),
+                        tech: e.num("tech").unwrap_or(3.0) as u8,
+                        after_month: e.num("after_month").unwrap_or(-1.0),
+                        kinds: e.list("kinds"),
+                        chance: e.qty("chance", Unit::Fraction).unwrap_or(0.25),
+                        per_level: e.qty("per_level", Unit::Fraction).unwrap_or(0.0),
+                    }
+                })
+                .collect(),
             outpost_income: g.num("outpost_income").unwrap_or(0.0).max(0.0),
             income_after: g.qty("income_after", Unit::Time).map_or(638.4, |s| s / 3600.0).max(0.0),
             harass_every: [hours(sub("harass"), "every", 6.0), num(sub("harass"), "every_per_level", -1.0)],
@@ -207,6 +250,20 @@ impl AlienBasesDef {
                     f("base", Ty::List(Box::new(Ty::Name)), "raids at a base: the first whose requires holds"),
                     f("outpost", Ty::Name, "the raid at a corporate outpost"),
                     f("opp", Ty::Name, "the raid at an outpost's platform"),
+                    f("freighter", Ty::Name, "the raid sent after a freighter (harass); without it the cargo is lost"),
+                    f("sizes", Ty::Dict(Box::new(rows(2))), "kind (base, outpost, opp, freighter): [[from, to), ...] ships by level"),
+                    f(
+                        "escorts",
+                        Ty::List(Box::new(Ty::Struct(vec![
+                            f("class", Ty::Name, "the escort's class"),
+                            f("tech", Ty::Num, "from this alien tech level (3)"),
+                            f("after_month", Ty::Num, "only after this month"),
+                            f("kinds", Ty::List(Box::new(Ty::Name)), "only for these target kinds"),
+                            f("chance", Ty::Qty(Unit::Fraction), "its chance (25 %)"),
+                            f("per_level", Ty::Qty(Unit::Fraction), "+ per level"),
+                        ]))),
+                        "escorts: the first that applies and wins its roll joins",
+                    ),
                 ]),
                 "the raid planner (it replaces the schedules of the raids it names)",
             ),
@@ -225,5 +282,26 @@ impl AlienBasesDef {
             f("outpost_income", Ty::Num, "each alien outpost's pay into the rival's treasury per income period (0: the economy's formula)"),
             f("income_after", Ty::Qty(Unit::Time), "an outpost pays once this old (0.95 x 28 days)"),
         ])
+    }
+}
+
+/// One escort rule (`alien_bases.raids.escorts`): from alien tech level `tech`, after
+/// month `after_month`, for targets of `kinds` (all when empty), with `chance` +
+/// `per_level` × d, a ship of `class` joins the raid (the original's `0x5a2f30`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct Escort {
+    pub class: String,
+    pub tech: u8,
+    pub after_month: f32,
+    pub kinds: Vec<String>,
+    pub chance: f32,
+    pub per_level: f32,
+}
+
+impl AlienBasesDef {
+    /// The `[from, to)` ships of a raid at a target of `kind` at level `d`.
+    pub fn size(&self, kind: &str, d: usize) -> Option<[f32; 2]> {
+        let rows = &self.sizes.iter().find(|(k, _)| k == kind)?.1;
+        rows.get(d).or(rows.last()).copied()
     }
 }

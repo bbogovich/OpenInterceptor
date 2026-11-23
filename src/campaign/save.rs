@@ -406,12 +406,14 @@ pub fn write(c: &Campaign, campaign_id: &str, packs: &[PackRef]) -> String {
     let product = |p: &Product| match p {
         Product::Item(i) => format!("item:{i}"),
         Product::Hull(h) => format!("hull:{h}"),
+        Product::Pilot(p) => format!("pilot:{p}"),
     };
     let pilot = |p: &Pilot| {
         let state = match p.state {
             PilotState::Ready => s("ready"),
             PilotState::Injured(h) => s(format!("injured:{h}")),
             PilotState::Dead => s("dead"),
+            PilotState::Arriving => s("arriving"),
         };
         map(vec![
             ("name", s(&p.name)),
@@ -697,6 +699,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
         match t.split_once(':') {
             Some(("item", i)) => i.parse::<usize>().ok().filter(|i| *i < def.items.len()).map(Product::Item),
             Some(("hull", h)) => h.parse::<usize>().ok().filter(|h| *h < def.hulls.len()).map(Product::Hull),
+            Some(("pilot", p)) => p.parse::<usize>().ok().map(Product::Pilot),
             _ => None,
         }
         .ok_or_else(|| bad("a product"))
@@ -712,6 +715,7 @@ pub fn read(text: &str, def: &StrategyDef, loaded: &[PackRef]) -> Result<Campaig
             missions: f(p, "missions") as u32,
             state: match p.str("state").unwrap_or("ready") {
                 "dead" => PilotState::Dead,
+                "arriving" => PilotState::Arriving,
                 t => match t.strip_prefix("injured:").and_then(|h| h.parse().ok()) {
                     Some(h) => PilotState::Injured(h),
                     None => PilotState::Ready,
@@ -1144,6 +1148,24 @@ fn write_aliens(a: &super::aliens::AlienState) -> Node {
             ]),
         ),
         ("pieces", seq(a.piece_work.iter().map(|(w, b)| nums(&[*w, *b as f64])).collect())),
+        (
+            "sizes",
+            seq(a
+                .sizes
+                .iter()
+                .map(|r| {
+                    map(vec![
+                        ("contact", n(r.contact as f64)),
+                        ("ships", n(r.ships as f64)),
+                        ("escort", r.escort.as_ref().map_or(Node::null(0), s)),
+                    ])
+                })
+                .collect()),
+        ),
+        (
+            "hunts",
+            seq(a.hunts.iter().map(|h| nums(&[h.contact as f64, h.outpost as f64, h.base as f64, h.arrive])).collect()),
+        ),
     ])
 }
 
@@ -1185,6 +1207,29 @@ fn read_aliens(node: &Node, systems: usize) -> super::aliens::AlienState {
         next_harass: at(&clocks, 4),
         last_founded: at(&clocks, 5),
         piece_clock: at(&clocks, 6),
+        sizes: g
+            .node("sizes")
+            .and_then(|n| n.as_seq())
+            .unwrap_or(&[])
+            .iter()
+            .map(|r| {
+                let r = Get(r);
+                super::aliens::RaidSize {
+                    contact: r.num("contact").unwrap_or(0.0) as u32,
+                    ships: r.num("ships").unwrap_or(1.0) as u32,
+                    escort: r.str("escort").map(str::to_string),
+                }
+            })
+            .collect(),
+        hunts: rows("hunts")
+            .iter()
+            .map(|v| super::aliens::Hunt {
+                contact: at(v, 0) as u32,
+                outpost: at(v, 1) as usize,
+                base: at(v, 2) as usize,
+                arrive: at(v, 3),
+            })
+            .collect(),
         piece_work: rows("pieces").iter().map(|v| (at(v, 0), at(v, 1) as u32)).collect(),
     }
 }
