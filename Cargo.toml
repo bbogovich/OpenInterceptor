@@ -1,6 +1,6 @@
 [package]
 name = "openinterceptor"
-version = "0.22.40"
+version = "0.22.41"
 edition = "2021"
 rust-version = "1.86"
 publish = false
