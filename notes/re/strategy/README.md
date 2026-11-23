@@ -251,8 +251,8 @@ Bracket tables (word pairs {threshold, bonus}): Intelligence 0x65f078, Stamina 0
 * Every **25 days** (2,160,000 s): income = Σ over alien outposts (faction 9) of the §2.2 formula. With at
   most one outpost left, a fallback of **125,000 × (difficulty + 1)** instead.
 * Every **6.25 days** (540,000 s): the treasury is split by the Think.ini `FinancialAI` ratios (research /
-  goods / Doomsday, adjusted by aggression `0x5a5240`) into a goods fund (+0x10) and a Doomsday fund
-  (+0x14).
+  goods / Doomsday, adjusted by aggression `0x5a5240`) into funds at +0x10 and +0x14. **Correction:** +0x10 is the Doomsday fund (it pays
+  for Doomsday orders, `../unknowns-2026-11.md` §17.1); +0x14 is paid out to the alien bases (`0x5763e7`).
 * Every **20 hours** (72,000 s): research money = min(budget, `WklyRschSpendingPerDLink` (20,000) ×
   alien downlinks / 7, or / 14 with none); the excess /12 goes to goods. **Alien tech level** rises 1→2
   and 2→3 when research money reaches (table 0x67c540, by difficulty Beginner→Superhuman):
@@ -263,7 +263,7 @@ Bracket tables (word pairs {threshold, bonus}): Intelligence 0x65f078, Stamina 0
   | → level 3 | 1,500,000 | 1,300,000 | 1,100,000 | 1,050,000 | 900,000 |
 
 * Doomsday pieces: built by tech level and shipped by freighter (`0x57ab9d`, debug log at 0x6a472c);
-  received pieces 1–3 at the Doomsday site. Build costs and timing **not traced**.
+  received pieces 1–3 at the Doomsday site. Orders, prices and timing: `../unknowns-2026-11.md` §12.2 and §17.1.
 
 ### 6.2 Side missions `0x57fbd3` (verified; mission names from the AI log strings)
 
