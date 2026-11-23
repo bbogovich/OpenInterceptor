@@ -183,6 +183,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `frames`, `interval`, `with_clock` | list of assets, ticks, bool | none, 6, `false` | An `anim`: its frames in turn, one every `interval` ticks (1/60 s), looping; `with_clock` only while the campaign clock runs. |
 | `shape` | `rect`, `round` | `rect` | A map's viewport: `round` clips it to the circle inside the rectangle. |
 | `outpost_marker` | asset | a small square | A `map`'s marker under a star with an outpost (app 0.22.26; `interceptor`: row 916, **verified**). |
+| `markers` | map of kind → asset | shapes | A `map`'s icons (app NEXT, RQ-UI-19): `base` (with a red / green progress bar under it while the base is built), `alien_base` and `alien_outpost` (the rival's places the player knows of — within a base's sensor range, *derived*; the outpost's blinks on 3 of every 6 steps), `freighter` (an outpost freighter flying a load), `contact`. A kind without an image is drawn as a shape. `interceptor`: 902, 903, 917, 606, 608 (**verified**, unknowns §1.2). A battle fought off-screen shows as a translucent red square for 5 of every 10 steps. |
 | `y_range`, `y_steps` | `[low, high]`, number | fitted, 18 / about 6 | A `graph`'s fixed y range in that many grid steps (the original's income report: `[0, 18000]`, 18); without it the range fits the values (app 0.22.22). |
 | `base_portraits`, `base_portrait_frames` | list of assets, number | none, 1 | A `map`'s system picture for a system with the player's base (first) and, for when the map has them, enemy bases (second), animated over that many rows (app 0.22.22). |
 | `knob` | `{frames, count, stops, reach, lamps_off, lamps_on, unavailable}` | none | A `knob`'s turning frames (rows N … N + count − 1, at `pos`), its click points (one per level), the px around a point that picks it (14), and a lamp per point (app 0.22.22). |
@@ -232,6 +233,7 @@ and kept; one that cannot be loaded is reported on standard error once
 | `money` (or `funds`) | The funds, `$1,000,000`. |
 | `score` | The campaign score. |
 | `base` | The current base's name. |
+| `base_hull` | The current base's hull, `HULL 5,400 / 6,000`; empty when its type has none (app NEXT). |
 | `speed` | The clock speed in words: the speed's `clock.labels` entry (`paused`, `1 hour/s`, `5 secs/s` …). |
 | `selection` | The name of what is selected on the map. |
 
@@ -377,6 +379,15 @@ starmap:
   widgets:
     map: {kind: map, rect: [8, 52, 790, 660], labels: {font: body, rise: 16, base_rise: 12, box: 40}}
 ```
+
+Since app NEXT the hover labels also name the rival's known bases and outposts ("ALIEN BASE",
+"ALIEN OUTPOST") and contacts (the raid's name) in RGB(200, 100, 50), freighters ("FREIGHTER")
+in RGB(0, 120, 0) and battles under way ("ATTACK IN PROGRESS") in RGB(200, 200, 200), the
+original's colours (**verified**; the texts *derived*); with labels, contacts' names show on hover
+only.
+
+A second click on the selected contact acts on it: **Intercept**, or **Join the battle** when it
+is being fought off-screen (RQ-C-21) — for screens without an info panel, such as the CSD.
 
 The testbed layout (`starmap`) takes a full `map` definition too, for its `labels`; its
 other keys are unused there. `--hover X,Y` puts the labels' cursor at a design-space point (for

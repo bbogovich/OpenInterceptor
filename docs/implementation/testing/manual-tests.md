@@ -2425,3 +2425,11 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Steps | 1. Main menu → Options → Difficulty: **Genius**; New Game. Open an alien base raid's battle or note a `per_level` value that differs by level (e.g. the Doomsday piece work, 50,000 technician-hours at Genius against 100,000 at Beginner, seen as days between pieces with `--strategy-soak`; or an alien fighter's turn and speed in a flown battle). Save in slot 1. 2. Main menu → Options → Difficulty: **Beginner**. 3. Load slot 1. 4. Fly the next interception, or open Options. |
 | Expected | 3: the campaign loads without an error. 4: the battle plays at Genius (alien pilots as at Genius, the X-COM shields and armour without Beginner's 150 % / 130 %), and Options shows **Genius**: the content was reloaded at the save's level before the save was read. Starting a New Game afterwards in this session uses Genius (the menu's remembered choice in `settings.yaml` stays Beginner for the next start). |
 
+### MT-6-38 — The CSD's icons, joining an off-screen battle, base hull and craft condition
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data; `auto_resolve` on. |
+| Steps | 1. `openinterceptor --campaign interceptor --strategy`; let time run until a freighter carries a purchase and a contact is fought off-screen. 2. Hover the base, a freighter, a contact, a battle. 3. Click the contact under attack twice. 4. Open Bases and Equip Ships. 5. Repeat 1 – 4 with `--campaign default` (Ctrl+T layout). |
+| Expected | 1: the base icon (902) with a progress bar while built; freighters (606) on their way; alien places in sensor range (903, 917 blinking); a blinking red square on a battle. 2: the labels name them in the original's colours. 3: the battle is flown from where it stands. 4: Bases shows "HULL x / 6,000"; a damaged craft's row gives its hull, shields and armour. 5: shapes instead of icons; the Contacts list offers "Join the battle"; the Bases list gives the hull. |
+
