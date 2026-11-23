@@ -253,8 +253,8 @@ Missions 2 (attack) and 3 (derived: outpost raid with escort rules) are launched
   in its build slots.
 * Size: from jump tables by the target's location type (0x573dd7) and difficulty (0x573d99), capped by the
   queued ships; ships are taken from the base's queue by class (up to 3 classes) and created as owner 9 with
-  a pilot of grade `0x5a44f9` (§5). On mission 3 the first 4 ships are normal; later ones, with a falling
-  chance (100 − 25·k %), get special armament (AlienType1: slot +0xa8 = 8; AlienType2: three slots = 8).
+  a pilot of grade `0x5a44f9` (§5). On mission 3 the first 4 ships of each class (k = 0…3) get, with a falling
+  chance (100 − 25·k %), special armament (AlienType1: slot +0xa8 = 8; AlienType2: three slots = 8).
 * Escorts by alien tech level (`0x5a2f30`): at level 3 and m > 5, location type 0/1: 25 % an AlienType4
   (pilot grade 4); otherwise, at level > 2, 25 + 5d % an AlienType3.
 * Speed factor rand[0.75, 0.95) (`0x416f70`); a tactical agent (`0x577892`) flies the plan, 500 ms think.
@@ -519,9 +519,9 @@ queue ships (`0x57e51e`), so only A bases can launch raids (`0x573998` needs ≥
   update. With T alien technicians: Veteran (70,000) — T = 200 → 350 h ≈ 15 days, T = 500 → 140 h ≈
   6 days; Superhuman (30,000) — T = 200 → 150 h ≈ 6 days, T = 500 → 60 h = 3 updates; Beginner
   (100,000) — T = 200 → 500 h ≈ 21 days. All 18–25 pieces then take months, shortened by alien
-  outpost growth (§3.1) and lengthened by X-COM destroying outposts or OPPs. When the build orders
-  for a type are set was not traced.
-* There is **no money cost** per piece. The "fund cap" (derived name): once the alien Doomsday fund
+  outpost growth (§3.1) and lengthened by X-COM destroying outposts or OPPs. Build orders: §17.1.
+* **Corrected (§17.1):** each build order **costs the "fund cap" column** from the alien Doomsday
+  fund — it is the **price per piece**, not only a cap. Once the Doomsday fund
   holds twice this amount, the Doomsday share of the treasury split falls to a random 1–5 %
   (`0x576e7c`); below it the share is `Think.ini` DoomsdayDefault.
 
@@ -805,10 +805,143 @@ So yes: the chasers consume queued ships; a base with an empty queue cannot hara
 ### 16.3 Mission 3's special armament (verified, `0x573998`)
 
 The values are **beam mount type bytes** (`+0xa8`, `+0xb4`, `+0xc0` = beam mounts 1–3; §2 of the
-flight notes): **8 = TachyonPulser**. On mission 3, ship k ≥ 4 of the fleet (k counted from 0), with
-chance 100 − 25k %, gets: AlienType1 — mount 1 = TachyonPulser (replacing its Plasma);
-AlienType2 — mounts 1–3 = TachyonPulser. Ships 0–3 keep their normal fit. (Mission 3 is the raid
-on a random X-COM outpost, §3.2.)
+flight notes): **8 = TachyonPulser**. **Corrected 2026-11-22 (#142 follow-up; my first wording
+inverted the test):** the code at `0x57413f` skips the upgrade when the mission is not 3 **or
+k ≥ 4**, so only **ships k = 0…3** can get it, with chance **100 − 25k %** (`0x574153`: 100 − 25k,
+fed to the percent roll `0x405070`, which is `rand() mod 100 < p`): 100 %, 75 %, 50 %, 25 %. k is
+the index **within one class entry of the fleet's class list** (the inner loop counter, reset for
+each class). Upgrade: AlienType1 — mount 1 = TachyonPulser (replacing its Plasma); AlienType2 —
+mounts 1–3 = TachyonPulser; other classes unchanged. Ships k ≥ 4 keep their normal fit. (Mission 3
+is the raid on a random X-COM outpost, §3.2.)
+
+## 17. Doomsday orders, side missions, new-base counters (#142 follow-up, 2026-11-22)
+
+### 17.1 What sets the Doomsday build orders (verified unless marked)
+
+It is a **race from the start, gated by the aliens' tech level and money, not by the story.**
+* The Doomsday agent (`0x578c17`, pointer 0x6a3dfc) is created at game start by `0x572992`, right
+  after the two initial alien bases (and again on load, `0x5a1c21`). Nothing in the order path
+  (`0x57bc10`, `0x57bd67`, the treasury `0x57649c`) reads the alien-message topics (11–15) or any
+  story flag. The alien messages (`strategy/README.md` §4.3) are an X-COM-side unlock and feed nothing
+  back into the Doomsday AI.
+* **Agent fields** (ints): received pieces per type +0x4/+0x8/+0xc; **orders pending** per type
+  +0x10/+0x14/+0x18; in transit per type +0x1c/+0x20/+0x24 (derived); work left per type
+  +0x28/+0x2c/+0x30; last work update +0x34; shipment handles +0x48/+0x58; **last order time +0x5c**
+  (0 at creation); **order interval +0x60 = 10 − 2d** (in 20-hour units).
+* **Placing an order** (in the treasury's 20-hour step, `0x576a76`–`0x576afe`). All four must hold:
+  1. **interval:** now − last order > 72,000 × (10 − 2d) s (`0x57bbbd`), i.e. more than 200 / 160 /
+     120 / 80 / 40 game hours (d 0…4) since the last order. The first order is possible after the
+     same time from game start;
+  2. **next type:** type 1 while received + in transit + pending (+1 if a shipment is under way) <
+     its maximum (table 0x67c568 col 3), else type 2 (col 4), else type 3 (col 5). If all are full, no
+     order;
+  3. **tech:** the alien tech level (`0x5a52e0`, 1–3) ≥ that type. So type-2 pieces wait for tech
+     level 2 and type-3 pieces for level 3 (`strategy/README.md` §6.1: research money 1,000,000 /
+     1,500,000 at Beginner … 500,000 / 900,000 at Superhuman);
+  4. **money:** the Doomsday fund (treasury +0x10) ≥ the **price** (col 2: 250,000 / 200,000 /
+     150,000 / 100,000 / 80,000). The price is subtracted, the order count +1 and +0x5c = now.
+  One order at most per 20-hour step.
+* **Building:** each 20-hour update works on **one** type only: type 1 if it has pending orders,
+  else type 2, else type 3 (an else-if chain, `0x57b789`–`0x57b904`). The update that starts a piece
+  only sets its work (col 1 × 3,600) and does no work. Later updates subtract elapsed × alien
+  technicians. When the remaining work ≤ that amount the piece is done: pending −1, `0x57ab52` ships
+  it, and the leftover is discarded.
+* **Consequence (derived).** The fastest possible completion is bounded by the order interval ×
+  total pieces: 25 × 200 h ≈ 208 days at Beginner and 18 × 40 h = 30 days at Superhuman. It is
+  further slowed by the tech-level gates, the fund and the technician-hours. A soak that completes
+  before month 5 most likely leaves out the interval, the tech gate or the price.
+
+### 17.2 Mission-3 armament
+
+The §16.3 wording was wrong and is corrected there. Only ships **k = 0…3** of each class entry
+can be upgraded, with chance 100 / 75 / 50 / 25 %. Ships from k = 4 on never are. (`0x57413f`:
+`cmp [ebp+8], 3; jne skip; cmp k, 4; jge skip`, then `100 − 25k` into the percent roll.)
+
+### 17.3 Side missions: what they fly (verified unless marked)
+
+**All side missions fly flight mission type 16.** SceneManager `0x4e634b` asks `0x613043(plan)`
+whether the plan belongs to a side mission. If it does, it stores the agent in 0x6b0850, sets
+0x6b084c, logs "Side mission active" and calls `0x4d9693(16, …)` instead of the normal type choice
+(the normal types are 0–5 and 7–14, plus 18). In flight, the agent's virtual methods supply the
+objective:
+* **+0x30:** the side-mission kind 1–7;
+* **+0x44:** the outcome. 2 = won, 1 = lost, 3 = not decided by the side mission. `0x4dd4e0` maps
+  2 → result 1 and 1 → result 2; the meaning of 2 = won is derived from the rewards;
+* **+0x48:** an event raised when a ship is destroyed (`0x4da333`);
+* **+0x34 / +0x38:** the strategic win / loss handlers;
+* **+0x3c / +0x40:** the debrief keys `DEBRIEF_SM…`.
+
+Each kind is its own class in SideMissionAgents.cpp (vtables 0x663768 … 0x6638f8). "Rating" below is
+`0x4270e9(1, region, n)`; derived meaning: X-COM's standing, global when the region is −1.
+
+| k | Kind (log / text keys) | In-flight objective (outcome +0x44) | Won | Lost |
+|---|---|---|---|---|
+| 1 | "alien raiders" / `SM_PIRATE_RAIDERS` | won when the site's two counts (+0x34, +0x38 of the site record, `0x41f9ad` / `0x41f774`) are both ≤ 0 (derived: the raiders' site wiped out) | +$1,000,000, rating +1,000 | rating −750 |
+| 2 | rogue freighter / `SM_ROGUE_FREIGHT` | won when the plan's freighter is no longer active in the battle, or no battle plan exists. Its flag +0x60 → lost | +$400,000, rating +1,500 at the outpost | the freighter destroys one OPP of that outpost (the logged message says so), rating −1,000 |
+| 3 | pirate rescue / `SM_PIRATE_RESCUE` | while the site still stands (+0x34 > 0) and is pirate-owned (owner 10): won when no alien (owner 9) ship is active. Otherwise lost | rating +1,000 | site removed |
+| 4 | **Nova Bomb hijack** / `SM_HJNOVA`, debrief `SM9` | below | +$500,000 | site removed |
+| 5 | arms dealer / `SM_DEALER` | won when the dealer site's count +0x34 ≤ 0 or the site is no longer pirate-owned. Otherwise undecided | notification only | notification only |
+| 6 | science station rescue / `SM_SCI_EVAC` | always 3: not decided in flight (the strategic side was not traced) | +$500,000, rating +500 | rating −500 |
+| 7 | **recon** / `SM_RECON`, debrief `SM_SURVEY` | below | +$350,000, rating +250 in that system, and a **new X-COM outpost** there | notification only |
+
+**Nova Bomb hijack (k 4):**
+* **Set-up** `0x60fdd0`: a new site (named by text key `DATABANK_ITEM107`) is placed near a random
+  system from list `0x41fcf2(0)`. The offset is rand[500, 1,000) units, or rand[4,000, 10,000) when
+  `0x5f2e47` finds no match; the point is clamped to the map; up to 50 tries. The kind-12 flag goes
+  on the site (`0x420c84`).
+* **Battle fleet** `0x6105df`, owner 10 = pirates. Size rand[2, 5) / [3, 6) / [2, 5) / [3, 6) /
+  [4, 7) by d (table 0x610758). Ship 0 is a **PirateFreighter** with engine 8, armour 2 and shield 4
+  (equipment ids). The rest are 80 % PirateType1 and 20 % PirateType2, with no armour below d 2. The
+  group gets order 7 (`0x582a10`).
+* **Lost:**
+  * when a PirateFreighter is destroyed (the hull-class-15 kill counter 0x71c488 is non-zero at a
+    destruction, so +0x48 sets flag +0x40). Debrief `LOSE2`;
+  * when **48 game hours** (172,800 s, `0x6100cb`) pass with no interception. Debrief `LOSE1`.
+* **Won:** when the freighter is no longer active in the battle (`0x570f62`: one of its rt flags
+  set) **without** being destroyed. Derived: disable or capture it, do not kill it.
+
+**Recon (k 7):**
+* **Set-up** `0x6124ea`: a target system is found by `0x5f2e47(…, 0x41)` near a random system.
+  Derived: a system suitable for an outpost; §6.2 of the strategy notes covers when the mission is
+  offered.
+* **Fleet** (owner 9): rand[3, 5) / [4, 7) / [3, 5) / [4, 7) / [5, 9) ships by d (table 0x61266e).
+  Each ship is:
+  * at d > 2, with 25 %: AlienType3 (pilot grade 3);
+  * otherwise, with 50 + 5d %: AlienType2 (grade 2);
+  * otherwise: AlienType1 (grade 1).
+  Plus max(1, d/2) **AlienFreighters** (grade 2). The fleet is placed rand[15,000, 45,000) units
+  into the system (derived from the `0x49c52c` arguments).
+* **Won:** no active alien (9) or pirate (10) ship is left in the battle (`0x612d3e`).
+* **Fails:** when more than **14 days** (1,209,600 s) have passed since it started, or once the
+  date field returned by `0x4122fc` exceeds 21 (derived: day of month > 21; `0x612962`).
+* **Win reward:** an X-COM outpost is founded in that system (`0x425f1d`, with a generated name), and
+  its 20 OPP slots are cleared (`0x425a34(2, …)`).
+
+**Minor side missions** are the other kinds above. The **fluff missions** (`0x57f0b5`, at most 4)
+are not side missions. They are ordinary alien flight plans of d + rand[1, 7) ships (minus 1 with
+10 %), started at a point rand[5,000, 7,500) units beyond a random system's radius. They fly the
+normal mission types.
+
+### 17.4 New-base period counters and the CentralHub fund (verified)
+
+* **Strategist +0x40 / +0x44 / +0x48** are set to 0 in the constructor (`0x57188b`) and every 25
+  days (`0x5757c7`). **No instruction in the executable increments them.** I searched the
+  strategist code and every reference to its pointer 0x6a3de4, and found only reads at
+  `0x5759c8` / `0x5759e5`. So they are always 0. The rule "`rand[1,3) + 4` ≥ +0x40 and
+  8 − d/2 < +0x44" is therefore never true, and that branch never founds a base. Derived: an
+  unfinished feature, probably meant to count raids or X-COM expansions per 25-day period.
+* **CentralHub affordability** `0x5a5260(cost, 1)` runs on the **alien treasury agent** (pointer
+  0x6a3dec; think `0x57649c`). The cost is 0x73e62c, filled at load time; derived: the alien
+  CentralHub module's Cost.
+  * It reads treasury **+0x18**, the base-construction fund (derived name). The 20-hour step fills
+    that fund with a quarter of the general pool +0x8 (or pays it out to alien bases whose fund is
+    below the hub cost, `0x5763e7`).
+  * Affordable: the cost is subtracted and a base is founded (`0x572771(0)`).
+  * Not affordable: a quarter of the **reserve +0x20** moves into +0x18, and nothing is founded this
+    time. The reserve gets the 25-day income, topped up from the pool up to its cap +0x24.
+* **Correction to `strategy/README.md` §6.1:** treasury +0x10 is the **Doomsday fund**. The
+  Doomsday share function `0x576e7b` compares +0x10 with 2 × the piece price, and orders are paid
+  from +0x10. The README called it the goods fund.
 
 ## 10. What remains unknown
 
