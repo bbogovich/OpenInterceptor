@@ -2416,3 +2416,12 @@ How to start: the launcher, or `--no-original` for the default campaign. Referen
 | Preconditions | App NEXT or later; the player's Interceptor data. |
 | Steps | 1. `openinterceptor --campaign interceptor --strategy`. Click the view knob's three positions (lower left, middle, upper right) with and without a star selected. 2. Click the system with the base, then a black hole. 3. Open Bases; press previous, next and the check mark. 4. `--chapter 2 --screen reports`; look at the axes; step to Alien activity. |
 | Expected | 1: each click turns the knob and plays the rotary sound; lower left = far view, middle = closer; upper right only with a star selected (its lamp shows unavailable otherwise) and shows the star's animated picture. 2: the base system shows the base picture; the black hole is only centred. 3: previous / next move the module selection; the check mark builds the selected module. 4: income 0 – 18,000 in 18 steps, 22 month columns with names under them and the years between brackets; the alien legend stays inside the panel. |
+
+### MT-6-37 — A save loads at the difficulty it was played at
+
+| Field | |
+|---|---|
+| Preconditions | App NEXT or later; the player's Interceptor data. No unit test covers it: the reload runs in the app's loop. |
+| Steps | 1. Main menu → Options → Difficulty: **Genius**; New Game. Open an alien base raid's battle or note a `per_level` value that differs by level (e.g. the Doomsday piece work, 50,000 technician-hours at Genius against 100,000 at Beginner, seen as days between pieces with `--strategy-soak`; or an alien fighter's turn and speed in a flown battle). Save in slot 1. 2. Main menu → Options → Difficulty: **Beginner**. 3. Load slot 1. 4. Fly the next interception, or open Options. |
+| Expected | 3: the campaign loads without an error. 4: the battle plays at Genius (alien pilots as at Genius, the X-COM shields and armour without Beginner's 150 % / 130 %), and Options shows **Genius**: the content was reloaded at the save's level before the save was read. Starting a New Game afterwards in this session uses Genius (the menu's remembered choice in `settings.yaml` stays Beginner for the next start). |
+
