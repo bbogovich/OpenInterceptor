@@ -781,7 +781,7 @@ outpost** it launches mission **5** with chance 50 + 5d %; within **2,000 units 
 mission **4** with chance 25 + 10d %. `0x57338e(mission, target)` then works like the raid launcher:
 * source = the **alien base agent (`Agent006v4`) nearest the target that has at least 3 ships queued**
   (only variant-A bases queue ships, §12.1); no such base → no fleet;
-* size = rand[3, 4) = 3 (d 0 and 2), 4 (d 1 and 3), 5 (d 4) — table 0x57354a — capped by the base's
+* size = rand[a, b) via `0x4050d0` (a + rand() mod (b − a), upper bound excluded), so a fixed 3 (d 0 and 2), 4 (d 1 and 3), 5 (d 4) — table 0x57354a — capped by the base's
   queued ships;
 * the ships are **taken out of that base's build queue** (`0x57e2a5`; class list AlienType1 ×3 for
   missions 4/5) and created (`0x4094d2`, owner 9) with the base's alien fit (§15.2) and pilots;
