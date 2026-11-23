@@ -1,7 +1,7 @@
 ---
-spec_version: 1.22.0
+spec_version: 1.23.0
 status: current
-updated: 2026-11-20
+updated: 2026-11-23
 ---
 
 # Specification
@@ -15,7 +15,7 @@ against. It has three parts:
 - the **original data formats**, normative for reading the player's original data (an
   installed copy or the CD).
 
-Specification version **1.22.0** (257 requirements). Changes are listed in the
+Specification version **1.23.0** (257 requirements). Changes are listed in the
 [change history](../meta/change-history.md).
 
 ## Requirements
@@ -97,3 +97,4 @@ Facts carry verified / derived / unknown marks.
 | 1.20.0 | 2026-11-20 | 257 requirements: Stage 3 complete (app 0.18.0): R-MOD-015 implemented — the user chose (c) on 2026-11-20 and the Tier 2 statement language is built, with an As-built note; R-FLT-012 extended with terrain detail textures and decorative scatter, its Open note closed. *Format: behaviours and scripting* gains the language as built (grammar, hooks, rules); *Format: missions* and *Mod structure* as-built notes (`.ois`, DEV-061) |
 | 1.21.0 | 2026-11-20 | 257 requirements: Stage 4 Batch 4.1 as built (app 0.19.0): R-STR-006 (bases: wrecks and `on_destroyed`, repair, dismantling a whole base, best-available templates, `placement:` conditions) and R-STR-014 (storage at every facility) implemented; R-STR-004 As-built note (storage on purchases, manufacture and deliveries), only markets per seller open; R-MOD-014 As-built note (`base_distance`, reserved names); *Logistics* design as-built note (placement conditions, DEV-049's placement part closed). No requirement wording changed |
 | 1.22.0 | 2026-11-20 | 257 requirements: Stage 4 Batch 4.2 as built (app 0.20.0; decisions D1 and D3): R-STR-021 (the survey craft, its battle at the site, suitability in the report), R-STR-022 (construction stages on the map and in battle, from 0 / 60 / 90 % since app 0.20.1; one list for every type, DEV-063) and R-STR-026 (cargo capacity) implemented; R-STR-019 and R-TST-011 As-built notes (stand-ins; the logistics soak); *Logistics* design as-built note, open questions 1 and 3 answered. No requirement wording changed |
+| 1.23.0 | 2026-11-23 | 257 requirements: R-STR-007 text corrected — an `interceptor` station's hull is the chart's `HP1` only (app 0.22.4, RQ-C-01), not `HP1` – `HP4` summed (#138). |
