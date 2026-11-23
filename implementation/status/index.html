@@ -8208,6 +8208,65 @@ saucer. <code>interceptor</code> <code>--strategy-soak</code> (app 0.22.32, seed
 </table>
 <p>D-24 closed: the soak keeps a craft and fights 52 battles in a year (it lost them all by day 30
 and fought one). DEV-102.</p>
+<p><strong>#139</strong> (app 0.22.34; RQ-S-23 – 26; unknowns §2.4, §3, §11.3, §12.1 – 12.2): <code>alien_bases:</code> and
+<code>campaign::aliens</code> — the rival's A and B bases and outposts as saved campaign objects (save section
+<code>aliens</code>), ship queues, the 20-hour expansion and 5-day re-founding, 25-day outposts, the raid planner
+sending raids from its A bases, the freighter harassment check, the outposts' income, and
+<code>plans.&lt;id&gt;.work</code> for pieces built by the outposts (not enabled in <code>interceptor</code>). DEV-104.
+<code>interceptor</code> <code>--strategy-soak</code> (seed 7):</p>
+<table>
+<thead>
+<tr>
+<th>Days</th>
+<th>Battles</th>
+<th>Alien bases</th>
+<th>Ships queued</th>
+<th>Alien outposts</th>
+<th>Alien tech</th>
+<th>Doomsday fund</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>30</td>
+<td>0</td>
+<td>2 (A)</td>
+<td>12</td>
+<td>2</td>
+<td>1</td>
+<td>273,375</td>
+</tr>
+<tr>
+<td>90</td>
+<td>6</td>
+<td>2 (A)</td>
+<td>12</td>
+<td>4</td>
+<td>1</td>
+<td>820,125</td>
+</tr>
+<tr>
+<td>180</td>
+<td>17</td>
+<td>2 (A)</td>
+<td>12</td>
+<td>5</td>
+<td>3</td>
+<td>3,143,813</td>
+</tr>
+<tr>
+<td>365</td>
+<td>45</td>
+<td>2 (A)</td>
+<td>12</td>
+<td>5</td>
+<td>3</td>
+<td>7,927,875</td>
+</tr>
+</tbody>
+</table>
+<p>No B base in the first year: none of the original's triggers holds (5 outposts are fewer than
+3 × 2 bases; ⌊month / 8⌋ first exceeds 2 in month 24).</p>
 
 
 

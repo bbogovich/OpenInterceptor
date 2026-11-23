@@ -6539,6 +6539,11 @@ live next to the code in <code>#[cfg(test)] mod tests</code> blocks and use <str
 test</strong> (fake DLLs, meshes, WAVs, temp pack folders) — never original game files.</p>
 <p><code>platform::linux</code> has a test too (joystick event mapping); it is compiled and run only on Linux,
 so it is not in the count from macOS.</p>
+<p><strong>#139 (app 0.22.34)</strong> five more in <code>campaign::aliens::tests</code>:
+<code>the_rival_starts_with_a_bases_that_queue_ships_and_outposts_that_pay</code> (and its save section),
+<code>the_raid_planner_sends_raids_from_an_a_base_with_ships_queued</code>,
+<code>new_bases_come_on_the_originals_triggers_and_are_b</code>, <code>the_rivals_outposts_build_its_plans_pieces</code>
+and <code>freighters_near_the_rivals_places_are_attacked</code>.</p>
 <p><strong>#134 (app 0.22.32)</strong> six more: <code>campaign::autoresolve::tests::ratings_follow_the_original_formulas</code>,
 <code>rounds_come_at_five_hours_then_hourly_and_hits_go_shield_armour_hull</code>,
 <code>a_won_battle_reports_its_kills_and_outcome_actions</code>,
