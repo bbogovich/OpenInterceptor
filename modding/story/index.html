@@ -7031,7 +7031,7 @@ usually loses the campaign.</p>
 <td><code>work</code></td>
 <td>number</td>
 <td>0</td>
-<td>App NEXT, with <a href="../strategy/#alien_bases"><code>alien_bases</code></a>: each piece takes this many outpost-hours of work — the rival's outposts work on it together — and is shipped (the plan's <code>raid</code>, from an alien base) when done; <code>every</code> and <code>chance</code> then do not apply. 0 = the rolls. <code>interceptor</code> keeps the rolls: the original's work per piece (100,000 … 30,000 by level, unknowns §12.2) would take years at the unit the RE reads, so the unit is being checked.</td>
+<td>With <a href="../strategy/#alien_bases"><code>alien_bases</code></a> (app 0.22.34): each piece takes this many <strong>technician-hours</strong> — every 20 game hours the hours since the last update × the rival's technicians (10 + 10 per platform for each alien outpost, from <a href="../strategy/"><code>manufacture</code></a>, app 0.22.35) go to the current piece — and is shipped (the plan's <code>raid</code>, from an alien base) when done; <code>every</code> and <code>chance</code> then do not apply. 0 = the rolls. <code>interceptor</code> (app 0.22.35): 100,000 / 80,000 / 70,000 / 50,000 / 30,000 by level (unknowns §12.2, <strong>verified</strong>); an alien outpost's platforms are one per planet of its system (<em>derived</em>).</td>
 </tr>
 <tr>
 <td><code>raid</code></td>
