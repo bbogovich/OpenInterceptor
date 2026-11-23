@@ -6856,6 +6856,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mt-6-39-attacking-the-rivals-places" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-39 — Attacking the rival's places
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -12560,6 +12571,17 @@
     <span class="md-ellipsis">
       
         MT-6-38 — The CSD's icons, joining an off-screen battle, base hull and craft condition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mt-6-39-attacking-the-rivals-places" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MT-6-39 — Attacking the rival's places
       
     </span>
   </a>
@@ -20947,6 +20969,29 @@ also a button and the S and F keys are gone: in MT-4-06 sell with <em>Sell 1</em
 <tr>
 <td>Expected</td>
 <td>1: the base icon (902) with a progress bar while built; freighters (606) on their way; alien places in sensor range (903, 917 blinking); a blinking red square on a battle. 2: the labels name them in the original's colours. 3: the battle is flown from where it stands. 4: Bases shows "HULL x / 6,000"; a damaged craft's row gives its hull, shields and armour. 5: shapes instead of icons; the Contacts list offers "Join the battle"; the Bases list gives the hull.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mt-6-39-attacking-the-rivals-places">MT-6-39 — Attacking the rival's places<a class="headerlink" href="#mt-6-39-attacking-the-rivals-places" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preconditions</td>
+<td>App NEXT or later; the player's Interceptor data; ready craft with pilots at the base.</td>
+</tr>
+<tr>
+<td>Steps</td>
+<td>1. <code>openinterceptor --campaign interceptor --strategy --map-demo</code> (the rival's base is selected). 2. Click the selected alien base again. 3. <code>--map-demo --screen testbed</code>: press <strong>Attack</strong> in the info panel. 4. <code>--campaign default --strategy --map-demo</code>.</td>
+</tr>
+<tr>
+<td>Expected</td>
+<td>1: the status bar reads ALIEN BASE, a yellow ring marks it. 2 and 3: the base's ready craft fly to the place as an interception (a contact appears there); the battle follows on arrival. 4: no rival places, nothing offers Attack.</td>
 </tr>
 </tbody>
 </table>

@@ -7776,7 +7776,11 @@ in RGB(0, 120, 0) and battles under way ("ATTACK IN PROGRESS") in RGB(200, 200, 
 original's colours (<strong>verified</strong>; the texts <em>derived</em>); with labels, contacts' names show on hover
 only.</p>
 <p>A second click on the selected contact acts on it: <strong>Intercept</strong>, or <strong>Join the battle</strong> when it
-is being fought off-screen (RQ-C-21) — for screens without an info panel, such as the CSD.</p>
+is being fought off-screen (RQ-C-21) — for screens without an info panel, such as the CSD.
+Since app 0.22.46 the rival's known bases and outposts can be selected too (they win over their
+star); their info offers <strong>Attack</strong>, which sends the current base's ready craft as an
+interception would (<code>Campaign::assault</code>, #142), and a second click on the selected place runs
+it. A campaign without <code>alien_bases</code> has no such places, so nothing changes there.</p>
 <p>The testbed layout (<code>starmap</code>) takes a full <code>map</code> definition too, for its <code>labels</code>; its
 other keys are unused there. <code>--hover X,Y</code> puts the labels' cursor at a design-space point (for
 screenshots).</p>
