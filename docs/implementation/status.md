@@ -710,3 +710,9 @@ complete on days 287, 301, 316, 330, 345, 359, 374, 388, 403, 418, 433, 447, 462
 520 (200 technicians), 533, 545 (240), 556, 567, 577, 588, 598 (280) and 607 (340), about 14 days a
 piece at first and 10 at the end as the rival's outposts grow to 18; the last shipment lands and the
 campaign ends with `doomsday_complete`.
+
+**Difficulty fix** (app NEXT, #139): `per_level` values resolve when the content loads, so the
+content must be at the campaign's level. New Game and the menu's difficulty choice already agree
+(the choice reloads the content); loading a save played at another level now reloads the content
+at the save's level first (`save::difficulty_of`), and `--strategy-soak` starts its campaign at the
+content's level (`--difficulty`, else the default) instead of level 1.
