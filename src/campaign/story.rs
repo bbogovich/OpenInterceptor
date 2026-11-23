@@ -532,7 +532,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, dt: f64, events: &mut Vec<Event
             continue;
         }
         // Pieces built by the rival's outposts (`work`), else rolled for (`every`, `chance`).
-        if super::aliens::plan_work(c, def, p, dt) {
+        if super::aliens::plan_work(def, p) {
             continue;
         }
         if c.story.plan_done[p] >= plan.total() || now < c.story.plan_next[p] {

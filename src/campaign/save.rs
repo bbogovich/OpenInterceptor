@@ -1121,8 +1121,19 @@ fn write_aliens(a: &super::aliens::AlienState) -> Node {
                 .map(|b| nums(&[b.system as f64, b.variant as f64, b.queued as f64, b.next_queue, b.founded]))
                 .collect()),
         ),
-        ("outposts", seq(a.outposts.iter().map(|o| nums(&[o.system as f64, o.founded])).collect())),
-        ("clocks", nums(&[a.next_expand, a.next_refound, a.next_growth, a.next_raid, a.next_harass, a.last_founded])),
+        ("outposts", seq(a.outposts.iter().map(|o| nums(&[o.system as f64, o.founded, o.opps as f64])).collect())),
+        (
+            "clocks",
+            nums(&[
+                a.next_expand,
+                a.next_refound,
+                a.next_growth,
+                a.next_raid,
+                a.next_harass,
+                a.last_founded,
+                a.piece_clock,
+            ]),
+        ),
         ("pieces", seq(a.piece_work.iter().map(|(w, b)| nums(&[*w, *b as f64])).collect())),
     ])
 }
@@ -1152,7 +1163,11 @@ fn read_aliens(node: &Node, systems: usize) -> super::aliens::AlienState {
         outposts: rows("outposts")
             .iter()
             .filter(|v| (at(v, 0) as usize) < systems)
-            .map(|v| super::aliens::AlienOutpost { system: at(v, 0) as usize, founded: at(v, 1) })
+            .map(|v| super::aliens::AlienOutpost {
+                system: at(v, 0) as usize,
+                founded: at(v, 1),
+                opps: at(v, 2) as u32,
+            })
             .collect(),
         next_expand: at(&clocks, 0),
         next_refound: at(&clocks, 1),
@@ -1160,6 +1175,7 @@ fn read_aliens(node: &Node, systems: usize) -> super::aliens::AlienState {
         next_raid: at(&clocks, 3),
         next_harass: at(&clocks, 4),
         last_founded: at(&clocks, 5),
+        piece_clock: at(&clocks, 6),
         piece_work: rows("pieces").iter().map(|v| (at(v, 0), at(v, 1) as u32)).collect(),
     }
 }

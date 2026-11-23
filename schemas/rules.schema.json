@@ -1555,7 +1555,7 @@
               }}},
           "start_when": {"description": "when work begins", "type": "string"},
           "every": {"description": "time between shipment rolls", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+(s|min|h)?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
-          "work": {"description": "with alien_bases: outpost-hours of work per piece, shipped when done (0: the rolls)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
+          "work": {"description": "with alien_bases: technician-hours of work per piece, shipped when done (0: the rolls)", "anyOf": [{"type": "number"}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"type": "number"}}}, "required": ["per_level"], "additionalProperties": false}]},
           "chance": {"description": "chance per roll", "anyOf": [{"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}, {"type": "object", "properties": {"per_level": {"type": "array", "items": {"anyOf": [{"type": "number"}, {"type": "string", "pattern": "^-?[0-9.]+%?$"}]}}}, "required": ["per_level"], "additionalProperties": false}]},
           "raid": {"description": "the raid a shipment flies as", "type": "string", "pattern": "^[a-z0-9_.-]+$"},
           "warnings": {"description": "warnings", "type": "array", "items": {"type": "object", "additionalProperties": false, "properties": {

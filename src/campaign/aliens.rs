@@ -42,6 +42,9 @@ pub struct AlienBase {
 pub struct AlienOutpost {
     pub system: usize,
     pub founded: f64,
+    /// Its orbital platforms (one per planet of its system, as the corporate outposts';
+    /// DERIVED): each adds technicians.
+    pub opps: u32,
 }
 
 /// What the rival holds and its clocks (campaign hours).
@@ -59,41 +62,66 @@ pub struct AlienState {
     pub last_founded: f64,
     /// Per plan (`plans.<id>.work`): work done on the current piece, pieces built.
     pub piece_work: Vec<(f64, u32)>,
+    /// The hour of the last piece-work update (every 20 h).
+    pub piece_clock: f64,
 }
 
-/// A plan's piece work (`plans.<id>.work`) for `dt` hours: the rival's outposts work on
-/// the current piece together; when it is done it is shipped (the plan's raid, from an
-/// alien base) and the next begins. Returns `true` when the plan is in work mode (so its
-/// rolls do not apply).
-pub fn plan_work(c: &mut Campaign, def: &StrategyDef, p: usize, dt: f64) -> bool {
-    let plan = &def.story.plans[p];
-    if plan.work <= 0.0 || def.alien_bases.is_none() {
-        return false;
+/// The rival's technicians (the original's `0x42758c(9)`): per alien outpost
+/// `manufacture.per_outpost` plus `per_opp` per platform (10 and 10 without the section).
+pub fn technicians(c: &Campaign, def: &StrategyDef) -> f64 {
+    let (base, per) = def.manufacture.as_ref().map_or((10.0, 10.0), |m| (m.per_outpost, m.per_opp));
+    c.aliens.outposts.iter().map(|o| (base + per * o.opps as f32) as f64).sum()
+}
+
+/// The piece-work update period: 20 game hours (`0x57b746`).
+const PIECE_UPDATE: f64 = 20.0;
+
+/// Whether plan `p` is built by piece work (`plans.<id>.work` with `alien_bases`): its
+/// rolls then do not apply; [`step`] does the work.
+pub fn plan_work(def: &StrategyDef, p: usize) -> bool {
+    def.story.plans[p].work > 0.0 && def.alien_bases.is_some()
+}
+
+/// The piece-work update (`plans.<id>.work`, technician-hours a piece; §12.2, verified):
+/// every 20 game hours the hours since the last update × the rival's [`technicians`] go to
+/// the current piece of each started plan; a finished piece is shipped (the plan's raid,
+/// from an alien base) and the next begins.
+fn piece_work(c: &mut Campaign, def: &StrategyDef) {
+    let elapsed = c.hours - c.aliens.piece_clock;
+    if elapsed < PIECE_UPDATE {
+        return;
     }
+    c.aliens.piece_clock = c.hours;
     if c.aliens.piece_work.len() < def.story.plans.len() {
         c.aliens.piece_work.resize(def.story.plans.len(), (0.0, 0));
     }
-    let (mut done, mut built) = c.aliens.piece_work[p];
-    if built >= plan.total() {
-        return true;
-    }
-    done += dt * c.aliens.outposts.len() as f64;
-    while done >= plan.work as f64 && built < plan.total() {
-        done -= plan.work as f64;
-        built += 1;
-        if let Some(r) = plan.raid {
-            c.launch(def, r);
-            let from = c.aliens.bases.first().map(|b| c.systems[b.system].pos);
-            if let Some(k) = c.contacts.last_mut() {
-                k.plan = Some(p);
-                if let Some(pos) = from {
-                    (k.pos, k.route) = (pos, Vec::new());
+    let techs = technicians(c, def);
+    for p in 0..def.story.plans.len() {
+        let plan = &def.story.plans[p];
+        if !plan_work(def, p) || !c.story.plan_started.get(p).copied().unwrap_or(false) {
+            continue;
+        }
+        let (mut done, mut built) = c.aliens.piece_work[p];
+        if built >= plan.total() {
+            continue;
+        }
+        done += elapsed * techs;
+        while done >= plan.work as f64 && built < plan.total() {
+            done -= plan.work as f64;
+            built += 1;
+            if let Some(r) = plan.raid {
+                c.launch(def, r);
+                let from = c.aliens.bases.first().map(|b| c.systems[b.system].pos);
+                if let Some(k) = c.contacts.last_mut() {
+                    k.plan = Some(p);
+                    if let Some(pos) = from {
+                        (k.pos, k.route) = (pos, Vec::new());
+                    }
                 }
             }
         }
+        c.aliens.piece_work[p] = (done, built);
     }
-    c.aliens.piece_work[p] = (done, built);
-    true
 }
 
 /// A uniform whole number in `lo ..< hi` (the original's `rand[lo, hi)`).
@@ -123,7 +151,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
             found_base(c, a, 1);
         }
         for _ in 0..a.start_outposts {
-            found_outpost(c, a);
+            found_outpost(c, def, a);
         }
         // The outposts it starts with are old enough to pay at once.
         for o in &mut c.aliens.outposts {
@@ -133,6 +161,7 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
         c.aliens.next_refound = now + a.refound_every as f64;
         c.aliens.next_growth = now + a.outposts_every as f64;
         c.aliens.next_harass = now + harass_every(c, a) as f64;
+        c.aliens.piece_clock = now;
         schedule_raid(c, a);
     }
     // Ship queues: each A base one ship a period, up to the cap.
@@ -167,20 +196,22 @@ pub fn step(c: &mut Campaign, def: &StrategyDef, events: &mut Vec<Event>) {
                 found_base(c, a, 2);
             }
             if c.roll() < a.grow[0] + a.grow[1] * d {
-                grow_outposts(c, a, month);
+                grow_outposts(c, def, a, month);
             }
         }
     }
     // The 25-day outpost growth.
     while now >= c.aliens.next_growth {
         c.aliens.next_growth += a.outposts_every as f64;
-        grow_outposts(c, a, month);
+        grow_outposts(c, def, a, month);
     }
     // The raid planner.
     if now >= c.aliens.next_raid {
         plan_raid(c, def, a, month, events);
         schedule_raid(c, a);
     }
+    // The plans' pieces (`plans.<id>.work`).
+    piece_work(c, def);
     // Harassment of freighters in flight near alien outposts and bases (RQ-S-23).
     while now >= c.aliens.next_harass {
         c.aliens.next_harass += harass_every(c, a) as f64;
@@ -243,7 +274,7 @@ fn found_base(c: &mut Campaign, a: &AlienBasesDef, variant: u8) -> bool {
 
 /// Founds an outpost in a free system within `outpost_range` of an alien base (the
 /// nearest free system to one when none is that close).
-fn found_outpost(c: &mut Campaign, a: &AlienBasesDef) -> bool {
+fn found_outpost(c: &mut Campaign, def: &StrategyDef, a: &AlienBasesDef) -> bool {
     let free = free_systems(c);
     if free.is_empty() || c.aliens.bases.is_empty() {
         return false;
@@ -258,13 +289,15 @@ fn found_outpost(c: &mut Campaign, a: &AlienBasesDef) -> bool {
         close[((c.roll() * close.len() as f32) as usize).min(close.len() - 1)]
     };
     let now = c.hours;
-    c.aliens.outposts.push(AlienOutpost { system: s, founded: now });
+    let least = def.outposts.as_ref().map_or(1, |o| o.min_opps);
+    let opps = (c.systems[s].planets as u32).clamp(least, 20);
+    c.aliens.outposts.push(AlienOutpost { system: s, founded: now, opps });
     true
 }
 
 /// The 25-day outpost growth (`0x575274`): before month 4, 0 or 1 (50 %); later
 /// rand[0, min(month / 8, 3)); with fewer than 2 outposts, one.
-fn grow_outposts(c: &mut Campaign, a: &AlienBasesDef, month: f32) {
+fn grow_outposts(c: &mut Campaign, def: &StrategyDef, a: &AlienBasesDef, month: f32) {
     let n = if c.aliens.outposts.len() < 2 {
         1
     } else if month < 4.0 {
@@ -273,7 +306,7 @@ fn grow_outposts(c: &mut Campaign, a: &AlienBasesDef, month: f32) {
         below(c, 0.0, (month / 8.0).floor().min(3.0)) as u32
     };
     for _ in 0..n {
-        found_outpost(c, a);
+        found_outpost(c, def, a);
     }
 }
 
@@ -484,7 +517,7 @@ mod tests {
         assert_eq!(c.aliens.bases.len(), 2);
         // Seven outposts: 3 x 2 < 7 — a new base, variant B, after the 12.5-day gap.
         while c.aliens.outposts.len() < 7 {
-            c.aliens.outposts.push(AlienOutpost { system: 0, founded: 0.0 });
+            c.aliens.outposts.push(AlienOutpost { system: 0, founded: 0.0, opps: 0 });
         }
         c.hours = 420.0;
         step(&mut c, &d, &mut ev);
@@ -500,16 +533,20 @@ mod tests {
     #[test]
     fn the_rivals_outposts_build_its_plans_pieces() {
         let (d, mut c) = rival(
-            "plans:\n  engine: {owner: enemy, stages: [{name: Core, count: 2}], every: 1d, raid: raid, work: 30}\n",
+            "plans:\n  engine: {owner: enemy, stages: [{name: Core, count: 2}], every: 1d, raid: raid, work: 1200}\n",
         );
-        assert_eq!(d.story.plans[0].work, 30.0);
-        // Two outposts: 30 outpost-hours a piece is 15 hours; two pieces in 30.
+        assert_eq!(d.story.plans[0].work, 1200.0);
         c.advance(&d, 1.0);
+        // Two outposts with two platforms each: 2 x (10 + 2 x 10) = 60 technicians.
+        assert!(c.aliens.outposts.iter().all(|o| o.opps == 2));
+        assert_eq!(technicians(&c, &d), 60.0);
+        // A piece is 1,200 technician-hours: 20 h at 60, applied at the 20-hour update.
         let shipped = |c: &Campaign| c.contacts.iter().filter(|k| k.plan == Some(0)).count();
-        assert_eq!(shipped(&c), 0);
-        c.advance(&d, 16.0);
+        c.advance(&d, 18.0);
+        assert_eq!(shipped(&c), 0, "nothing before the first update");
+        c.advance(&d, 2.0);
         assert_eq!(shipped(&c), 1);
-        c.advance(&d, 50.0);
+        c.advance(&d, 60.0);
         assert_eq!(shipped(&c), 2, "both pieces, and no more");
         assert_eq!(c.aliens.piece_work[0].1, 2);
     }
@@ -538,13 +575,13 @@ mod tests {
         c.load_freighters(&d);
         assert_eq!(c.deliveries.len(), 1);
         // Far away (x9 at 22,000): nothing happens.
-        c.aliens.outposts = vec![AlienOutpost { system: 12, founded: 0.0 }];
+        c.aliens.outposts = vec![AlienOutpost { system: 12, founded: 0.0, opps: 0 }];
         c.aliens.bases.clear();
         c.hours = 1.0;
         harass(&mut c, &d, &mut ev);
         assert_eq!(c.deliveries.len(), 1);
         // One hour out the freighter is 1,000 units from system b: an outpost there is in reach.
-        c.aliens.outposts = vec![AlienOutpost { system: 1, founded: 0.0 }];
+        c.aliens.outposts = vec![AlienOutpost { system: 1, founded: 0.0, opps: 0 }];
         harass(&mut c, &d, &mut ev);
         assert!(c.deliveries.is_empty(), "attacked: the cargo is lost");
     }
