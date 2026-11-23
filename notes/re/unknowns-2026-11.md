@@ -495,7 +495,7 @@ queue ships (`0x57e51e`), so only A bases can launch raids (`0x573998` needs ≥
 
 ### 12.2 Doomsday pieces (`0x57b6xx`, table 0x67c568, 6 ints per difficulty)
 
-| d | total pieces | work per piece (outpost-hours) | fund cap | type 1 | type 2 | type 3 |
+| d | total pieces | work per piece (technician-hours) | fund cap | type 1 | type 2 | type 3 |
 |---|---|---|---|---|---|---|
 | 0 | 25 | 100,000 | 250,000 | 8 | 8 | 9 |
 | 1 | 25 | 80,000 | 200,000 | 9 | 8 | 8 |
@@ -504,12 +504,23 @@ queue ships (`0x57e51e`), so only A bases can launch raids (`0x573998` needs ≥
 | 4 | 18 | 30,000 | 80,000 | 7 | 6 | 5 |
 
 * Pieces are built one at a time, type 1 first, then 2, then 3, while the build orders for that type
-  last. Every 20 h (72,000 s) the current piece's remaining work drops by **elapsed seconds × the
-  number of alien outposts**; a piece needs `work × 3600` of that, i.e. *work* hours with one
-  outpost. When done it is logged as built (`0x57ab52`) and shipped by freighter; shipments
-  received (messages 0x3a–0x3c, `0x57a94f`) count up to the per-type maximum; type-3 arrivals raise
-  the warnings `DD_WARNING1` / `DD_WARNING2` at max − 4 / max − 3. The Doomsday is complete when the
-  received pieces add up to the total (`0x57b37a`).
+  last (verified). **Units (verified, `0x57b746`):** elapsed = game time `0x412181` (integer **game
+  seconds**, the strategy clock; it runs only while the CSD clock runs and scales with the time
+  speed) minus the last update (+0x34). The update fires once elapsed ≥ 72,000 s (**20 game hours**)
+  and then subtracts **elapsed × `0x42758c(9)`**, where `0x42758c(9)` is the sum of `0x427468` over all
+  alien (side 9) outposts — **the aliens' technician count** (10 + 10 per working OPP per outpost,
+  §2.5), not the outpost count (my earlier wording was wrong). A piece needs `work × 3600`
+  technician-seconds, i.e. **work technician-hours** — the same unit as manufacturing's ProdTime.
+  When done it is logged as built (`0x57ab52`) and shipped by freighter; shipments received (messages
+  0x3a–0x3c, `0x57a94f`) count up to the per-type maximum; type-3 arrivals raise the warnings
+  `DD_WARNING1` / `DD_WARNING2` at max − 4 / max − 3. The Doomsday is complete when the received pieces
+  add up to the total (`0x57b37a`).
+* **Build time per piece** (derived) = work ÷ alien technicians hours, rounded up to the 20-hour
+  update. With T alien technicians: Veteran (70,000) — T = 200 → 350 h ≈ 15 days, T = 500 → 140 h ≈
+  6 days; Superhuman (30,000) — T = 200 → 150 h ≈ 6 days, T = 500 → 60 h = 3 updates; Beginner
+  (100,000) — T = 200 → 500 h ≈ 21 days. All 18–25 pieces then take months, shortened by alien
+  outpost growth (§3.1) and lengthened by X-COM destroying outposts or OPPs. When the build orders
+  for a type are set was not traced.
 * There is **no money cost** per piece. The "fund cap" (derived name): once the alien Doomsday fund
   holds twice this amount, the Doomsday share of the treasury split falls to a random 1–5 %
   (`0x576e7c`); below it the share is `Think.ini` DoomsdayDefault.
