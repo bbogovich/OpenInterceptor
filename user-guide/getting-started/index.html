@@ -6989,6 +6989,14 @@ scripts/check.sh
 <td>Play the campaign's strategy layer without a window for that many days with a simple automatic player, print one line (date, funds, score, bases, craft, topics, battles, messages) and exit (app 0.8.0; <a href="../../modding/strategy/#trying-a-campaign-out">Strategy layer</a>). Use with <code>--campaign</code>.</td>
 </tr>
 <tr>
+<td><code>--soak-fleet &lt;N&gt;</code></td>
+<td>With <code>--strategy-soak</code> (app 0.22.38): the automatic player keeps N craft, buying a hull (one a day) while fewer are flying or on order; default the campaign's starting craft. It also researches event-opened topics (the saucer examinations) first.</td>
+</tr>
+<tr>
+<td><code>--soak-capture</code></td>
+<td>With <code>--strategy-soak</code> (app 0.22.38, test tooling): a won battle's first destroyed ship of each class some topic needs <code>captured(&lt;class&gt;)</code> counts as captured, so a soak can open those topics. The game itself never does this.</td>
+</tr>
+<tr>
 <td><code>--ship &lt;ID&gt;</code></td>
 <td>Player ship for <code>--scenario</code> when the scenario lets you choose.</td>
 </tr>
