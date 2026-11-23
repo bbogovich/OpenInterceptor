@@ -601,6 +601,29 @@ pub async fn run(options: Options) {
             }
             Next::Simulator => screen = Screen::Simulator(simulator::Simulator::new()),
             Next::NewCampaign | Next::LoadCampaign | Next::LoadSlot { .. } => {
+                // A save played at another level than the content's: reload the content at
+                // the save's level first, so its `per_level` values are the campaign's.
+                let slot = match next {
+                    Next::LoadSlot { slot } => Some(slot),
+                    Next::LoadCampaign => Some(0),
+                    _ => None,
+                };
+                if let Some(level) = slot.and_then(|k| strategy::StrategyScreen::saved_level(&ctx, k)) {
+                    let mut cfg = options.content_config();
+                    cfg.campaign = ctx.content.campaign.clone();
+                    cfg.difficulty = Some(level);
+                    match Content::load(&cfg) {
+                        Ok(content) => {
+                            ctx.renderer.models = Default::default();
+                            let volume = ctx.sounds.effects_volume;
+                            ctx.sounds = SoundBank::load(&content).await;
+                            ctx.sounds.effects_volume = volume;
+                            ctx.content = content;
+                            ctx.ui = ui::Ui::load(&ctx.content);
+                        }
+                        Err(e) => eprintln!("error: reloading at the save's level: {e}"),
+                    }
+                }
                 let made = match next {
                     Next::NewCampaign => strategy::StrategyScreen::new_campaign(&ctx)
                         .ok_or("this campaign has no strategy layer".to_string()),

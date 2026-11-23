@@ -481,6 +481,17 @@ impl StrategyScreen {
         Self::load_slot(ctx, 0)
     }
 
+    /// The difficulty level name the campaign saved in slot `slot` was played at, when it
+    /// differs from the level the content is loaded at (the content must then be reloaded
+    /// at that level before loading: `per_level` values are resolved at load).
+    pub fn saved_level(ctx: &AppContext, slot: usize) -> Option<String> {
+        let id = ctx.content.campaign.clone().unwrap_or_default();
+        let text = std::fs::read_to_string(slot_path(&id, slot)?).ok()?;
+        let d = save::difficulty_of(&text)?;
+        let r = &ctx.content.rules;
+        (d != r.difficulty).then(|| r.difficulty_levels.get(d).cloned()).flatten()
+    }
+
     /// The campaign saved in slot `slot` (0: the automatic save).
     pub fn load_slot(ctx: &AppContext, slot: usize) -> Result<StrategyScreen, String> {
         let def = ctx.content.rules.strategy.as_ref().ok_or("this campaign has no strategy layer")?;

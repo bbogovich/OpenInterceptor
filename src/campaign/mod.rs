@@ -3711,6 +3711,43 @@ mod tests {
         assert_eq!(c.pilots[1].state, PilotState::Dead);
     }
 
+    /// A save tells the level it was played at before it is read, so the app can load the
+    /// content at that level first (`per_level` values resolve at load).
+    #[test]
+    fn a_save_names_its_difficulty_before_it_is_read() {
+        let (d, errors) = build(SAMPLE);
+        assert!(errors.is_empty(), "{errors:?}");
+        let d = d.unwrap();
+        let c = Campaign::new(&d, 1, 5);
+        let packs = [save::PackRef { id: "t".into(), version: "1".into() }];
+        let text = save::write(&c, "t", &packs);
+        assert_eq!(save::difficulty_of(&text), Some(1));
+        assert_eq!(save::difficulty_of("not: [a save"), None);
+    }
+
+    /// Content loaded at a level is at that level, and a campaign started from it takes it
+    /// (the app's New Game: `Campaign::new(def, rules.difficulty, ..)`).
+    #[test]
+    fn content_resolves_per_level_values_at_the_chosen_level() {
+        let load = |level: &str| {
+            crate::content::Content::load(&crate::content::ContentConfig {
+                pack_dirs: crate::content::checkout_dirs(),
+                no_original: true,
+                campaign: Some("default".into()),
+                difficulty: Some(level.into()),
+                ..Default::default()
+            })
+            .unwrap()
+        };
+        let first = load("cadet");
+        let levels = first.rules.difficulty_levels.clone();
+        let last = load(levels.last().unwrap());
+        assert_eq!((first.rules.difficulty, last.rules.difficulty), (0, levels.len() - 1));
+        // A campaign started from that content takes the content's level.
+        let def = last.rules.strategy.as_ref().unwrap();
+        assert_eq!(Campaign::new(def, last.rules.difficulty, 1).difficulty, levels.len() - 1);
+    }
+
     #[test]
     fn a_seen_contact_may_turn_on_the_base_that_saw_it() {
         // A probe heading for system b, reacting with certainty; the home base at a sees
