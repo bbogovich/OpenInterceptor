@@ -465,6 +465,9 @@ pub async fn run(options: Options) {
                     s.notice(text);
                 }
                 s.hover = options.hover;
+                if options.map_demo {
+                    s.map_demo(&ctx);
+                }
                 Screen::Strategy(Box::new(s))
             }
             None => Screen::Launcher(launcher::Launcher::new(&ctx)),
