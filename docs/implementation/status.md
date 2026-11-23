@@ -664,6 +664,15 @@ the Bases rows) and craft condition (the hangar rows); the map's `markers` — b
 bar, the rival's known bases and outposts, freighters in flight (`Campaign::freighters_in_flight`,
 for #141 to extend), battles under way — and their hover labels. MT-6-38.
 
+**#146** (app NEXT; a playtest of 0.22.48): impacts sent a station spinning. Collisions were not
+the cause (a station is immovable there); every class had a pilot under `damage.pilot_injury`, so
+fighter hits and rams killed the station's "pilot" and `hurt_pilot` made it a tumbling wreck. The
+original injures pilots only on ship objects (rt type 1; flight notes §4.2, §8.3, verified). New
+class key `crewed` (default by kind: fighters, freighters, capitals, drones); a static class is
+anchored even when crewed. Checked: a fighter's ram leaves a capital ship or a freighter (radius
+cubed: 125 × the mass at 5 × the radius) nearly unspun. Unit test
+`fighter_impacts_leave_stations_and_heavy_hulls_steady`.
+
 **#145** (app 0.22.47; a playtest of 0.22.46): the CSD's dial globe listed only rows 918 – 929, a
 quarter of its 48-frame turn, so it looped a quarter turn every 0.8 s (too fast, frames missing);
 it now lists 918 – 965 and sits 15 px higher, at (562, 289). The picture level (level 2) draws the
