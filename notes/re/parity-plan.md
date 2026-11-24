@@ -49,7 +49,10 @@ counterpart or stays unaffected, unit tests with synthetic data, modding docs in
 | #141 freighters in flight (`aliens::freighters`), RQ-S-23 raids that hunt them, raid sizes and escorts by tech (`raids.sizes`, `escorts`), hired pilots as shipments | 0.22.41 |
 | #142 player attacks on the rival's places (`alien_bases.assault`, `Campaign::assault`), scouts, hangar growth and the ship queue; side missions and the remaining new-base checks wait on RE | 0.22.44 |
 | #141 follow-up (unknowns §16): the hunters come from the nearest A base with 3 queued and take 3/4/3/4/5 from its queue; outpost 50 + 5d %, base 25 + 10d %; meeting within 600 is a battle (freighter lost only if destroyed); mission 3's Tachyon armament not built (chance formula gives 0, question for RE) | 0.22.45 |
-| #144 (bug) content reload in the bundle: absolute pack folders, the reload error stays on its screen with the folders searched, Options left/right step both ways and keep the row, the bundle built aside and swapped in | NEXT |
+| #145 (bug) CSD animations at the original rate, the globe's 48 frames 15 px higher, a black scope behind the zoomed star | 0.22.47 |
+| #144 (bug) content reload in the bundle: absolute pack folders, the reload error stays on its screen with the folders searched, Options left/right step both ways and keep the row, the bundle built aside and swapped in | 0.22.48 |
+| #146 (bug) stations have no pilot (`crewed`), so impacts no longer send them tumbling | 0.22.49 |
+| #147 (bug) the craft's own shape from the cockpit art (`ship_status.craft_art`) in the middle of the shield rings; generated silhouettes for the default campaign | 0.22.50 |
 | #137 RQ-S-19/21 deliveries by outpost freighter (100 units, 135 units/h), RQ-S-22 map speed by mass, RQ-S-28 versioned save sections (DEV-103) | 0.22.33 |
 
 ## Issues
@@ -60,7 +63,7 @@ Filed 2026-11-22 as GitHub issues (labels `parity-m1`, `parity-m2`, `parity-m3`,
 |---|---|
 | M1 combat | #113 station hull/shields, #114 alien base hard points and layouts, #115 turret fire control, #116 repair and system damage, #117 shield types and special weapons, #118 AI piloting, #119 AI retreat and Nova, #120 missiles/cloak/PD/hulls, #121 balance report and re-measure |
 | M2 screens | #122 sheet fonts and anchors, #123 CSD readouts and captions, #124 compact lists, #125 sprites and buttons, #126 sounds/tooltips/dial/lamps, #127 dialogs/history/clock, #128 screen content |
-| M3 strategy | #129 research, #130 sensors, #131 outposts, #132 bases, #133 pilots, #134 auto-resolve, #135 aliens, #137 deliveries and saves, #139 alien bases and outposts, #140 strategy screens for the new state, #141 freighters as contacts and raid sizes, #142 attacks on the rival and their side missions, #143 soak autoplay |
+| M3 strategy | #129 research, #130 sensors, #131 outposts, #132 bases, #133 pilots, #134 auto-resolve, #135 aliens, #137 deliveries and saves, #139 alien bases and outposts, #140 strategy screens for the new state, #141 freighters as contacts and raid sizes, #142 attacks on the rival and their side missions, #143 soak autoplay; playtest bugs #144–#147 |
 | RE | #136 remaining unknowns |
 
 ## Order of work
